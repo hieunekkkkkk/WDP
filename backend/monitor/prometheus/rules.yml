@@ -1,0 +1,11 @@
+groups:
+  - name: NodejsAlerts
+    rules:
+      - alert: HighRequestRate
+        expr: rate(http_requests_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request rate detected"
+          description: "Request rate is above 10 per 5 minutes on {{ $labels.instance }}"

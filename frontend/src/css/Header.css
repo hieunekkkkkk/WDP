@@ -1,0 +1,91 @@
+.header {
+  width: 100%;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+  width: 120px; /* Chiều rộng ảnh */
+  height: 50px; /* Chiều cao ảnh */
+}
+
+.header-nav {
+  display: flex;
+  gap: 2rem;
+  /* margin-left: 350px; */
+}
+
+.header-nav a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.header-nav a:hover {
+  color: #007bff;
+}
+
+.account-menu-wrapper {
+  position: relative;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+  /* margin-left: 300px; */
+  cursor: pointer;
+}
+
+.account-menu-wrapper:hover {
+  background-color: #e2e6ea;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  list-style: none;
+  padding: 0;
+  z-index: 1000;
+  min-width: 160px;
+}
+
+.account-dropdown li a {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.account-dropdown li a:hover {
+  background-color: #f1f1f1;
+  color: #007bff;
+}
+
+.header-nav-link.active {
+  font-weight: bold;
+  color: #ff6b35;
+}

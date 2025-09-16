@@ -1,0 +1,16 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'iwillwin2211@gmail.com'
+  smtp_auth_username: 'iwillwin2211@gmail.com'  
+  smtp_auth_password: 'lcos slfu fogl pvop'  # Thay bằng App Password từ Gmail
+  smtp_require_tls: true
+
+route:
+  receiver: 'email'
+
+receivers:
+  - name: 'email'
+    email_configs:
+      - to: 'hieutmhe180168@fpt.edu.vn'  # Thay bằng email nhận thông báo
+        send_resolved: true
