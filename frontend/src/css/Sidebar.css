@@ -1,0 +1,228 @@
+/* ================================
+   SIDEBAR
+================================= */
+.sidebar {
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.sidebar.open {
+  width: 280px;
+}
+
+.sidebar.collapsed {
+  width: 64px;
+}
+
+/* Header Sidebar */
+.sidebar-header {
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;   /* căn logo về bên trái */
+  height: 64px;                  /* khớp header */
+  padding: 0 16px;
+  border-bottom: 1px solid #f1f5f9;
+  box-sizing: border-box;
+  gap: 8px;                      /* khoảng cách logo - text */
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-img {
+  width: 32px;                   /* thu nhỏ logo */
+  height: 32px;                  /* ép cố định khung cao */
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 16px;
+  color: #ff6600;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sidebar.collapsed .logo-text {
+  display: none;                 /* ẩn chữ khi collapse */
+}
+
+/* Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.menu-link:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.menu-link.active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.menu-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.menu-label {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar.collapsed .menu-label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tooltip khi collapsed */
+.tooltip {
+  position: absolute;
+  left: 72px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1f2937;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .menu-item:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Footer Sidebar */
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.dark-mode-compact {
+  display: flex;
+  justify-content: center;
+}
+
+.dark-mode-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.dark-mode-btn:hover {
+  background: #e2e8f0;
+}
+
+/* ================================
+   DARK MODE
+================================= */
+.layout.dark .sidebar {
+  background: #0f172a;
+  border-right-color: #374151;
+}
+
+.layout.dark .sidebar-header {
+  background: #0f172a;
+  border-bottom-color: #374151;
+}
+
+.layout.dark .logo-text {
+  color: #ff6600;
+}
+
+.layout.dark .menu-link {
+  color: #9ca3af;
+}
+
+.layout.dark .menu-link:hover {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.layout.dark .menu-link.active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.layout.dark .sidebar-footer {
+  border-top-color: #374151;
+}
+
+.layout.dark .dark-mode-btn {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.layout.dark .dark-mode-btn:hover {
+  background: #4b5563;
+}
+
+/* Overlay khi sidebar mở trên mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+/* Sidebar trong mobile */
+.sidebar.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 100;
+}

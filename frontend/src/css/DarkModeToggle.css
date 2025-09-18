@@ -1,0 +1,227 @@
+/* ========== DARK MODE TOGGLE MAIN ========== */
+.dark-mode-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  width: 100%;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.toggle-container:hover {
+  background: #f1f5f9;
+}
+
+/* ========== TOGGLE ICONS ========== */
+.toggle-icon {
+  font-size: 16px;
+  color: #9ca3af;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.toggle-icon.active {
+  color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.toggle-icon.moon.active {
+  color: #6366f1;
+}
+
+.toggle-icon.sun.active {
+  color: #f59e0b;
+}
+
+/* ========== TOGGLE SWITCH ========== */
+.toggle-switch {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  display: block;
+  width: 44px;
+  height: 24px;
+  background: #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== TOGGLE STATES ========== */
+.toggle-input:checked + .toggle-slider {
+  background: #3b82f6;
+}
+
+.toggle-input:checked + .toggle-slider .toggle-thumb {
+  transform: translateX(20px);
+  background: #ffffff;
+}
+
+.toggle-switch:focus .toggle-slider {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.toggle-switch:hover .toggle-slider {
+  background: #cbd5e1;
+}
+
+.toggle-input:checked + .toggle-slider:hover {
+  background: #2563eb;
+}
+
+/* ========== TOGGLE LABEL ========== */
+.toggle-label {
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+/* ========== DARK MODE STYLES ========== */
+.layout.dark .toggle-container {
+  background: #374151;
+}
+
+.layout.dark .toggle-container:hover {
+  background: #4b5563;
+}
+
+.layout.dark .toggle-icon {
+  color: #6b7280;
+}
+
+.layout.dark .toggle-icon.active {
+  color: #60a5fa;
+}
+
+.layout.dark .toggle-icon.moon.active {
+  color: #818cf8;
+}
+
+.layout.dark .toggle-icon.sun.active {
+  color: #fbbf24;
+}
+
+.layout.dark .toggle-slider {
+  background: #4b5563;
+}
+
+.layout.dark .toggle-switch:hover .toggle-slider {
+  background: #374151;
+}
+
+.layout.dark .toggle-input:checked + .toggle-slider:hover {
+  background: #2563eb;
+}
+
+.layout.dark .toggle-label {
+  color: #9ca3af;
+}
+
+/* ========== ANIMATION ENHANCEMENTS ========== */
+@keyframes toggleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark-mode-toggle {
+  animation: toggleSlideIn 0.3s ease-out;
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+@media (max-width: 768px) {
+  .toggle-container {
+    padding: 10px 14px;
+  }
+  
+  .toggle-slider {
+    width: 40px;
+    height: 22px;
+  }
+  
+  .toggle-thumb {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .toggle-input:checked + .toggle-slider .toggle-thumb {
+    transform: translateX(18px);
+  }
+  
+  .toggle-icon {
+    font-size: 14px;
+  }
+}
+
+/* ========== ACCESSIBILITY IMPROVEMENTS ========== */
+@media (prefers-reduced-motion: reduce) {
+  .toggle-slider,
+  .toggle-thumb,
+  .toggle-icon {
+    transition: none;
+  }
+}
+
+.toggle-switch:focus-visible .toggle-slider {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ========== HIGH CONTRAST MODE ========== */
+@media (prefers-contrast: high) {
+  .toggle-slider {
+    border: 1px solid;
+  }
+  
+  .layout.dark .toggle-slider {
+    border-color: #ffffff;
+  }
+  
+  .toggle-slider {
+    border-color: #000000;
+  }
+}
