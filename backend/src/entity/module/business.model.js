@@ -26,7 +26,6 @@ const businessSchema = new mongoose.Schema({
   business_stack_id: { type: mongoose.Schema.Types.ObjectId, ref: 'stack' },
   business_total_vote: Number,
   business_rating: Number,
-  business_view: Number,
   business_status: Boolean,
   business_active: { type: String, enum: ['active', 'inactive', 'pending'], default: 'pending' },
 });
