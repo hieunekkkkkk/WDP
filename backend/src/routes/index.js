@@ -10,11 +10,15 @@ const feedbackRoutes = require('./feedback.routes');
 const userRoutes = require('./user.routes');
 const aiRoutes = require('./ai.routes');
 const authRoutes = require('./auth');
+const businessViewRoutes = require('./businessView.routes');
+const businessRevenueRoutes = require('./businessRevenue.routes');
 // const redisRoutes = require('./redisRouter');
 
 // Tập trung các routes
 
 router.use('/business', businessRoutes);
+router.use('/', businessViewRoutes);
+router.use('/', businessRevenueRoutes);
 router.use('/product', productRoutes);
 router.use('/payment', paymentRoutes);
 router.use('/stack', stackRoutes);

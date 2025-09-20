@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const aiBotSchema = new mongoose.Schema({
-  owner_id: { type: mongoose.Schema.Types.String, ref: 'business' },
+  owner_id: String,
   name: String,
   description: String,
   status: { type: String, enum: ['active', 'inactive'], default: 'inactive' },
