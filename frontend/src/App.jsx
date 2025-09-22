@@ -30,6 +30,7 @@ import AdminRoute from "./components/AdminRoute";
 import OwnerRoute from "./components/OwnerRoute";
 import ClientRoute from "./components/ClientRoute";
 import AiChatLayout from "./layout/AiChatLayout.jsx";
+import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -64,7 +65,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<AboutLandingPage />} />
           <Route path="/landingPage" element={<LandingPage />} />
           <Route path="/business/:id" element={<BusinessPage />} />
           <Route path="/personalized" element={<PersonalizedPage />} />
