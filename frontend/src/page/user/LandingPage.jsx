@@ -369,7 +369,7 @@ function LandingPage() {
         <div className="container">
           {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
           <section className="best-places-section">
-            <h2>Best of Local Assistant HOLA</h2>
+            <h2>Best of HOLA</h2>
 
             <div className="places-grid-new">
               {filteredBusinesses.slice(0, 8).map((business) => (
