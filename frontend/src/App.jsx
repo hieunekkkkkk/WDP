@@ -21,6 +21,7 @@ import AnimatedLayout from "./components/AnimatedLayout";
 import MyBusinessPage from "./page/user/MyBusinessPage";
 import ProductRegistrationPage from "./page/user/ProductRegistrationPage";
 import BusinessRegistrationPage from "./page/user/BusinessRegistrationPage";
+import MessagesPage from "./page/user/MessagesPage";
 import ManageUserPage from "./page/admin/ManageUserPage";
 import ManageBusinessPage from "./page/admin/ManageBusinessPage";
 import ManageTransactionPage from "./page/admin/ManageTransactionPage";
@@ -125,6 +126,19 @@ const AppRoutes = () => {
                   <LoginPage />
                 </SignedOut>
               </ClientRoute>
+            }
+          />
+          <Route
+            path="/business-message"
+            element={
+              <>
+                <SignedIn>
+                  <MessagesPage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
             }
           />
 
