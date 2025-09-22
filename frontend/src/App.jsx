@@ -42,7 +42,9 @@ const AppRoutes = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/ai" element={<AiChatLayout />} />
+        <Route path="/ai" element={<AiChatLayout />}>
+          <Route path="messages" element={<MessagesPage />} />
+        </Route>
 
         <Route
           path="/auth-callback"

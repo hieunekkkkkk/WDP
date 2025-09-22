@@ -1,4 +1,3 @@
-// Sidebar.jsx
 import React, { useState, useEffect } from "react";
 import {
   FaHome,
@@ -27,16 +26,16 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Menu items (tất cả đều là NavLink riêng biệt)
   const menus = [
     { icon: <FaHome />, label: "Dashboard", path: "/" },
     { icon: <FaCog />, label: "Quản lý", path: "/quan-ly" },
-    { icon: <FaRegComments />, label: "Messages", path: "/message" },
+    { icon: <FaRegComments />, label: "Messages", path: "/ai/messages" },
     { icon: <FaRobot />, label: "AI", path: "/ai" },
   ];
 
   return (
     <>
-      {/* Overlay chỉ hiện khi ở mobile */}
       {isMobile && open && (
         <div className="sidebar-overlay" onClick={() => setOpen(false)} />
       )}
@@ -48,38 +47,34 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       >
         <div className="sidebar-header">
           <div className="sidebar-logo vertical">
-            <img src="/logo-home.png" className="logo-img" />
+            <img src="/logo-home.png" className="logo-img" alt="Logo" />
             {open && <div className="logo-text">FPT EDUCATION</div>}
           </div>
+          {isMobile && (
+            <button className="menu-toggle" onClick={() => setOpen(!open)}>
+              {open ? <FaTimes /> : <FaBars />}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
           <ul className="menu-list">
             {menus.map((item, i) => (
-              <li key={i}>
+              <li key={i} className="menu-item">
                 <NavLink
                   to={item.path}
+                  end
                   className={({ isActive }) =>
                     `menu-link ${isActive ? "active" : ""}`
                   }
                 >
                   <span className="menu-icon">{item.icon}</span>
-                  {open && (
-                    <>
-                      <span className="menu-label">{item.label}</span>
-                      {item.badge && (
-                        <span className="menu-badge">{item.badge}</span>
-                      )}
-                    </>
-                  )}
+                  {open && <span className="menu-label">{item.label}</span>}
                 </NavLink>
+
+                {/* Tooltip khi collapsed */}
                 {!open && !isMobile && (
-                  <div className="tooltip">
-                    {item.label}
-                    {item.badge && (
-                      <span className="tooltip-badge">{item.badge}</span>
-                    )}
-                  </div>
+                  <div className="tooltip">{item.label}</div>
                 )}
               </li>
             ))}
