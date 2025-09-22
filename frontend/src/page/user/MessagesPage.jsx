@@ -31,7 +31,6 @@ const MessagesPage = () => {
 
   return (
     <div className="page-container">
-      <Header />
       <div className="business-mess-container">
         {/* Sidebar */}
         <div className="business-mess-sidebar">
