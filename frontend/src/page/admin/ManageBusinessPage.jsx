@@ -117,7 +117,7 @@ function ManageBusinessPage() {
         owner_name: owner.fullName,
         subject: 'Doanh nghiệp bị từ chối phê duyệt',
         message_body: `
-        <p>Chúng tôi xin thông báo rằng doanh nghiệp <strong>"${business.business_name}"</strong> của bạn đã <strong>không được phê duyệt</strong> trên nền tảng Local Link.</p>
+        <p>Chúng tôi xin thông báo rằng doanh nghiệp <strong>"${business.business_name}"</strong> của bạn đã <strong>không được phê duyệt</strong> trên nền tảng Local Assistant HOLA.</p>
         <p><strong>Lý do từ chối:</strong><br />${banReason}</p>
         <p>Nếu bạn cần hỗ trợ chỉnh sửa hoặc muốn gửi lại yêu cầu phê duyệt, vui lòng cập nhật lại thông tin doanh nghiệp trong hệ thống.</p>
       `,
