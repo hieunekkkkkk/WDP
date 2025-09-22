@@ -12,6 +12,7 @@ const aiRoutes = require('./ai.routes');
 const authRoutes = require('./auth');
 const businessViewRoutes = require('./businessView.routes');
 const businessRevenueRoutes = require('./businessRevenue.routes');
+const aibotRoutes = require('./aibot.routes');
 // const redisRoutes = require('./redisRouter');
 
 // Tập trung các routes
@@ -27,7 +28,9 @@ router.use('/feedback', feedbackRoutes);
 router.use('/user', userRoutes);
 router.use('/ai', aiRoutes);
 router.use('/auth', authRoutes);
+router.use('/', aibotRoutes);
 
 // router.use('/redis', redisRoutes);
 
 module.exports = router;
+

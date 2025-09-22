@@ -9,3 +9,4 @@ router.post('/business/:id/view', (req, res) => BusinessViewController.addView(r
 router.get('/business/:id/views', (req, res) => BusinessViewController.getViewsInRange(req, res));
 
 module.exports = router;
+
