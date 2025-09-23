@@ -29,6 +29,7 @@ import StackPage from './page/user/StackPage';
 import AdminRoute from './components/AdminRoute';
 import OwnerRoute from './components/OwnerRoute';
 import ClientRoute from './components/ClientRoute';
+import DashboardPage from './page/user/DashboardPage';
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -70,10 +71,46 @@ const AppRoutes = () => {
             path="/discover/:category"
             element={<DiscoverByCategoryPage />}
           />
-          <Route path="/user-profile/*" element={<><SignedIn><UserProfilePage /></SignedIn><SignedOut><LoginPage /></SignedOut></>} />
+          <Route
+            path="/user-profile/*"
+            element={
+              <>
+                <SignedIn>
+                  <UserProfilePage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
 
-          <Route path="/payment-complete" element={<><SignedIn><UserPayComplete /></SignedIn><SignedOut><LoginPage /></SignedOut></>} />
-          <Route path="/stacks" element={<><SignedIn><StackPage /></SignedIn><SignedOut><LoginPage /></SignedOut></>} />
+          <Route
+            path="/payment-complete"
+            element={
+              <>
+                <SignedIn>
+                  <UserPayComplete />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
+          <Route
+            path="/stacks"
+            element={
+              <>
+                <SignedIn>
+                  <StackPage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
           <Route
             path="/business-registration"
             element={
@@ -129,6 +166,19 @@ const AppRoutes = () => {
               <AdminRoute>
                 <ManageTransactionPage />
               </AdminRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <>
+                <SignedIn>
+                  <DashboardPage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
             }
           />
         </Route>
