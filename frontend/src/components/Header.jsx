@@ -79,6 +79,7 @@ const Header = () => {
               Cá nhân hóa
             </Link>
             {role === 'owner' && (
+              <>
               <Link
                 to="/my-business"
                 className={`header-nav-link ${location.pathname === '/my-business' ? 'active' : ''
@@ -86,9 +87,18 @@ const Header = () => {
               >
                 Doanh nghiệp của tôi
               </Link>
+              <Link
+                to="/business-dashboard"
+                className={`header-nav-link ${location.pathname === '/my-business' ? 'active' : ''
+                  }`}
+              >
+                Hỗ trợ doanh nghiệp
+              </Link>
+              </>
             )}
 
             {role === 'client' && (
+              <>
               <Link
                 to="/business-registration"
                 className={`header-nav-link ${location.pathname === '/business-registration' ? 'active' : ''
@@ -96,6 +106,14 @@ const Header = () => {
               >
                 Đăng ký doanh nghiệp
               </Link>
+              {/* <Link
+                to="/"
+                className={`header-nav-link ${location.pathname === '/' ? 'active' : ''
+                  }`}
+              >
+                Hỗ trợ học tập
+              </Link> */}
+              </>
             )}
           </nav>
         )}

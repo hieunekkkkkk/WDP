@@ -20,6 +20,7 @@ import DiscoverByCategoryPage from './page/user/DiscoverByCategoryPage';
 import AnimatedLayout from './components/AnimatedLayout';
 import MyBusinessPage from './page/user/MyBusinessPage';
 import ProductRegistrationPage from './page/user/ProductRegistrationPage';
+import MessagesPage from './page/user/MessagesPage';
 import BusinessRegistrationPage from './page/user/BusinessRegistrationPage';
 import ManageUserPage from './page/admin/ManageUserPage';
 import ManageBusinessPage from './page/admin/ManageBusinessPage';
@@ -29,7 +30,8 @@ import StackPage from './page/user/StackPage';
 import AdminRoute from './components/AdminRoute';
 import OwnerRoute from './components/OwnerRoute';
 import ClientRoute from './components/ClientRoute';
-import DashboardPage from './page/user/DashboardPage';
+import AiChatLayout from './layout/AiChatLayout.jsx';
+import AboutLandingPage from './page/user/AboutLandingPage.jsx';
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -40,6 +42,14 @@ const AppRoutes = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/business-dashboard" element={<AiChatLayout />}>
+          {/* 👇 All child pages go inside <Outlet /> */}
+          <Route path="message" element={<MessagesPage />} />
+          {/* <Route path="ai" element={<AiChatLayout />} /> */}
+          {/* You can add more child routes here */}
+          {/* <Route path="dashboard" element={<Dashboard />} /> */}
+        </Route>
+
         <Route
           path="/auth-callback"
           element={
@@ -62,7 +72,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<AboutLandingPage />} />
           <Route path="/landingPage" element={<LandingPage />} />
           <Route path="/business/:id" element={<BusinessPage />} />
           <Route path="/personalized" element={<PersonalizedPage />} />

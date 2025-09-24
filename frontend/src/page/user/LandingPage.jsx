@@ -369,7 +369,7 @@ function LandingPage() {
         <div className="container">
           {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
           <section className="best-places-section">
-            <h2>Best of LocalLink</h2>
+            <h2>Best of HOLA</h2>
 
             <div className="places-grid-new">
               {filteredBusinesses.slice(0, 8).map((business) => (
@@ -654,7 +654,7 @@ const WhyChooseSection = React.memo(() => (
   <section className="why-choose-section-new">
     <div className="why-choose-content-new">
       <div className="why-choose-left-new">
-        <h2>Tại sao chọn LocalLink</h2>
+        <h2>Tại sao chọn Local Assistant HOLA</h2>
         <div className="features-list-new">
           <div className="feature-item-new">
             <div className="feature-icon-new">📍</div>
