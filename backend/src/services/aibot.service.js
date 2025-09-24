@@ -26,6 +26,13 @@ class AiBotService {
     async deleteBot(id) {
         return await AiBot.findByIdAndDelete(id);
     }
+
+    async handleMessage(bot, message) {
+        // Giả sử bot có một phương thức để xử lý tin nhắn
+        // Thực tế có thể tích hợp với OpenAI hoặc các dịch vụ AI khác
+        // Ở đây chỉ là ví dụ đơn giản trả về tin nhắn đã nhận
+        return `Bot (${bot.name}) received: ${message}`;
+    }
 }
 
 module.exports = new AiBotService();
