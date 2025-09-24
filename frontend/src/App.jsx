@@ -32,6 +32,7 @@ import OwnerRoute from './components/OwnerRoute';
 import ClientRoute from './components/ClientRoute';
 import AiChatLayout from './layout/AiChatLayout.jsx';
 import AboutLandingPage from './page/user/AboutLandingPage.jsx';
+import DashboardPage from './page/user/DashboardPage.jsx';
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -45,6 +46,7 @@ const AppRoutes = () => {
         <Route path="/business-dashboard" element={<AiChatLayout />}>
           {/* 👇 All child pages go inside <Outlet /> */}
           <Route path="message" element={<MessagesPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           {/* <Route path="ai" element={<AiChatLayout />} /> */}
           {/* You can add more child routes here */}
           {/* <Route path="dashboard" element={<Dashboard />} /> */}
