@@ -26,12 +26,15 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Menu items (tất cả đều là NavLink riêng biệt)
   const menus = [
-    { icon: <FaHome />, label: "Dashboard", path: "/" },
-    { icon: <FaCog />, label: "Quản lý", path: "/quan-ly" },
-    { icon: <FaRegComments />, label: "Messages", path: "/ai/messages" },
-    { icon: <FaRobot />, label: "AI", path: "/ai" },
+    { icon: <FaHome />, label: "Dashboard", path: "/business-dashboard" },
+    { icon: <FaCog />, label: "Quản lý", path: "/business-dashboard/manage" },
+    {
+      icon: <FaRegComments />,
+      label: "Messages",
+      path: "/business-dashboard/messages",
+    },
+    { icon: <FaRobot />, label: "AI", path: "/business-dashboard/ai" },
   ];
 
   return (

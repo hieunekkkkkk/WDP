@@ -164,7 +164,7 @@ const StackPage = () => {
                     <div className="business-register-intro-section">
                         <div className="business-register-intro-text">
                             <p>
-                                Để tiếp tục quản lý và hiển thị doanh nghiệp trên LocalLink, vui lòng chọn hoặc nâng cấp gói
+                                Để tiếp tục quản lý và hiển thị doanh nghiệp trên Local Assistant HOLA, vui lòng chọn hoặc nâng cấp gói
                                 đăng ký phù hợp với nhu cầu của bạn.
                             </p>
                             <ul>

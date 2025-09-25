@@ -1,50 +1,78 @@
-/* AiChatLayout.css */
+/* ======================
+   LAYOUT CƠ BẢN
+====================== */
 .layout {
   min-height: 100vh;
   background: #ffffff;
   color: #1f2937;
   transition: all 0.3s ease;
   display: flex;
-  flex-direction: column; /* Đảm bảo bố cục theo cột */
+  flex-direction: column;
 }
 
 .layout-container {
   display: flex;
-  flex: 1; /* Chiếm toàn bộ không gian còn lại trước footer */
+  flex: 1; /* chiếm toàn bộ phần trên footer */
 }
 
 .layout-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Đảm bảo flex con hoạt động đúng */
+  min-height: 0; /* fix flex con */
   overflow: hidden;
+  height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ======================
+   MAIN CONTENT
+====================== */
 .main-content {
-  flex: 1; /* Chiếm toàn bộ phần giữa */
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 0;
 }
 
+/* Wrapper chuẩn hóa cho Outlet */
 .content-wrapper {
   flex: 1;
-  padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #f3f4f6; /* Màu nền nhạt như trong Figma */
+  background: #f3f4f6; /* nền nhạt */
+  display: flex;
+  flex-direction: column;
+  padding: 24px; /* spacing đồng đều */
+  gap: 24px; /* khoảng cách giữa các block */
+  box-sizing: border-box;
 }
 
-/* Định nghĩa footer */
+/* ======================
+   CARD DÙNG CHUNG
+====================== */
+.business-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================
+   FOOTER
+====================== */
 footer {
-  background: #1e293b; /* Màu nền footer từ Figma */
+  background: #1e293b;
   color: #e2e8f0;
   padding: 24px 0;
   width: 100%;
+  text-align: center;
 }
 
-/* Dark Mode */
+/* ======================
+   DARK MODE
+====================== */
 .layout.dark {
   background: #0f172a;
   color: #e2e8f0;
@@ -62,11 +90,27 @@ footer {
   background: #1e293b;
 }
 
-.layout.dark footer {
-  background: #1e293b; /* Giữ màu nền tối cho footer trong dark mode */
+.layout.dark .business-card {
+  background: #1e293b;
+  color: #e2e8f0;
 }
 
-/* Responsive Adjustments */
+.layout.dark footer {
+  background: #1e293b;
+}
+
+/* Scroll trong dark mode */
+.layout.dark .content-wrapper::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.layout.dark .content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* ======================
+   RESPONSIVE
+====================== */
 @media (max-width: 768px) {
   .layout-container {
     position: relative;
@@ -78,6 +122,7 @@ footer {
 
   .content-wrapper {
     padding: 16px;
+    gap: 16px;
   }
 
   footer {
@@ -88,6 +133,7 @@ footer {
 @media (max-width: 480px) {
   .content-wrapper {
     padding: 12px;
+    gap: 12px;
   }
 
   footer {
@@ -95,12 +141,9 @@ footer {
   }
 }
 
-/* Smooth Transitions */
-.layout-main {
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Scroll Styling */
+/* ======================
+   SCROLLBAR STYLE
+====================== */
 .content-wrapper::-webkit-scrollbar {
   width: 6px;
 }
@@ -116,12 +159,4 @@ footer {
 
 .content-wrapper::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-.layout.dark .content-wrapper::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-
-.layout.dark .content-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
 }

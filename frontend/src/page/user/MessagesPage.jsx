@@ -1,10 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import "../../css/MessagesPage.css";
+import React, { useState, useEffect, useRef } from "react";
+import { FaPlus, FaPhoneAlt, FaInfoCircle } from "react-icons/fa";
+import { HiVideoCamera } from "react-icons/hi";
 import { IoSend } from "react-icons/io5";
-import { FaPlus } from "react-icons/fa";
-import { FaPhoneAlt } from "react-icons/fa";
-import { HiVideoCamera } from "react-icons/hi2";
-import { FaInfoCircle } from "react-icons/fa";
+import "../../css/MessagesPage.css";
 
 const MessagesPage = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -14,28 +12,19 @@ const MessagesPage = () => {
     {
       id: 1,
       type: "received",
-      content: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:00 PM"
+      content:
+        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+      time: "8:00 PM",
     },
     {
       id: 2,
       type: "sent",
-      content: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:00 PM"
+      content:
+        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
+      time: "8:05 PM",
     },
-    {
-      id: 3,
-      type: "received",
-      content: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:00 PM"
-    },
-    {
-      id: 4,
-      type: "sent",
-      content: "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:00 PM"
-    }
   ]);
+
   const dropdownRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -50,29 +39,35 @@ const MessagesPage = () => {
         id: messages.length + 1,
         type: "sent",
         content: message,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      
-      setMessages([...messages, newMessage]);
+
+      setMessages((prev) => [...prev, newMessage]);
       setMessage("");
-      
-      // Simulate response after 1 second
+
       if (responseType === "Bot") {
         setTimeout(() => {
           const botResponse = {
             id: messages.length + 2,
             type: "received",
-            content: "Cảm ơn bạn đã gửi tin nhắn! Tôi đã nhận được và sẽ phản hồi sớm nhất có thể.",
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            content:
+              "Cảm ơn bạn đã gửi tin nhắn! Tôi đã nhận được và sẽ phản hồi sớm nhất có thể.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           };
-          setMessages(prev => [...prev, botResponse]);
+          setMessages((prev) => [...prev, botResponse]);
         }, 1000);
       }
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -89,13 +84,11 @@ const MessagesPage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="business-mess-container">
+    <div className="business-card business-mess-container">
       {/* Sidebar */}
       <div className="business-mess-sidebar">
         <h2 className="business-mess-sidebar-title">Tin nhắn</h2>
@@ -105,7 +98,6 @@ const MessagesPage = () => {
           </button>
         </div>
 
-        {/* Chat list */}
         <div className="business-mess-chat-list">
           {Array(6)
             .fill(0)
@@ -118,7 +110,7 @@ const MessagesPage = () => {
               >
                 <div className="business-mess-avatar-wrapper">
                   <img
-                    src="https://scontent.fhan18-1.fna.fbcdn.net/v/t39.30808-6/466854849_1733817834124988_5196228810719253685_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeHB6NxJ3V9KXUcKN3Wdm_zac00U3AvFs0VzTRTcC8WzRbXTerX4ZtJoXdMsdU76V90-J11usNiwD9e16zvDUJps&_nc_ohc=BIqcUM9JOOIQ7kNvwFQYzHJ&_nc_oc=AdlEiZecP6a_3T6cokU-VvpfHCYogolOQ5FZ2CKitoSJyMueumUPMrgK4TsSvpr_8xE&_nc_zt=23&_nc_ht=scontent.fhan18-1.fna&_nc_gid=8RKGO-quruyECv-iYutaCQ&oh=00_AfZIYYRcw_h5zNllwjOaKOZBE2C13DXkqAndubMRj5WQrw&oe=68D21539"
+                    src="https://via.placeholder.com/40"
                     alt="avatar"
                     className="business-mess-avatar"
                   />
@@ -127,7 +119,7 @@ const MessagesPage = () => {
                 <div className="business-mess-chat-info">
                   <p className="business-mess-chat-name">Suporte ADMIN</p>
                   <p className="business-mess-chat-status">
-                    {index % 2 === 0 ? "Espera" : "Atendimento"}
+                    {index % 2 === 0 ? "Đang chờ" : "Đang chat"}
                   </p>
                 </div>
                 <div className="business-mess-chat-meta">
@@ -167,17 +159,20 @@ const MessagesPage = () => {
 
         <div className="business-mess-body">
           {messages.map((msg) => (
-            <div key={msg.id} className={`business-mess-row ${msg.type === 'sent' ? 'right' : 'left'}`}>
-              <div className="business-mess-message">
-                {msg.content}
-              </div>
+            <div
+              key={msg.id}
+              className={`business-mess-row ${
+                msg.type === "sent" ? "right" : "left"
+              }`}
+            >
+              <div className="business-mess-message">{msg.content}</div>
               <span className="business-mess-time">{msg.time}</span>
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
+        {/* Input */}
         <div className="business-mess-input">
           <div className="business-mess-dropdown" ref={dropdownRef}>
             <button
@@ -204,14 +199,14 @@ const MessagesPage = () => {
             )}
           </div>
 
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder={`Send as ${responseType}...`}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <button 
+          <button
             className="business-mess-send-btn"
             onClick={handleSendMessage}
             disabled={!message.trim()}

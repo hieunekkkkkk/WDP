@@ -72,7 +72,7 @@ const AiChatLayout = () => {
           </main>
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

@@ -32,9 +32,11 @@ import OwnerRoute from "./components/OwnerRoute";
 import ClientRoute from "./components/ClientRoute";
 import AiChatLayout from "./layout/AiChatLayout.jsx";
 import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
+import DashboardPage from "./page/user/DashboardPage.jsx";
 
 const AppRoutes = () => {
   const location = useLocation();
+  const ComingSoonPage = () => <div>🚧 Coming soon...</div>;
 
   return (
     <AnimatePresence mode="wait">
@@ -42,8 +44,12 @@ const AppRoutes = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/ai" element={<AiChatLayout />}>
+        {/* Business Dashboard */}
+        <Route path="/business-dashboard" element={<AiChatLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="manage" element={<ComingSoonPage />} />
           <Route path="messages" element={<MessagesPage />} />
+          <Route path="ai" element={<ComingSoonPage />} />
         </Route>
 
         <Route
