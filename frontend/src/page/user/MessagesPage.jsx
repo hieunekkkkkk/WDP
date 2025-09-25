@@ -110,7 +110,7 @@ const MessagesPage = () => {
               >
                 <div className="business-mess-avatar-wrapper">
                   <img
-                    src="https://via.placeholder.com/40"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSclv9wC3RpMsd1MEU3pSgPky1Ns0YpuS1mEA&s"
                     alt="avatar"
                     className="business-mess-avatar"
                   />
@@ -135,7 +135,7 @@ const MessagesPage = () => {
         <div className="business-mess-header">
           <div className="business-mess-header-left">
             <img
-              src="https://via.placeholder.com/40"
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRM-7hjMfAnA9oW2MSTts0_DeYxMlWS1Uv5ZA&s"
               alt="avatar"
               className="business-mess-avatar"
             />

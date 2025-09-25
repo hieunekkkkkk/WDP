@@ -1,36 +1,45 @@
-/* ================================
-   SIDEBAR
-================================= */
+/* Sidebar */
 .sidebar {
   height: 100vh;
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  z-index: 100;
-  border-radius: 0;
+  position: relative;
+  transition: width 0.3s ease-in-out;
+  z-index: 1000;
 }
 
 .sidebar.open {
-  width: 280px;
+  width: 260px;
 }
 
 .sidebar.collapsed {
-  width: 64px;
+  width: 72px;
 }
 
-/* Header Sidebar */
+.sidebar.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Header */
 .sidebar-header {
-  background-color: #ffffff;
   display: flex;
   align-items: center;
-  justify-content: flex-start;   /* căn logo về bên trái */
-  height: 64px;                  /* khớp header */
+  justify-content: space-between;
+  height: 64px;
   padding: 0 16px;
   border-bottom: 1px solid #f1f5f9;
-  box-sizing: border-box;
-  gap: 8px;                      /* khoảng cách logo - text */
 }
 
 .sidebar-logo {
@@ -40,39 +49,39 @@
 }
 
 .logo-img {
-  width: 32px;                   /* thu nhỏ logo */
-  height: 32px;                  /* ép cố định khung cao */
-  object-fit: contain;
-  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .logo-text {
-  font-size: 16px;
-  color: #ff6600;
-  font-weight: 700;
-  white-space: nowrap;
-  line-height: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
 }
 
-.sidebar.collapsed .logo-text {
-  display: none;                 /* ẩn chữ khi collapse */
+.menu-toggle {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  color: #374151;
 }
 
-/* Navigation */
+/* Menu */
 .sidebar-nav {
   flex: 1;
-  padding: 16px 8px;
   overflow-y: auto;
-  overflow-x: hidden;
+  padding: 16px 0;
 }
 
 .menu-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+}
+
+.menu-item {
+  position: relative;
 }
 
 .menu-link {
@@ -80,150 +89,169 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  color: #64748b;
+  font-size: 14px;
+  color: #374151;
   text-decoration: none;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .menu-link:hover {
-  background: #f1f5f9;
-  color: #475569;
+  background: #f3f4f6;
 }
 
 .menu-link.active {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #e0e7ff;
+  color: #1e40af;
 }
 
 .menu-icon {
-  font-size: 20px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
-.menu-label {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .menu-label {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Tooltip khi collapsed */
+/* Tooltip */
 .tooltip {
   position: absolute;
-  left: 72px;
+  left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  background: #1f2937;
-  color: #ffffff;
-  padding: 8px 12px;
-  border-radius: 6px;
+  margin-left: 8px;
+  background: #111827;
+  color: white;
   font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
   white-space: nowrap;
   opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  z-index: 1000;
   pointer-events: none;
+  transition: opacity 0.2s;
 }
 
-.sidebar.collapsed .menu-item:hover .tooltip {
+.menu-item:hover .tooltip {
   opacity: 1;
-  visibility: visible;
 }
 
-/* Footer Sidebar */
+/* Footer */
 .sidebar-footer {
-  padding: 16px;
   border-top: 1px solid #f1f5f9;
-}
-
-.dark-mode-compact {
+  padding: 12px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
 }
 
-.dark-mode-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+.sidebar.open .sidebar-footer {
+  align-items: stretch;
+}
+
+/* Back button */
+.sidebar-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
   border: none;
-  background: #f8fafc;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 16px;
 }
 
-.dark-mode-btn:hover {
-  background: #e2e8f0;
+.sidebar-back-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
 
-/* ================================
-   DARK MODE
-================================= */
+/* Dark toggle */
+.dark-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.sidebar.open .dark-toggle {
+  justify-content: flex-start;
+}
+
+/* Switch style */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 18px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: 0.4s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3b82f6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+/* Dark Mode */
 .layout.dark .sidebar {
-  background: #0f172a ;
-  border-right-color: #374151;
-}
-
-.layout.dark .sidebar-header {
   background: #0f172a;
-  border-bottom-color: #374151;
-}
-
-.layout.dark .logo-text {
-  color: #ff6600;
+  border-right-color: #1e293b;
 }
 
 .layout.dark .menu-link {
-  color: #9ca3af;
-}
-
-.layout.dark .menu-link:hover {
-  background: #374151;
-  color: #e5e7eb;
+  color: #e2e8f0;
 }
 
 .layout.dark .menu-link.active {
-  background: #3b82f6;
+  background: #1e40af;
   color: #ffffff;
 }
 
-.layout.dark .sidebar-footer {
-  border-top-color: #374151;
+.layout.dark .sidebar-back-btn {
+  color: #e2e8f0;
 }
 
-.layout.dark .dark-mode-btn {
-  background: #374151;
-  color: #e5e7eb;
+.layout.dark .sidebar-back-btn:hover {
+  background: #1e293b;
 }
 
-.layout.dark .dark-mode-btn:hover {
-  background: #4b5563;
-}
-
-/* Overlay khi sidebar mở trên mobile */
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 99;
-}
-
-/* Sidebar trong mobile */
-.sidebar.mobile {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  z-index: 100;
+.layout.dark .dark-toggle {
+  color: #e2e8f0;
 }

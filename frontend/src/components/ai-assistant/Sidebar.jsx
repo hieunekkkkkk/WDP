@@ -6,16 +6,17 @@ import {
   FaRobot,
   FaBars,
   FaTimes,
+  FaArrowLeft,
 } from "react-icons/fa";
-import { NavLink } from "react-router-dom";
-import DarkModeToggle from "./DarkModeToggle";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./../../css/Sidebar.css";
 
 const Sidebar = ({ darkMode, setDarkMode }) => {
   const [open, setOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
 
-  // Responsive check
+  // Responsive
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -48,18 +49,19 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           isMobile ? "mobile" : ""
         }`}
       >
+        {/* Header */}
         <div className="sidebar-header">
-          <div className="sidebar-logo vertical">
-            <img src="/logo-home.png" className="logo-img" alt="Logo" />
-            {open && <div className="logo-text">FPT EDUCATION</div>}
+          <div className="sidebar-logo">
+            <img src="/logo-home.png" alt="Logo" className="logo-img" />
+            {open && <span className="logo-text">FPT EDUCATION</span>}
           </div>
-          {isMobile && (
-            <button className="menu-toggle" onClick={() => setOpen(!open)}>
-              {open ? <FaTimes /> : <FaBars />}
-            </button>
-          )}
+         <button className="menu-toggle" onClick={() => setOpen(!open)}>
+  {open ? <FaTimes /> : <FaBars />}
+</button>
+
         </div>
 
+        {/* Menu */}
         <nav className="sidebar-nav">
           <ul className="menu-list">
             {menus.map((item, i) => (
@@ -74,8 +76,6 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
                   <span className="menu-icon">{item.icon}</span>
                   {open && <span className="menu-label">{item.label}</span>}
                 </NavLink>
-
-                {/* Tooltip khi collapsed */}
                 {!open && !isMobile && (
                   <div className="tooltip">{item.label}</div>
                 )}
@@ -84,22 +84,30 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           </ul>
         </nav>
 
+        {/* Footer */}
         <div className="sidebar-footer">
-          {open ? (
-            <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
-          ) : (
-            <div className="dark-mode-compact">
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="dark-mode-btn"
-                title={
-                  darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
-                }
-              >
-                {darkMode ? "🌞" : "🌙"}
-              </button>
-            </div>
-          )}
+          {/* Back button */}
+          <button
+            className="sidebar-back-btn"
+            onClick={() => navigate("/")}
+            title="Quay về trang chính"
+          >
+            <FaArrowLeft className="back-icon" />
+            {open && <span className="back-label">Quay lại</span>}
+          </button>
+
+          {/* Dark Mode toggle */}
+          <div className="dark-toggle">
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={darkMode}
+                onChange={() => setDarkMode(!darkMode)}
+              />
+              <span className="slider round"></span>
+            </label>
+            {open && <span>{darkMode ? "Dark Mode" : "Light Mode"}</span>}
+          </div>
         </div>
       </aside>
     </>
