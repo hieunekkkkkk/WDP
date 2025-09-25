@@ -60,10 +60,41 @@ class BusinessController {
       res.status(404).json({ error: error.message });
     }
   }
+  
+  async getBusinessByPriority(req, res) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const result = await BusinessService.getBusinessesByPriorityAndUpdatedAt(
+        parseInt(page),
+        parseInt(limit)
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(404).json({ error: error.message });
+    }
+  }
 
   async updateBusiness(req, res) {
     try {
       const business = await BusinessService.updateBusiness(req.params.id, req.body);
+      res.status(200).json(business);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async increaseBusinessPriority(req, res) {
+    try {
+      const business = await BusinessService.increaseBusinessPriority(req.params.id);
+      res.status(200).json(business);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async resetBusinessPriority(req, res) {
+    try {
+      const business = await BusinessService.resetBusinessPriority(req.params.id);
       res.status(200).json(business);
     } catch (error) {
       res.status(400).json({ error: error.message });

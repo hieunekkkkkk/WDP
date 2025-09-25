@@ -3,15 +3,17 @@ const botKnowledgeModel = require('../entity/module/botknowledge.model');
 
 class BotKnowledgeService {
     // Tạo mới kiến thức
-    async createKnowledge(data) {
+    async createKnowledge(aibot_id, data) {
         try {
-            const knowledge = new botKnowledgeModel({
+            const newKnowledge = new botKnowledgeModel({
+                aibot_id: aibot_id,
+                created_by: data.created_by,
                 title: data.title,
                 content: data.content,
                 tags: data.tags,
             });
-            await knowledge.save();
-            return knowledge;
+            await newKnowledge.save();
+            return newKnowledge;
         } catch (error) {
             throw error;
         }

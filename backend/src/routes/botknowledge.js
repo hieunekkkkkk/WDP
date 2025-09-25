@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // Tạo kiến thức mới
-router.post('/botknowledge', (req, res) => BotKnowledgeController.createKnowledge(req, res));
+router.post('/botknowledge/:aibot_id', (req, res) => BotKnowledgeController.createKnowledge(req, res));
 
 // Lấy danh sách kiến thức
 router.get('/botknowledge', (req, res) => BotKnowledgeController.getKnowledges(req, res));

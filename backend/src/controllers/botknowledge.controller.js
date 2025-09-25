@@ -4,9 +4,11 @@ class BotKnowledgeController {
     // POST /botknowledge
     async createKnowledge(req, res) {
         try {
-            const knowledge = await KnowledgeService.createKnowledge(req.body);
+            const aibot_id = req.params.aibot_id;
+            const knowledge = await KnowledgeService.createKnowledge(aibot_id, req.body);
             res.status(201).json(knowledge);
-        } catch (error) {
+        }
+        catch (error) {
             res.status(500).json({ message: error.message });
         }
     }
@@ -36,7 +38,7 @@ class BotKnowledgeController {
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
-    }   
+    }
 }
 
 module.exports = new BotKnowledgeController();
