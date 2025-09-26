@@ -66,7 +66,7 @@ const Header = () => {
                 location.pathname === "/" ? "active" : ""
               }`}
             >
-              About Page
+              Trang chủ
             </Link>
             <Link
               to="/discover"
@@ -82,7 +82,7 @@ const Header = () => {
                 location.pathname === "/personalized" ? "active" : ""
               }`}
             >
-              Cá nhân hóa
+              Hỗ trợ học tập
             </Link>
             {role === "owner" && (
               <>
