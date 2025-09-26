@@ -52,13 +52,17 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <img src="/logo-home.png" alt="Logo" className="logo-img" />
-            {open && <span className="logo-text">FPT EDUCATION</span>}
+            <img
+              src="/localLink.png"
+              alt="Local Link Assistant"
+              className="logo-img"
+            />
           </div>
-         <button className="menu-toggle" onClick={() => setOpen(!open)}>
-  {open ? <FaTimes /> : <FaBars />}
-</button>
 
+          {/* Toggle đóng/mở kiểu ChatGPT */}
+          <button className="menu-toggle" onClick={() => setOpen(!open)}>
+            <span className="toggle-icon">{open ? "«" : "»"}</span>
+          </button>
         </div>
 
         {/* Menu */}

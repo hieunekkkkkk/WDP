@@ -1,16 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaUserCircle, FaHome, FaUserCog, FaBuilding } from 'react-icons/fa';
-import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
-import '../css/Header.css';
-import AuthTokenReset from '../auth/AuthTokenReset';
-import { useNavigate } from 'react-router-dom';
-import { useUserRole } from '../contexts/UserRoleContext';
+import React, { useState, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { FaUserCircle, FaHome, FaUserCog, FaBuilding } from "react-icons/fa";
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import "../css/Header.css";
+import AuthTokenReset from "../auth/AuthTokenReset";
+import { useNavigate } from "react-router-dom";
+import { useUserRole } from "../contexts/UserRoleContext";
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdminPage = location.pathname.startsWith('/admin');
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   const { role } = useUserRole();
 
@@ -31,82 +31,93 @@ const Header = () => {
           </Link>
         </div>
 
-        {role === 'admin' && isAdminPage ? (
+        {role === "admin" && isAdminPage ? (
           <nav className="header-nav">
             <Link
               to="/admin/users"
-              className={`header-nav-link ${location.pathname === '/admin/users' ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname === "/admin/users" ? "active" : ""
+              }`}
             >
               Người dùng
             </Link>
             <Link
               to="/admin/businesses"
-              className={`header-nav-link ${location.pathname === '/admin/businesses' ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname === "/admin/businesses" ? "active" : ""
+              }`}
             >
               Doanh nghiệp
             </Link>
             <Link
               to="/admin/transactions"
-              className={`header-nav-link ${location.pathname === '/admin/transactions' ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname === "/admin/transactions" ? "active" : ""
+              }`}
             >
               Giao dịch
             </Link>
           </nav>
         ) : (
-          <nav className={`header-nav ${isMenuOpen ? 'active' : ''}`}>
+          <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
             <Link
               to="/"
-              className={`header-nav-link ${location.pathname === '/' ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname === "/" ? "active" : ""
+              }`}
             >
-              Trang chủ
+              About Page
             </Link>
             <Link
               to="/discover"
-              className={`header-nav-link ${location.pathname.startsWith('/discover') ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname.startsWith("/discover") ? "active" : ""
+              }`}
             >
-              Khám phá
+              Kết nối doanh nghiệp
             </Link>
             <Link
               to="/personalized"
-              className={`header-nav-link ${location.pathname === '/personalized' ? 'active' : ''
-                }`}
+              className={`header-nav-link ${
+                location.pathname === "/personalized" ? "active" : ""
+              }`}
             >
               Cá nhân hóa
             </Link>
-            {role === 'owner' && (
+            {role === "owner" && (
               <>
-              <Link
-                to="/my-business"
-                className={`header-nav-link ${location.pathname === '/my-business' ? 'active' : ''
+                <Link
+                  to="/my-business"
+                  className={`header-nav-link ${
+                    location.pathname === "/my-business" ? "active" : ""
                   }`}
-              >
-                Doanh nghiệp của tôi
-              </Link>
-              <Link
-                to="/business-dashboard"
-                className={`header-nav-link ${location.pathname === '/my-business' ? 'active' : ''
+                >
+                  Doanh nghiệp của tôi
+                </Link>
+                <Link
+                  to="/business-dashboard"
+                  className={`header-nav-link ${
+                    location.pathname === "/my-business" ? "active" : ""
                   }`}
-              >
-                Hỗ trợ doanh nghiệp
-              </Link>
+                >
+                  Hỗ trợ doanh nghiệp
+                </Link>
               </>
             )}
 
-            {role === 'client' && (
+            {role === "client" && (
               <>
-              <Link
-                to="/business-registration"
-                className={`header-nav-link ${location.pathname === '/business-registration' ? 'active' : ''
+                <Link
+                  to="/business-registration"
+                  className={`header-nav-link ${
+                    location.pathname === "/business-registration"
+                      ? "active"
+                      : ""
                   }`}
-              >
-                Đăng ký doanh nghiệp
-              </Link>
-              {/* <Link
+                >
+                  Đăng ký doanh nghiệp
+                </Link>
+                {/* <Link
                 to="/"
                 className={`header-nav-link ${location.pathname === '/' ? 'active' : ''
                   }`}
@@ -141,39 +152,39 @@ const Header = () => {
         <SignedIn>
           <div className="header-user-info">
             <UserButton userProfileUrl="/user-profile">
-              {role === 'admin' && !isAdminPage && (
+              {role === "admin" && !isAdminPage && (
                 <UserButton.MenuItems>
                   <UserButton.Action
                     label="Quản trị hệ thống"
                     labelIcon={<FaUserCog />}
-                    onClick={() => navigate('/admin/users')}
+                    onClick={() => navigate("/admin/users")}
                   />
                 </UserButton.MenuItems>
               )}
-              {role === 'admin' && isAdminPage && (
+              {role === "admin" && isAdminPage && (
                 <UserButton.MenuItems>
                   <UserButton.Action
                     label="Trang chủ"
                     labelIcon={<FaHome />}
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate("/admin/users")}
                   />
                 </UserButton.MenuItems>
               )}
-              {role === 'owner' && (
+              {role === "owner" && (
                 <UserButton.MenuItems>
                   <UserButton.Action
                     label="Xem doanh nghiệp"
                     labelIcon={<FaBuilding />}
-                    onClick={() => navigate('/my-business')}
+                    onClick={() => navigate("/my-business")}
                   />
                 </UserButton.MenuItems>
               )}
-              {role === 'client' && (
+              {role === "client" && (
                 <UserButton.MenuItems>
                   <UserButton.Action
                     label="Trở thành chủ doanh nghiệp"
                     labelIcon={<FaBuilding />}
-                    onClick={() => navigate('/business-registration')}
+                    onClick={() => navigate("/business-registration")}
                   />
                 </UserButton.MenuItems>
               )}
