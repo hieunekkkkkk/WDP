@@ -1,4 +1,4 @@
- const express = require('express');
+const express = require('express');
 const router = express.Router();
 const BusinessController = require('../controllers/business.controller');
 
@@ -217,5 +217,10 @@ router.delete('/:id', BusinessController.deleteBusiness);
  *                 $ref: '#/components/schemas/Business'
  */
 router.get('/category/:categoryId', BusinessController.getBusinessByCategory);
-// ... existing code ...
+
+
+
+router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
+router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);
+router.get('/priority/top', BusinessController.getTopPriorityBusinesses);
 module.exports = router;

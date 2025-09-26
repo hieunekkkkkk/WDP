@@ -88,6 +88,34 @@ class BusinessService {
         }
     }
 
+    // Get businesses sorted by priority and updated_at
+    async getBusinessesByPriorityAndUpdatedAt(page = 1, limit = 10) {
+        try {
+            const skip = (page - 1) * limit;
+
+            const businesses = await Business.find()
+                .sort({ business_priority: -1, updated_at: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            // đếm tổng số business để trả về cho pagination
+            const total = await Business.countDocuments();
+
+            return {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                data: businesses
+            };
+        } catch (error) {
+            throw new Error(`Error fetching businesses: ${error.message}`);
+        }
+    }
+
+
+
+    // Get businesses by category with pagination
     async getBusinessByCategory(categoryId, page = 1, limit = 10) {
         try {
             const skip = (page - 1) * limit;
@@ -132,6 +160,43 @@ class BusinessService {
             return business;
         } catch (error) {
             throw new Error(`Error updating business: ${error.message}`);
+        }
+    }
+
+    // Update business priority
+    async increaseBusinessPriority(id) {
+        try {
+            const business = await Business.findByIdAndUpdate(
+                id,
+                {
+                    $inc: { business_priority: 1 },      // tăng thêm 1
+                    $set: { updated_at: Date.now() }     // cập nhật ngày giờ
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!business) {
+                throw new Error('Business not found');
+            }
+            return business;
+        } catch (error) {
+            throw new Error(`Error updating business priority: ${error.message}`);
+        }
+    }
+
+    async resetBusinessPriority(id) {
+        try {
+            const business = await Business.findByIdAndUpdate(
+                id,
+                { $set: { business_priority: 0, updated_at: Date.now() } }
+            );
+
+            if (!business) {
+                throw new Error('Business not found');
+            }
+            return business;
+        } catch (error) {
+            throw new Error(`Error resetting business priority: ${error.message}`);
         }
     }
 
