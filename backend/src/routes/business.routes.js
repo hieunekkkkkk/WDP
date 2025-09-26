@@ -222,5 +222,5 @@ router.get('/category/:categoryId', BusinessController.getBusinessByCategory);
 
 router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
 router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);
-router.get('/priority/top', BusinessController.getTopPriorityBusinesses);
+router.get('/priority/top', BusinessController.getBusinessByPriority);
 module.exports = router;
