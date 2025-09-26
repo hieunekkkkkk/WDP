@@ -218,10 +218,7 @@ router.delete("/:id", BusinessController.deleteBusiness);
  */
 router.get("/category/:categoryId", BusinessController.getBusinessByCategory);
 
-router.post(
-  "/:id/increase-priority",
-  BusinessController.increaseBusinessPriority
-);
-router.post("/:id/reset-priority", BusinessController.resetBusinessPriority);
-router.get("/priority/top", BusinessController.getBusinessByPriority);
+router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
+router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);
+router.get('/priority/top', BusinessController.getBusinessByPriority);
 module.exports = router;

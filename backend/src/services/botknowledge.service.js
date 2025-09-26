@@ -26,6 +26,15 @@ class BotKnowledgeService {
             throw error;
         }
     }
+    // Lấy kiến thức theo bot
+    async getKnowledgeByBotId(aibot_id) {
+        try {
+            return await botKnowledgeModel.find({ aibot_id: aibot_id }).sort({ created_at: -1 });
+        } catch (error) {
+            throw error;
+        }
+    }
+    
     // Cập nhật kiến thức
     async updateKnowledge(id, data) {
         try {

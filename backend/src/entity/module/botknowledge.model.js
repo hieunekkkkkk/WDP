@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const botKnowledgeSchema = new mongoose.Schema({
-    aibot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'aiBot' },
+    aibot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'aiBot', required: true, message: 'AI Bot ID is required' },
     created_by: String,
     title: String,
     content: String,
