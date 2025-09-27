@@ -3,15 +3,17 @@ const botKnowledgeModel = require('../entity/module/botknowledge.model');
 
 class BotKnowledgeService {
     // Tạo mới kiến thức
-    async createKnowledge(data) {
+    async createKnowledge(aibot_id, data) {
         try {
-            const knowledge = new botKnowledgeModel({
+            const newKnowledge = new botKnowledgeModel({
+                aibot_id: aibot_id,
+                created_by: data.created_by,
                 title: data.title,
                 content: data.content,
                 tags: data.tags,
             });
-            await knowledge.save();
-            return knowledge;
+            await newKnowledge.save();
+            return newKnowledge;
         } catch (error) {
             throw error;
         }
@@ -24,6 +26,15 @@ class BotKnowledgeService {
             throw error;
         }
     }
+    // Lấy kiến thức theo bot
+    async getKnowledgeByBotId(aibot_id) {
+        try {
+            return await botKnowledgeModel.find({ aibot_id: aibot_id }).sort({ created_at: -1 });
+        } catch (error) {
+            throw error;
+        }
+    }
+    
     // Cập nhật kiến thức
     async updateKnowledge(id, data) {
         try {

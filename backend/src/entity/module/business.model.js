@@ -28,6 +28,8 @@ const businessSchema = new mongoose.Schema({
   business_rating: Number,
   business_status: Boolean,
   business_active: { type: String, enum: ['active', 'inactive', 'pending'], default: 'pending' },
+  business_priority: { type: Number, default: 0 },
+  updated_at: { type: Date, default: Date.now },
 });
 
 

@@ -1,4 +1,5 @@
 const BusinessView = require('../entity/module/business_view.model');
+const mongoose = require('mongoose');
 
 class BusinessViewService {
     async addView(businessId) {
