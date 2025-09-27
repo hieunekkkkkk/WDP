@@ -1,0 +1,296 @@
+.student-ai-chat {
+  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+  padding: 24px;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+}
+
+.emoji {
+  margin-right: 8px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-input {
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 200px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.view-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #e5e7eb;
+  color: #4b5563;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.view-button.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.view-button:hover {
+  background: #d1d5db;
+}
+
+.bot-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.form-input,
+.form-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-button {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.add-button:hover {
+  background: #15803d;
+}
+
+.save-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.save-button:hover {
+  background: #1d4ed8;
+}
+
+.cancel-button {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background: #4b5563;
+}
+
+.bot-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bot-table th,
+.bot-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.bot-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.bot-table tr:hover {
+  background: #f9fafb;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-inactive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.edit-button:hover {
+  background: #d97706;
+}
+
+.delete-button {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.delete-button:hover {
+  background: #dc2626;
+}
+
+.knowledge-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.knowledge-button:hover {
+  background: #1d4ed8;
+}
+
+.bot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.bot-card {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: box-shadow 0.2s;
+}
+
+.bot-card:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.card-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.card-status {
+  margin-bottom: 12px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  padding: 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .bot-form {
+    flex-direction: column;
+  }
+
+  .form-input,
+  .form-select {
+    min-width: 100%;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+}

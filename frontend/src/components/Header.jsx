@@ -77,7 +77,7 @@ const Header = () => {
               Kết nối doanh nghiệp
             </Link>
             <Link
-              to="/personalized"
+              to="/dashboard"
               className={`header-nav-link ${
                 location.pathname === "/personalized" ? "active" : ""
               }`}
