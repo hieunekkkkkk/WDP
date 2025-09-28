@@ -36,9 +36,9 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
       path: "/dashboard/messages",
     },
     {
-      icon: <FaRobot /> ,
+      icon: <FaRobot />,
       label: "AI",
-      path: "/dashboard/ai-bot",
+      path: "/dashboard/ai-support",
     },
   ];
 

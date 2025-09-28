@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
@@ -10,6 +10,8 @@ import "./style/KnowledgePage.css";
 
 const KnowledgePage = () => {
   const { botId } = useParams();
+  const location = useLocation();
+  const isBusinessKnowledge = location.pathname.includes("business-dashboard");
   const [bot, setBot] = useState(null);
   const [knowledges, setKnowledges] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -65,10 +67,18 @@ const KnowledgePage = () => {
 
   return (
     <div className="knowledge-page">
-      {/* Nút thêm kiến thức to, dài, căn giữa */}
+      <div className="knowledge-header">
+        <h1 className="knowledge-title">
+          {isBusinessKnowledge
+            ? "🏢 Kiến thức doanh nghiệp"
+            : "📘 Kiến thức học tập"}
+        </h1>
+      </div>
+
       <div className="add-knowledge-top">
         <button className="knowledge-btn" onClick={() => setShowCreate(true)}>
-          Thêm kiến thức
+          ➕ Thêm{" "}
+          {isBusinessKnowledge ? "kiến thức doanh nghiệp" : "kiến thức học tập"}
         </button>
       </div>
 
@@ -112,13 +122,56 @@ const KnowledgePage = () => {
             <div key={k._id} className="knowledge-row">
               <div className="knowledge-info-box">{k.title}</div>
               <div className="actions">
-                <button onClick={() => setSelected(k)}>👁️ Xem</button>
-                <button onClick={() => setEditingKnowledge(k)}>✏️ Sửa</button>
                 <button
-                  className="delete-btn"
-                  onClick={() => deleteKnowledge(k._id)}
+                  style={{
+                    backgroundColor: "#059669",
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                  }}
+                  onClick={() => setSelected(k)}
+                  title="Xem"
                 >
-                  🗑️ Xóa
+                  <FaEye size={14} />
+                </button>
+                <button
+                  style={{
+                    backgroundColor: "#3b82f6",
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                  }}
+                  onClick={() => setEditingKnowledge(k)}
+                  title="Sửa"
+                >
+                  <FaEdit size={14} />
+                </button>
+                <button
+                  style={{
+                    backgroundColor: "#ef4444",
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                  }}
+                  onClick={() => deleteKnowledge(k._id)}
+                  title="Xóa"
+                >
+                  <FaTrash size={14} />
                 </button>
               </div>
             </div>

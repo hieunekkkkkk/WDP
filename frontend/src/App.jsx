@@ -36,6 +36,7 @@ import DashboardPage from "./page/user/DashboardPage.jsx";
 import AiChatStudentLayout from "./layout/AiChatStudentLayout.jsx";
 import StudentAiChat from "./components/ai-support/StudentAiChat.jsx";
 import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
+import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
 const AppRoutes = () => {
   const location = useLocation();
   const ComingSoonPage = () => <div>🚧 Coming soon...</div>;
@@ -47,17 +48,32 @@ const AppRoutes = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         {/* Business Dashboard */}
-        <Route path="/business-dashboard" element={<AiChatLayout />}>
+        <Route
+          path="/business-dashboard"
+          element={
+            <OwnerRoute>
+              <AiChatLayout />
+            </OwnerRoute>
+          }
+        >
           <Route index element={<DashboardPage />} />
-          <Route path="manage" element={<ComingSoonPage />} />
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="ai" element={<ComingSoonPage />} />
+          <Route path="ai-assistant" element={<BusinessAiChat />} />
+          <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
         </Route>
+
         {/* Student Dashboard */}
-        <Route path="/dashboard" element={<AiChatStudentLayout />}>
+        <Route
+          path="/dashboard"
+          element={
+            <ClientRoute>
+              <AiChatStudentLayout />
+            </ClientRoute>
+          }
+        >
           <Route index element={<ComingSoonPage />} />
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="ai-bot" element={<StudentAiChat />} />
+          <Route path="ai-support" element={<StudentAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
         </Route>
 
