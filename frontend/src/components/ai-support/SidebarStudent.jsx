@@ -7,6 +7,11 @@ import {
   FaBars,
   FaArrowLeft,
   FaRobot,
+  FaCommentAlt,
+  FaCalendarAlt,
+  FaCog,
+  FaEnvelope,
+  FaMagic,
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./../../css/Sidebar.css";
@@ -31,14 +36,47 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
   const menus = [
     { icon: <FaHome />, label: "Dashboard", path: "/dashboard" },
     {
-      icon: <FaHandsHelping />,
-      label: "Hỗ trợ sinh viên",
+      icon: <FaEnvelope />,
+      label: "Messages",
       path: "/dashboard/messages",
     },
     {
       icon: <FaRobot />,
-      label: "AI",
-      path: "/dashboard/ai-support",
+      label: "My AI",
+      path: "/dashboard/my-ai",
+    },
+    {
+      icon: <FaCog />,
+      label: "AI Module",
+      path: "/dashboard/ai-module",
+    },
+    {
+      icon: (
+        <span
+          style={{
+            display: "inline-flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "18px",
+            height: "22px",
+            backgroundColor: "#1c090cbe", // Màu nền tối giống icon khác
+            borderRadius: "4px", // Góc bo nhẹ để giống hình
+            color: "white", // Chữ màu trắng
+            fontSize: "0.9em",
+            fontWeight: "bold",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          AI
+        </span>
+      ),
+      label: "AI có sẵn",
+      path: "/dashboard/ai-available",
+    },
+    {
+      icon: <FaCalendarAlt />,
+      label: "Calendar",
+      path: "/dashboard/calendar",
     },
   ];
 

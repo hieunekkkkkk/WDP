@@ -37,6 +37,9 @@ import AiChatStudentLayout from "./layout/AiChatStudentLayout.jsx";
 import StudentAiChat from "./components/ai-support/StudentAiChat.jsx";
 import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
 import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
+import AiSupportDocument from "./components/ai-support/AiSupportDocument.jsx";
+import MyAi from "./components/ai-common/MyAi.jsx";
+import MyCalendar from "./components/calendar/MyCalendar.jsx";
 const AppRoutes = () => {
   const location = useLocation();
   const ComingSoonPage = () => <div>🚧 Coming soon...</div>;
@@ -73,8 +76,11 @@ const AppRoutes = () => {
         >
           <Route index element={<ComingSoonPage />} />
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="ai-support" element={<StudentAiChat />} />
+          <Route path="ai-module" element={<StudentAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
+          <Route path="calendar" element={<MyCalendar />} />
+          <Route path="ai-available" element={<AiSupportDocument />} />
+          <Route path="my-ai" element={<MyAi />} />
         </Route>
 
         <Route
