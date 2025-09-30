@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
 import {
   FaHome,
-  FaCog,
-  FaRegComments,
-  FaRobot,
+  FaBook,
+  FaHandsHelping,
+  FaUserFriends,
   FaBars,
-  FaTimes,
   FaArrowLeft,
+  FaRobot,
+  FaCommentAlt,
+  FaCalendarAlt,
+  FaCog,
+  FaEnvelope,
+  FaMagic,
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./../../css/Sidebar.css";
 
-const Sidebar = ({ darkMode, setDarkMode }) => {
+const SidebarStudent = ({ darkMode, setDarkMode }) => {
   const [open, setOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
@@ -27,18 +32,51 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Menu student
   const menus = [
-    { icon: <FaHome />, label: "Dashboard", path: "/business-dashboard" },
-    { icon: <FaCog />, label: "Quản lý", path: "/business-dashboard/manage" },
+    { icon: <FaHome />, label: "Dashboard", path: "/dashboard" },
     {
-      icon: <FaRegComments />,
+      icon: <FaEnvelope />,
       label: "Messages",
-      path: "/business-dashboard/messages",
+      path: "/dashboard/messages",
     },
     {
       icon: <FaRobot />,
-      label: "AI",
-      path: "/business-dashboard/ai-assistant",
+      label: "My AI",
+      path: "/dashboard/my-ai",
+    },
+    {
+      icon: <FaCog />,
+      label: "AI Module",
+      path: "/dashboard/ai-module",
+    },
+    {
+      icon: (
+        <span
+          style={{
+            display: "inline-flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "18px",
+            height: "22px",
+            backgroundColor: "#1c090cbe", // Màu nền tối giống icon khác
+            borderRadius: "4px", // Góc bo nhẹ để giống hình
+            color: "white", // Chữ màu trắng
+            fontSize: "0.9em",
+            fontWeight: "bold",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          AI
+        </span>
+      ),
+      label: "AI có sẵn",
+      path: "/dashboard/ai-available",
+    },
+    {
+      icon: <FaCalendarAlt />,
+      label: "Calendar",
+      path: "/dashboard/calendar",
     },
   ];
 
@@ -104,7 +142,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
             {open && <span className="back-label">Quay lại</span>}
           </button>
 
-          {/* Dark Mode toggle */}
+          {/* Dark Mode */}
           <div className="dark-toggle">
             <label className="switch">
               <input
@@ -122,4 +160,4 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
   );
 };
 
-export default Sidebar;
+export default SidebarStudent;
