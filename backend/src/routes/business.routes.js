@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const BusinessController = require('../controllers/business.controller');
+const BusinessController = require("../controllers/business.controller");
 
 /**
  * @swagger
@@ -43,7 +43,7 @@ const BusinessController = require('../controllers/business.controller');
  *             schema:
  *               $ref: '#/components/schemas/Business'
  */
-router.post('/', BusinessController.createBusiness);
+router.post("/", BusinessController.createBusiness);
 /**
  * @swagger
  * /api/businesses/filter:
@@ -60,7 +60,7 @@ router.post('/', BusinessController.createBusiness);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/filter', BusinessController.filterBusinesses);
+router.get("/filter", BusinessController.filterBusinesses);
 /**
  * @swagger
  * /api/businesses:
@@ -77,7 +77,7 @@ router.get('/filter', BusinessController.filterBusinesses);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/', BusinessController.getAllBusinesses);
+router.get("/", BusinessController.getAllBusinesses);
 /**
  * @swagger
  * /api/businesses/rating:
@@ -94,7 +94,7 @@ router.get('/', BusinessController.getAllBusinesses);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/rating', BusinessController.getAllBusinessesWithRating);
+router.get("/rating", BusinessController.getAllBusinessesWithRating);
 /**
  * @swagger
  * /api/businesses/search:
@@ -111,7 +111,7 @@ router.get('/rating', BusinessController.getAllBusinessesWithRating);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/search', BusinessController.searchBusinesses);
+router.get("/search", BusinessController.searchBusinesses);
 /**
  * @swagger
  * /api/businesses/near:
@@ -128,7 +128,7 @@ router.get('/search', BusinessController.searchBusinesses);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/near', BusinessController.findNearestBusinesses);
+router.get("/near", BusinessController.findNearestBusinesses);
 /**
  * @swagger
  * /api/businesses/{id}:
@@ -149,7 +149,7 @@ router.get('/near', BusinessController.findNearestBusinesses);
  *             schema:
  *               $ref: '#/components/schemas/Business'
  */
-router.get('/:id', BusinessController.getBusinessById);
+router.get("/:id", BusinessController.getBusinessById);
 /**
  * @swagger
  * /api/businesses/{id}:
@@ -176,7 +176,7 @@ router.get('/:id', BusinessController.getBusinessById);
  *             schema:
  *               $ref: '#/components/schemas/Business'
  */
-router.put('/:id', BusinessController.updateBusiness);
+router.put("/:id", BusinessController.updateBusiness);
 /**
  * @swagger
  * /api/businesses/{id}:
@@ -193,7 +193,7 @@ router.put('/:id', BusinessController.updateBusiness);
  *       200:
  *         description: Business đã được xoá
  */
-router.delete('/:id', BusinessController.deleteBusiness);
+router.delete("/:id", BusinessController.deleteBusiness);
 /**
  * @swagger
  * /api/businesses/category/{categoryId}:
@@ -216,9 +216,7 @@ router.delete('/:id', BusinessController.deleteBusiness);
  *               items:
  *                 $ref: '#/components/schemas/Business'
  */
-router.get('/category/:categoryId', BusinessController.getBusinessByCategory);
-
-
+router.get("/category/:categoryId", BusinessController.getBusinessByCategory);
 
 router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
 router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);

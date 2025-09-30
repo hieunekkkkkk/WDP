@@ -274,7 +274,7 @@ const BusinessPage = () => {
 
                 <div className="action-buttons">
                   <button className="contact-btn" onClick={handleContact}>
-                    Liên hệ
+                    Chat ngay
                   </button>
                   <button className="map-btn" onClick={handleShowOnMap}>
                     Hiển thị trên GG map

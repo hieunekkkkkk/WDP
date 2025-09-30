@@ -1,56 +1,74 @@
 .header {
   width: 100%;
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 64px; /* Chiều cao cố định */
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 999;
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between; /* logo trái, menu giữa, account phải */
+  padding: 0 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
-  text-decoration: none;
-  width: 120px; /* Chiều rộng ảnh */
-  height: 50px; /* Chiều cao ảnh */
+  width: 140px;
+  height: auto;
+  object-fit: contain;
 }
 
 .header-nav {
   display: flex;
-  gap: 2rem;
-  /* margin-left: 350px; */
+  align-items: center;
+  gap: 32px;
+  flex: 1;
+  justify-content: center; /* menu nằm giữa */
 }
 
-.header-nav a {
+.header-nav-link {
   color: #333;
   text-decoration: none;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
-.header-nav a:hover {
+.header-nav-link:hover {
   color: #007bff;
 }
 
+.header-nav-link.active {
+  font-weight: bold;
+  color: #ff6b35;
+}
+
+.header-user-info,
 .account-menu-wrapper {
-  position: relative;
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s ease;
-  /* margin-left: 300px; */
+  gap: 8px;
   cursor: pointer;
+}
+
+.account-menu-wrapper {
+  padding: 6px 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  position: relative;
 }
 
 .account-menu-wrapper:hover {
@@ -83,9 +101,4 @@
 .account-dropdown li a:hover {
   background-color: #f1f1f1;
   color: #007bff;
-}
-
-.header-nav-link.active {
-  font-weight: bold;
-  color: #ff6b35;
 }
