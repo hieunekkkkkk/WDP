@@ -1,17 +1,26 @@
 const botKnowledgeModel = require('../entity/module/botknowledge.model');
+const fileToText = require('../utils/fileToText');
 
 
 class BotKnowledgeService {
     // Tạo mới kiến thức
-    async createKnowledge(aibot_id, data) {
+    async createKnowledge(aibot_id, data, filePath = null) {
         try {
+            let content = data.content;
+
+            // Nếu có file upload -> convert file sang text
+            if (filePath) {
+                content = await fileToText(filePath);
+            }
+
             const newKnowledge = new botKnowledgeModel({
                 aibot_id: aibot_id,
                 created_by: data.created_by,
                 title: data.title,
-                content: data.content,
+                content: content,
                 tags: data.tags,
             });
+
             await newKnowledge.save();
             return newKnowledge;
         } catch (error) {
@@ -34,7 +43,7 @@ class BotKnowledgeService {
             throw error;
         }
     }
-    
+
     // Cập nhật kiến thức
     async updateKnowledge(id, data) {
         try {

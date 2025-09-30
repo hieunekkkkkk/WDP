@@ -1,9 +1,12 @@
 const BotKnowledgeController = require('../controllers/botknowledge.controller');
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Tạo kiến thức mới
-router.post('/:aibot_id', (req, res) => BotKnowledgeController.createKnowledge(req, res));
+router.post('/:aibot_id', upload.single('file'), (req, res) => BotKnowledgeController.createKnowledge(req, res));
 
 // Lấy danh sách kiến thức
 router.get('/', (req, res) => BotKnowledgeController.getKnowledges(req, res));
