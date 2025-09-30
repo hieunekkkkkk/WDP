@@ -20,7 +20,8 @@ import DiscoverByCategoryPage from "./page/user/DiscoverByCategoryPage";
 import AnimatedLayout from "./components/AnimatedLayout";
 import MyBusinessPage from "./page/user/MyBusinessPage";
 import ProductRegistrationPage from "./page/user/ProductRegistrationPage";
-import MessagesPage from "./page/user/MessagesPage";
+import BusinessMessagesPage from "./page/user/BusinessMessagesPage";
+import StudentMessagesPage from "./page/user/StudentMessagesPage";
 import BusinessRegistrationPage from "./page/user/BusinessRegistrationPage";
 import ManageUserPage from "./page/admin/ManageUserPage";
 import ManageBusinessPage from "./page/admin/ManageBusinessPage";
@@ -42,13 +43,6 @@ const AppRoutes = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/business-dashboard" element={<AiChatLayout />}>
-          {/* 👇 All child pages go inside <Outlet /> */}
-          <Route path="message" element={<MessagesPage />} />
-          {/* <Route path="ai" element={<AiChatLayout />} /> */}
-          {/* You can add more child routes here */}
-          {/* <Route path="dashboard" element={<Dashboard />} /> */}
-        </Route>
 
         <Route
           path="/auth-callback"
@@ -87,6 +81,21 @@ const AppRoutes = () => {
               <>
                 <SignedIn>
                   <UserProfilePage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
+          <Route
+            path="/student-support"
+            element={
+              <>
+                <SignedIn>
+                  <AiChatLayout>
+                    <BusinessMessagesPage />
+                  </AiChatLayout>
                 </SignedIn>
                 <SignedOut>
                   <LoginPage />
@@ -152,6 +161,23 @@ const AppRoutes = () => {
               </OwnerRoute>
             }
           />
+          <Route
+            path="/business-dashboard"
+            element={
+              <OwnerRoute>
+                <AiChatLayout />
+              </OwnerRoute>
+            }
+          >
+            <Route
+              path="message"
+              element={
+                <OwnerRoute>
+                  <BusinessMessagesPage />
+                </OwnerRoute>
+              }
+            />
+          </Route>
 
           {/* Admin routes */}
           <Route

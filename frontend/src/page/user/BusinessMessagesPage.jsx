@@ -6,7 +6,7 @@ import { FaPhoneAlt } from "react-icons/fa";
 import { HiVideoCamera } from "react-icons/hi2";
 import { FaInfoCircle } from "react-icons/fa";
 
-const MessagesPage = () => {
+const BusinessMessagesPage = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [responseType, setResponseType] = useState("Bot");
   const [message, setMessage] = useState("");
@@ -224,4 +224,4 @@ const MessagesPage = () => {
   );
 };
 
-export default MessagesPage;
+export default BusinessMessagesPage;

@@ -413,7 +413,7 @@ function AboutLandingPage() {
                 Khám phá ngay
               </button>
               <button
-                onClick={() => navigate("/business/register")}
+                onClick={() => navigate("/business-registration")}
                 className="hero-btn-secondary"
               >
                 Đăng ký doanh nghiệp

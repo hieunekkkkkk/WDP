@@ -311,7 +311,7 @@ function DiscoverPage() {
         </div>
       </div>
       <div className="discover-page">
-        <div className="container">
+        <div className="">
           {searchQuery && (
             <section className="search-results-section">
               <p className="search-heading">

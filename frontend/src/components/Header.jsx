@@ -89,7 +89,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/business-dashboard"
-                className={`header-nav-link ${location.pathname === '/my-business' ? 'active' : ''
+                className={`header-nav-link ${location.pathname === '/business-dashboard' ? 'active' : ''
                   }`}
               >
                 Hỗ trợ doanh nghiệp
@@ -106,13 +106,13 @@ const Header = () => {
               >
                 Đăng ký doanh nghiệp
               </Link>
-              {/* <Link
-                to="/"
-                className={`header-nav-link ${location.pathname === '/' ? 'active' : ''
+              <Link
+                to="/student-support"
+                className={`header-nav-link ${location.pathname === '/student-support' ? 'active' : ''
                   }`}
               >
                 Hỗ trợ học tập
-              </Link> */}
+              </Link>
               </>
             )}
           </nav>
