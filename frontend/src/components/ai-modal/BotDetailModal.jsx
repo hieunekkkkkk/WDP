@@ -1,30 +1,33 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
+import "../../components/ai-support/style/KnowledgePage.css";
 import "../../components/ai-support/style/Modal.css";
 
 const BotDetailModal = ({ bot, onClose, onSave }) => {
-  const botId = bot._id || bot.id
+  const botId = bot._id || bot.id;
   const [name, setName] = useState(bot.name || "");
   const [description, setDescription] = useState(bot.description || "");
 
- const handleSave = async () => {
-  try {
-    const botId = bot._id || bot.id; // fix undefined
-    const res = await axios.put(
-      `${import.meta.env.VITE_BE_URL}/api/aibot/${botId}`,
-      { name, description }
-    );
+  const handleSave = async () => {
+    try {
+      const botId = bot._id || bot.id; // fix undefined
+      const res = await axios.put(
+        `${import.meta.env.VITE_BE_URL}/api/aibot/${botId}`,
+        { name, description }
+      );
 
-    console.log("✅ Update bot response:", res.data);
-
-    onSave(); // reload bot info
-    onClose();
-  } catch (err) {
-    console.error("❌ Error updating bot:", err.response?.data || err.message);
-    alert("Có lỗi khi cập nhật bot");
-  }
-};
-
+      console.log(" Update bot response:", res.data);
+      toast.success("Cập nhật bot thành công!");
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error(" Error updating bot:", err.response?.data || err.message);
+      toast.error(
+        "Có lỗi khi cập nhật bot" + (err.response?.data?.message || "")
+      );
+    }
+  };
 
   return (
     <div className="modal-overlay">

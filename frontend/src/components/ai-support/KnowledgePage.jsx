@@ -17,8 +17,15 @@ const KnowledgePage = () => {
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editingKnowledge, setEditingKnowledge] = useState(null);
-  const [filter, setFilter] = useState("Tất cả");
   const [showBotDetail, setShowBotDetail] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredKnowledges = knowledges.filter(
+    (k) =>
+      k.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      k.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      k.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const fetchBot = async () => {
     try {
@@ -36,6 +43,7 @@ const KnowledgePage = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge`
       );
+      // Tạm thời filter client-side vì BE chưa có API theo botId
       const filtered = res.data.filter((k) => k.aibot_id === botId);
       setKnowledges(filtered);
     } catch (err) {
@@ -54,32 +62,40 @@ const KnowledgePage = () => {
       await axios.delete(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${id}`
       );
+
       fetchKnowledge();
     } catch (err) {
       console.error("Error deleting knowledge:", err);
     }
   };
 
-  const filteredKnowledge =
-    filter === "Tất cả"
-      ? knowledges
-      : knowledges.filter((k) => k.type === filter);
-
   return (
     <div className="knowledge-page">
-      <div className="knowledge-header">
+      {/* Header card */}
+      <div className="knowledge-header-card">
         <h1 className="knowledge-title">
           {isBusinessKnowledge
             ? "🏢 Kiến thức doanh nghiệp"
             : "📘 Kiến thức học tập"}
         </h1>
-      </div>
 
-      <div className="add-knowledge-top">
-        <button className="knowledge-btn" onClick={() => setShowCreate(true)}>
-          ➕ Thêm{" "}
-          {isBusinessKnowledge ? "kiến thức doanh nghiệp" : "kiến thức học tập"}
-        </button>
+        <div className="action-bar">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, nội dung hoặc tags..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <button className="add-button" onClick={() => setShowCreate(true)}>
+            ➕{" "}
+            {isBusinessKnowledge
+              ? "Thêm kiến thức doanh nghiệp"
+              : "Thêm kiến thức học tập"}
+          </button>
+        </div>
       </div>
 
       {/* Panel danh sách */}
@@ -88,9 +104,12 @@ const KnowledgePage = () => {
           <div className="bot-info-box">
             <p>
               <b>Bot ID:</b>{" "}
-              <span className="link" onClick={() => setShowBotDetail(true)}>
+              <button
+                className="bot-id-link"
+                onClick={() => setShowBotDetail(true)}
+              >
                 {bot.id || bot._id}
-              </span>
+              </button>
             </p>
             <p>
               <b>Tên:</b> {bot.name}
@@ -101,16 +120,6 @@ const KnowledgePage = () => {
           </div>
         )}
 
-        {/* Dropdown filter */}
-        <div className="filter-box">
-          <label>Loại: </label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option>Tất cả</option>
-            <option>Liên kết</option>
-            <option>Văn bản</option>
-          </select>
-        </div>
-
         {/* Table */}
         <div className="knowledge-table">
           <div className="knowledge-row header">
@@ -118,56 +127,29 @@ const KnowledgePage = () => {
             <div className="col actions-col">Hành động</div>
           </div>
 
-          {filteredKnowledge.map((k) => (
-            <div key={k._id} className="knowledge-row">
-              <div className="knowledge-info-box">{k.title}</div>
+          {filteredKnowledges.map((k, idx) => (
+            <div
+              key={k._id}
+              className={`knowledge-row ${idx % 2 === 0 ? "zebra" : ""}`}
+            >
+              <div className="knowledge-info-box">📄 {k.title}</div>
               <div className="actions">
                 <button
-                  style={{
-                    backgroundColor: "#059669",
-                    width: "32px",
-                    height: "32px",
-                    border: "none",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                  }}
+                  style={{ backgroundColor: "#059669", ...btnStyle }}
                   onClick={() => setSelected(k)}
                   title="Xem"
                 >
                   <FaEye size={14} />
                 </button>
                 <button
-                  style={{
-                    backgroundColor: "#3b82f6",
-                    width: "32px",
-                    height: "32px",
-                    border: "none",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                  }}
+                  style={{ backgroundColor: "#3b82f6", ...btnStyle }}
                   onClick={() => setEditingKnowledge(k)}
                   title="Sửa"
                 >
                   <FaEdit size={14} />
                 </button>
                 <button
-                  style={{
-                    backgroundColor: "#ef4444",
-                    width: "32px",
-                    height: "32px",
-                    border: "none",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                  }}
+                  style={{ backgroundColor: "#ef4444", ...btnStyle }}
                   onClick={() => deleteKnowledge(k._id)}
                   title="Xóa"
                 >
@@ -177,8 +159,12 @@ const KnowledgePage = () => {
             </div>
           ))}
 
-          {filteredKnowledge.length === 0 && (
-            <p className="empty">Chưa có kiến thức nào</p>
+          {filteredKnowledges.length === 0 && (
+            <p className="empty">
+              {knowledges.length === 0
+                ? "Chưa có kiến thức nào"
+                : "Không tìm thấy kết quả phù hợp"}
+            </p>
           )}
         </div>
       </div>
@@ -213,6 +199,17 @@ const KnowledgePage = () => {
       )}
     </div>
   );
+};
+
+const btnStyle = {
+  width: "32px",
+  height: "32px",
+  border: "none",
+  borderRadius: "6px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white",
 };
 
 export default KnowledgePage;

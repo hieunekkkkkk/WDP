@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useUser } from "@clerk/clerk-react";
+import { toast } from "react-toastify";
 import "../../components/ai-support/style/KnowledgePage.css";
 
 const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
@@ -9,35 +10,62 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
     title: "",
     content: "",
     tags: "",
-    type: "Liên kết",
   });
-
+  const [file, setFile] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
   const handleSubmit = async () => {
-    if (!form.title.trim()) return alert("Tên không được để trống");
+    if (!form.title.trim()) {
+      toast.error("Tên không được để trống");
+      return;
+    }
+
     try {
-     const response =  await axios.post(
-        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`,
-        {
-          title: form.title,
-          content: form.content,
-          tags: form.tags
+      const formData = new FormData();
+      formData.append("title", form.title);
+
+      if (file) {
+        formData.append("file", file);
+      } else {
+        formData.append("content", form.content);
+      }
+
+      formData.append(
+        "tags",
+        JSON.stringify(
+          form.tags
             .split(",")
             .map((t) => t.trim())
-            .filter(Boolean),
-          created_by: user.id,
-        }
+            .filter(Boolean)
+        )
       );
-      console.log(response?.data)
-      
+
+      formData.append("created_by", user.id);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      console.log("✅ Created knowledge:", response.data);
+      toast.success("Tạo kiến thức thành công!");
+
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error creating knowledge:", err.response?.data?.message);
+      console.error(
+        "❌ Error creating knowledge:",
+        err.response?.data?.message
+      );
+      toast.error("Có lỗi khi tạo kiến thức");
     }
   };
 
@@ -57,33 +85,30 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Nhập tên file"
+            placeholder="Nhập tên kiến thức"
             className="form-input"
           />
         </div>
 
         <div className="form-group">
-          <label>Loại</label>
-          <select
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            className="form-select"
-          >
-            <option>Liên kết</option>
-            <option>Văn bản</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Nội dung</label>
+          <label>Nội dung (nếu không tải file)</label>
           <textarea
             name="content"
             rows={6}
             value={form.content}
             onChange={handleChange}
-            placeholder="Dán nội dung code hoặc text..."
+            placeholder="Nhập nội dung văn bản..."
             className="form-textarea"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Tải file (PDF, Word, TXT...)</label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={handleFileChange}
+            className="form-input"
           />
         </div>
 
@@ -93,7 +118,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
             name="tags"
             value={form.tags}
             onChange={handleChange}
-            placeholder="VD: C++, Source"
+            placeholder="VD: AI, NodeJS"
             className="form-input"
           />
         </div>

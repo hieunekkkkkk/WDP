@@ -1,3 +1,4 @@
+/* ========== Layout ========== */
 .knowledge-page {
   display: flex;
   flex-direction: column;
@@ -7,20 +8,26 @@
   background: #f9fafb;
   min-height: 100vh;
 }
-.actions-col {
-  display: flex;
-  justify-content: center;  
-  align-items: center;      
+
+/* Card container */
+.knowledge-container,
+.knowledge-header-card,
+.knowledge-list-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-
+/* ========== Header ========== */
 .knowledge-header {
   text-align: center;
   margin-bottom: 10px;
 }
 
 .knowledge-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
@@ -30,80 +37,85 @@
   justify-content: center;
   gap: 8px;
 }
-.knowledge-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 12px;
-  color: #111827;
-}
 
-/* Nút thêm kiến thức trên cùng */
-.add-knowledge-top {
+/* ========== Action bar ========== */
+.action-bar {
   display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-/* Nút thêm kiến thức */
-.knowledge-btn {
+.search-container {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input {
   width: 100%;
-  max-width: 600px; /* chiều ngang tối đa */
-  padding: 14px 16px; /* to + cao */
-  font-size: 18px;
-  font-weight: 600;
-  text-align: center;
-  background: #6b7280; /* xám tối */
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.add-button {
+  height: 40px;
+  padding: 0 20px;
+  background: #007bff;
   color: #fff;
   border: none;
   border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+.add-button:hover {
+  background: #0056b3;
 }
 
-.knowledge-btn:hover {
-  background: #4b5563; /* xám đậm hơn khi hover */
-}
-
-.knowledge-btn:active {
-  transform: scale(0.98);
-}
-
-/* Panel danh sách */
-.knowledge-list-panel {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 16px;
-  background: #fff;
-}
-
+/* ========== Bot info ========== */
 .bot-info-box {
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 12px 16px;
-  background: #fdfdfd;
+  border-radius: 8px;
+  padding: 16px;
   margin-bottom: 16px;
   font-size: 14px;
   color: #111827;
 }
 .bot-info-box p {
-  margin: 4px 0;
+  margin: 6px 0;
+}
+.bot-id {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.bot-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+.bot-description {
+  font-style: italic;
+  color: #4b5563;
+  margin: 0;
 }
 
-/* Filter */
-.filter-box {
-  margin: 12px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-box select {
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-/* Table */
+/* ========== Knowledge table ========== */
 .knowledge-table {
   border-top: 1px solid #eee;
   margin-top: 10px;
@@ -111,7 +123,7 @@
 .knowledge-row {
   display: grid;
   grid-template-columns: 3fr 1fr;
-  padding: 10px 0;
+  padding: 12px 16px;
   border-bottom: 1px solid #f1f5f9;
   align-items: center;
   font-size: 14px;
@@ -119,62 +131,54 @@
 .knowledge-row.header {
   font-weight: bold;
   background: #f3f4f6;
-  padding: 12px 0;
+  padding: 12px 16px;
 }
+.knowledge-row:nth-child(even):not(.header) {
+  background: #f9fafb;
+}
+
 .col {
   padding: 0 8px;
 }
+
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
-
 .actions button {
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s;
   padding: 0;
   margin: 0;
+  color: #fff;
+}
+.actions button:hover {
+  transform: scale(1.05);
+}
+.actions .view-btn {
+  background: #059669;
+}
+.actions .edit-btn {
+  background: #0ea5e9;
+}
+.actions .delete-btn {
+  background: #dc2626;
 }
 
 .actions button svg {
   width: 14px;
   height: 14px;
-  color: #ffffff;
   fill: currentColor;
 }
 
-.actions .view-btn {
-  background: #059669; /* Green */
-}
-.actions .view-btn:hover {
-  background: #047857;
-  transform: scale(1.05);
-}
-
-.actions .edit-btn {
-  background: #0ea5e9; /* Lighter blue */
-  border: none;
-}
-.actions .edit-btn:hover {
-  background: #0284c7;
-  transform: scale(1.05);
-}
-
-.actions .delete-btn {
-  background: #dc2626; /* Red */
-}
-.actions .delete-btn:hover {
-  background: #b91c1c;
-  transform: scale(1.05);
-}
 .empty {
   padding: 12px;
   font-style: italic;
@@ -182,7 +186,7 @@
   text-align: center;
 }
 
-/* -------- Modal -------- */
+/* ========== Modal ========== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -276,4 +280,30 @@
 }
 .cancel-button:hover {
   background: #4b5563;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 640px) {
+  .action-bar {
+    flex-direction: column;
+  }
+  .search-container {
+    width: 100%;
+  }
+  .add-button {
+    width: 100%;
+  }
+}
+.bot-id-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: none;
+}
+
+.bot-id-link:hover {
+  color: #1d4ed8;
 }

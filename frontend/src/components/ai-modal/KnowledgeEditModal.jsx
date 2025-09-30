@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import "../../components/ai-support/style/KnowledgePage.css";
 
 const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
@@ -7,7 +8,6 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     title: knowledge.title || "",
     content: knowledge.content || "",
     tags: knowledge.tags ? knowledge.tags.join(", ") : "",
-    type: knowledge.type || "Liên kết",
   });
 
   const handleChange = (e) => {
@@ -15,21 +15,30 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) return alert("Tên không được để trống");
+    if (!form.title.trim()) {
+      toast.error("Tên không được để trống");
+      return;
+    }
+
     try {
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledge._id}`,
         {
           title: form.title,
           content: form.content,
-          tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-          type: form.type,
+          tags: form.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
         }
       );
+
+      toast.success("Cập nhật kiến thức thành công!");
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error updating knowledge:", err);
+      console.error(" Error updating knowledge:", err.response?.data || err);
+      toast.error("Có lỗi khi cập nhật kiến thức");
     }
   };
 
@@ -49,22 +58,9 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Nhập tên file"
+            placeholder="Nhập tên kiến thức"
             className="form-input"
           />
-        </div>
-
-        <div className="form-group">
-          <label>Loại</label>
-          <select
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            className="form-select"
-          >
-            <option>Liên kết</option>
-            <option>Văn bản</option>
-          </select>
         </div>
 
         <div className="form-group">
@@ -85,7 +81,7 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             name="tags"
             value={form.tags}
             onChange={handleChange}
-            placeholder="VD: C++, Source"
+            placeholder="VD: AI, NodeJS"
             className="form-input"
           />
         </div>
