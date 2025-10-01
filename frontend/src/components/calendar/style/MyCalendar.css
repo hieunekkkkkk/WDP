@@ -1,157 +1,777 @@
-.calendar-container {
-  max-width: 900px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 24px;
-  font-family: "Inter", sans-serif;
-  color: #111827;
+/* MyCalendar.css - Complete Version */
+
+/* ==================== Wrapper & Container ==================== */
+.calendar-wrapper {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 40px 20px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
+.calendar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* ==================== Header ==================== */
 .calendar-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  background: #ffffff;
 }
 
-.calendar-title {
-  font-size: 20px;
-  font-weight: 600;
+.calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Navigation Buttons */
+.calendar-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.calendar-nav-btn:hover {
+  background: #f3f4f6;
   color: #111827;
 }
 
+.calendar-nav-btn:active {
+  transform: scale(0.95);
+}
+
+.calendar-nav-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Calendar Title */
+.calendar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  user-select: none;
+  padding: 6px 12px;
+}
+
+/* Month Picker (react-datepicker) - Nếu cần dùng */
+.calendar-month-picker {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s;
+  min-width: 140px;
+  text-align: center;
+}
+
+.calendar-month-picker:hover {
+  border-color: #9ca3af;
+  background: #fafafa;
+}
+
+.calendar-month-picker:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ==================== Action Buttons ==================== */
 .calendar-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .calendar-btn {
-  padding: 8px 14px;
-  background: #f3f4f6;
+  padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  color: #111827;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.5;
 }
 
-.calendar-btn:hover {
+.calendar-btn:active {
+  transform: scale(0.98);
+}
+
+.calendar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.calendar-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.calendar-btn-secondary:hover {
   background: #e5e7eb;
 }
 
-/* React-calendar override */
-.react-calendar {
-  width: 100%;
-  background: #fff;
-  border: none;
+.calendar-btn-primary {
+  background: #6b7280;
+  color: #ffffff;
 }
 
-.react-calendar__navigation {
-  display: none; /* Ẩn navigation mặc định */
+.calendar-btn-primary:hover {
+  background: #4b5563;
 }
 
-.react-calendar__month-view__weekdays {
-  background: #f9fafb;
-  text-align: center;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: #6b7280;
+/* ==================== Calendar Content ==================== */
+.calendar-content {
+  padding: 0;
 }
 
-.react-calendar__month-view__weekdays__weekday {
-  padding: 10px 0;
-}
-
-.react-calendar__month-view__days {
+/* ==================== Weekdays Header ==================== */
+.calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ==================== Days Grid ==================== */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
   background: #e5e7eb;
 }
 
-.react-calendar__tile {
-  background: #fff;
-  min-height: 100px;
-  padding: 6px;
+/* ==================== Individual Day Cell ==================== */
+.calendar-day {
+  min-height: 110px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  border: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
   position: relative;
 }
 
-/* Ẩn số ngày mặc định */
-.react-calendar__tile abbr {
-  display: none;
+.calendar-day:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: inset 0 0 0 1px #d1d5db;
 }
 
-.react-calendar__tile--neighboringMonth {
+.calendar-day-number {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #111827;
+  user-select: none;
+}
+
+/* Other month days (grayed out) */
+.calendar-day-other-month {
+  background: #fafafa;
+  cursor: default;
+}
+
+.calendar-day-other-month:hover {
+  background: #f5f5f5;
+  box-shadow: none;
+}
+
+.calendar-day-other-month .calendar-day-number {
   color: #d1d5db;
 }
 
-.react-calendar__tile--now {
-  background: none;
+/* Today highlight */
+.calendar-day-today {
+  background: #eff6ff;
+  border-color: #3b82f6;
 }
 
-.react-calendar__tile:enabled:hover,
-.react-calendar__tile:enabled:focus {
-  background: #f9fafb;
+.calendar-day-today:hover {
+  background: #dbeafe;
 }
 
-.react-calendar__tile--active {
-  background: none;
-}
-
-.calendar-date {
-  font-size: 14px;
+.calendar-day-today .calendar-day-number {
+  color: #3b82f6;
   font-weight: 600;
-  margin-bottom: 4px;
-  color: #111827;
 }
 
+/* ==================== Events ==================== */
 .calendar-events {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  width: 100%;
 }
 
-.event-label {
-  font-size: 12px;
+.calendar-event {
+  font-size: 11px;
   font-weight: 500;
-  border-radius: 4px;
-}
-
-.event-label.blue {
-  color: #3b82f6;
-}
-
-.event-label.orange {
-  color: #f59e0b;
-}
-
-.event-label.red {
-  color: #ef4444;
-}
-/* DatePicker style để giống Google */
-.date-picker-input {
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.calendar-event:hover {
+  opacity: 0.8;
+}
+
+.calendar-event-blue {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.calendar-event-orange {
+  color: #ea580c;
+  font-weight: 600;
+}
+
+.calendar-event-red {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.calendar-event-gray {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+/* ==================== Modal ==================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
   color: #111827;
 }
 
-/* Hover & focus cho đẹp */
-.date-picker-input:hover {
-  border-color: #9ca3af;
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #6b7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+  padding: 0;
 }
 
-.date-picker-input:focus {
+.modal-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ==================== Form Elements ==================== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  transition: all 0.2s;
+  background: #ffffff;
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-textarea:hover {
+  border-color: #d1d5db;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  background: #fafafa;
+}
+
+/* ==================== Buttons ==================== */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary:disabled:hover {
+  background: #9ca3af;
+  transform: none;
+}
+
+/* ==================== React DatePicker Custom Styles ==================== */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
+  font-family: inherit;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.react-datepicker__header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 8px 8px 0 0;
+  padding-top: 12px;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+  color: #374151;
+  font-size: 13px;
+  width: 2rem;
+  line-height: 2rem;
+  margin: 0.166rem;
+}
+
+.react-datepicker__day-name {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.react-datepicker__day {
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.react-datepicker__day:hover {
+  background-color: #dbeafe;
+  border-radius: 4px;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #60a5fa;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+.react-datepicker__day--today {
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.react-datepicker__day--disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.react-datepicker__day--disabled:hover {
+  background-color: transparent;
+}
+
+.react-datepicker__navigation {
+  top: 13px;
+  line-height: 1.7rem;
+  border: 0.45rem solid transparent;
+}
+
+.react-datepicker__navigation--previous {
+  border-right-color: #6b7280;
+}
+
+.react-datepicker__navigation--previous:hover {
+  border-right-color: #111827;
+}
+
+.react-datepicker__navigation--next {
+  border-left-color: #6b7280;
+}
+
+.react-datepicker__navigation--next:hover {
+  border-left-color: #111827;
+}
+
+.react-datepicker__month-container {
+  float: left;
+}
+
+.react-datepicker__month {
+  margin: 0.4rem;
+  text-align: center;
+}
+
+.react-datepicker__month-wrapper {
+  display: flex;
+  justify-content: space-around;
+}
+
+.react-datepicker__month-text {
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.react-datepicker__month-text:hover {
+  background-color: #dbeafe;
+}
+
+.react-datepicker__month--selected {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+  .calendar-wrapper {
+    padding: 20px 10px;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .calendar-header-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .calendar-month-picker {
+    font-size: 16px;
+    min-width: 120px;
+  }
+
+  .calendar-actions {
+    width: 100%;
+  }
+
+  .calendar-btn {
+    flex: 1;
+    font-size: 12px;
+    padding: 8px 12px;
+    justify-content: center;
+  }
+
+  .calendar-weekday {
+    font-size: 10px;
+    padding: 10px 0;
+  }
+
+  .calendar-day {
+    min-height: 80px;
+    padding: 6px 8px;
+  }
+
+  .calendar-day-number {
+    font-size: 13px;
+  }
+
+  .calendar-event {
+    font-size: 10px;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    margin: 0 10px;
+    max-height: 85vh;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 16px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-wrapper {
+    padding: 10px 5px;
+  }
+
+  .calendar-header {
+    padding: 12px;
+  }
+
+  .calendar-month-picker {
+    font-size: 14px;
+    min-width: 100px;
+    padding: 4px 8px;
+  }
+
+  .calendar-nav-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .calendar-weekday {
+    font-size: 9px;
+    padding: 8px 0;
+  }
+
+  .calendar-day {
+    min-height: 70px;
+    padding: 4px 6px;
+  }
+
+  .calendar-day-number {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .calendar-event {
+    font-size: 9px;
+  }
+
+  .calendar-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .modal-content {
+    border-radius: 8px;
+  }
+
+  .modal-header h3 {
+    font-size: 16px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size: 13px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+}
+
+/* ==================== Print Styles ==================== */
+@media print {
+  .calendar-wrapper {
+    background: white;
+    padding: 0;
+  }
+
+  .calendar-header {
+    border-bottom: 2px solid #000;
+  }
+
+  .calendar-actions {
+    display: none;
+  }
+
+  .modal-overlay {
+    display: none;
+  }
 }
