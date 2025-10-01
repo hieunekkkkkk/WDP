@@ -64,7 +64,7 @@ const Footer = () => {
               <h4>Liên hệ</h4>
               <ul className="footer-links">
                 <li>Trường Đại học FPT, Thạch Hòa, Thạch Thất, Thành phố Hà Nội</li>
-                <li>Locallink@gmail.com</li>
+                <li>Local Assistant HOLA@gmail.com</li>
               </ul>
             </div>
 
@@ -121,7 +121,7 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="container">
           <div className="footer-bottom-content">
-            <p>© Bản quyền LocalLink 2024</p>
+            <p>© Bản quyền Local Assistant HOLA 2025</p>
             <div className="footer-bottom-links">
               <a href="#">Chính sách bảo mật</a>
               <a href="#">Điều khoản dịch vụ</a>

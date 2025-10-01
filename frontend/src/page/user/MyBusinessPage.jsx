@@ -193,7 +193,7 @@ const MyBusinessPage = () => {
             message_body: `
           Gói đăng ký của doanh nghiệp <strong>${business.business_name}</strong> đã hết hạn sau 30 ngày sử dụng.<br /><br />
           Trạng thái hiển thị của doanh nghiệp đã được chuyển về <strong>chờ duyệt</strong>.<br /><br />
-          Vui lòng truy cập trang doanh nghiệp trên Local Link để chọn gói đăng ký mới và gia hạn dịch vụ.
+          Vui lòng truy cập trang doanh nghiệp trên Local Assistant HOLA để chọn gói đăng ký mới và gia hạn dịch vụ.
         `,
           });
 
@@ -432,7 +432,7 @@ const MyBusinessPage = () => {
             )}
             {business?.business_active === 'pending' && !planExpired && (
               <div className="business-warning">
-                Doanh nghiệp của bạn đang trong quá trình xét duyệt bởi quản trị viên. <br />Vui lòng đợi hoặc liên hệ qua email <b>locallinkhola@gmail.com</b> để được hỗ trợ.
+                Doanh nghiệp của bạn đang trong quá trình xét duyệt bởi quản trị viên. <br />Vui lòng đợi hoặc liên hệ qua email <b>LocalAssistantHOLA@gmail.com</b> để được hỗ trợ.
               </div>
             )}
             {business?.business_active === 'inactive' && (
