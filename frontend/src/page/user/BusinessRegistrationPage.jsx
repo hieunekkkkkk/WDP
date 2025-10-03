@@ -5,12 +5,10 @@ import "../../css/BusinessRegistrationPage.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUserId } from "../../utils/useCurrentUserId";
-import { PuffLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import { convertFilesToBase64 } from "../../utils/imageToBase64";
 import { sendEmail } from "../../utils/sendEmail";
 import MapModal from "../../components/MapModal";
-import { motion } from "framer-motion";
 
 const BusinessRegistrationPage = () => {
   const navigate = useNavigate();
@@ -18,7 +16,6 @@ const BusinessRegistrationPage = () => {
     const savedImages = localStorage.getItem("businessImages");
     return savedImages ? JSON.parse(savedImages) : [];
   });
-  const [stacks, setStacks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,21 +39,6 @@ const BusinessRegistrationPage = () => {
   const userId = getCurrentUserId();
 
   useEffect(() => {
-    const fetchStacks = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/stack`
-        );
-        setStacks(response.data.stacks || []);
-      } catch (err) {
-        console.error("Error fetching stacks:", err);
-        setError("Không thể tải dữ liệu gói đăng ký.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const fetchCategories = async () => {
       try {
         setLoading(true);
@@ -71,8 +53,6 @@ const BusinessRegistrationPage = () => {
         setLoading(false);
       }
     };
-
-    fetchStacks();
     fetchCategories();
   }, [userId]);
 

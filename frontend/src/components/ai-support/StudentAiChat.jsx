@@ -27,18 +27,18 @@ const styles = {
   loadingText: {
     marginTop: "15px",
     fontSize: "16px",
-    color: "#4b5563", 
+    color: "#4b5563",
     fontWeight: "500",
   },
   spinner: {
     width: "40px",
     height: "40px",
     border: "4px solid #f3f3f3",
-    borderTop: "4px solid #4f46e5", 
+    borderTop: "4px solid #4f46e5",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
   },
-  
+
   emptyContainer: {
     padding: "40px",
     backgroundColor: "#ffffff",
@@ -99,6 +99,8 @@ const StudentAiChat = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
       );
+      console.log(user.id);
+      console.log(res.data);
 
       if (res.data?.length > 0) {
         const userBot = res.data[0];

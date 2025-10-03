@@ -1,45 +1,46 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import "./index.css";
-import "@fontsource/montserrat";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import ProtectedRoute from "./components/ProtectedRoute";
+import React from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import './index.css';
+import '@fontsource/montserrat';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import ProtectedRoute from './components/ProtectedRoute';
 
-import LandingPage from "./page/user/LandingPage";
-import LoginPage from "./page/user/LoginPage";
-import SignupPage from "./page/user/SignupPage";
-import BusinessPage from "./page/user/BusinessPage";
-import UserProfilePage from "./page/user/UserProfilePage";
-import AuthCallback from "./auth/AuthCallback";
-import PersonalizedPage from "./page/user/PersonalizedPage";
-import DiscoverPage from "./page/user/DiscoverPage";
-import DiscoverByCategoryPage from "./page/user/DiscoverByCategoryPage";
-import AnimatedLayout from "./components/AnimatedLayout";
-import MyBusinessPage from "./page/user/MyBusinessPage";
-import ProductRegistrationPage from "./page/user/ProductRegistrationPage";
-import BusinessRegistrationPage from "./page/user/BusinessRegistrationPage";
-import MessagesPage from "./page/user/MessagesPage";
-import ManageUserPage from "./page/admin/ManageUserPage";
-import ManageBusinessPage from "./page/admin/ManageBusinessPage";
-import ManageTransactionPage from "./page/admin/ManageTransactionPage";
-import UserPayComplete from "./components/UserPayComplete";
-import StackPage from "./page/user/StackPage";
-import AdminRoute from "./components/AdminRoute";
-import OwnerRoute from "./components/OwnerRoute";
-import ClientRoute from "./components/ClientRoute";
-import AiChatLayout from "./layout/AiChatLayout.jsx";
-import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
-import DashboardPage from "./page/user/DashboardPage.jsx";
-import AiChatStudentLayout from "./layout/AiChatStudentLayout.jsx";
-import StudentAiChat from "./components/ai-support/StudentAiChat.jsx";
-import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
-import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
-import AiSupportDocument from "./components/ai-support/AiSupportDocument.jsx";
-import MyAi from "./components/ai-common/MyAi.jsx";
-import MyCalendar from "./components/calendar/MyCalendar.jsx";
+import LandingPage from './page/user/LandingPage';
+import LoginPage from './page/user/LoginPage';
+import SignupPage from './page/user/SignupPage';
+import BusinessPage from './page/user/BusinessPage';
+import UserProfilePage from './page/user/UserProfilePage';
+import AuthCallback from './auth/AuthCallback';
+import PersonalizedPage from './page/user/PersonalizedPage';
+import DiscoverPage from './page/user/DiscoverPage';
+import DiscoverByCategoryPage from './page/user/DiscoverByCategoryPage';
+import AnimatedLayout from './components/AnimatedLayout';
+import MyBusinessPage from './page/user/MyBusinessPage';
+import ProductRegistrationPage from './page/user/ProductRegistrationPage';
+import BusinessMessagesPage from './page/user/BusinessMessagesPage';
+import StudentMessagesPage from './page/user/StudentMessagesPage';
+import BusinessRegistrationPage from './page/user/BusinessRegistrationPage';
+import ManageUserPage from './page/admin/ManageUserPage';
+import ManageBusinessPage from './page/admin/ManageBusinessPage';
+import ManageTransactionPage from './page/admin/ManageTransactionPage';
+import UserPayComplete from './components/UserPayComplete';
+import StackPage from './page/user/StackPage';
+import AdminRoute from './components/AdminRoute';
+import OwnerRoute from './components/OwnerRoute';
+import ClientRoute from './components/ClientRoute';
+import AiChatLayout from './layout/AiChatLayout.jsx';
+import AboutLandingPage from './page/user/AboutLandingPage.jsx';
+import DashboardPage from './page/user/DashboardPage.jsx';
+import AiChatStudentLayout from './layout/AiChatStudentLayout.jsx';
+import StudentAiChat from './components/ai-support/StudentAiChat.jsx';
+import KnowledgePage from './components/ai-support/KnowledgePage.jsx';
+import BusinessAiChat from './components/ai-assistant/BusinessAiChat.jsx';
+import AiSupportDocument from './components/ai-support/AiSupportDocument.jsx';
+import MyAi from './components/ai-common/MyAi.jsx';
+import MyCalendar from './components/calendar/MyCalendar.jsx';
 const AppRoutes = () => {
   const location = useLocation();
   const ComingSoonPage = () => <div>🚧 Coming soon...</div>;
@@ -60,7 +61,7 @@ const AppRoutes = () => {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages" element={<BusinessMessagesPage />} />
           <Route path="ai-assistant" element={<BusinessAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
         </Route>
@@ -75,7 +76,7 @@ const AppRoutes = () => {
           }
         >
           <Route index element={<ComingSoonPage />} />
-          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages" element={<StudentMessagesPage />} />
           <Route path="ai-module" element={<StudentAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
           <Route path="calendar" element={<MyCalendar />} />
@@ -120,6 +121,21 @@ const AppRoutes = () => {
               <>
                 <SignedIn>
                   <UserProfilePage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
+          <Route
+            path="/student-support"
+            element={
+              <>
+                <SignedIn>
+                  <AiChatLayout>
+                    <BusinessMessagesPage />
+                  </AiChatLayout>
                 </SignedIn>
                 <SignedOut>
                   <LoginPage />
@@ -172,7 +188,7 @@ const AppRoutes = () => {
             element={
               <>
                 <SignedIn>
-                  <MessagesPage />
+                  <BusinessMessagesPage />
                 </SignedIn>
                 <SignedOut>
                   <LoginPage />
@@ -198,6 +214,23 @@ const AppRoutes = () => {
               </OwnerRoute>
             }
           />
+          <Route
+            path="/business-dashboard"
+            element={
+              <OwnerRoute>
+                <AiChatLayout />
+              </OwnerRoute>
+            }
+          >
+            <Route
+              path="message"
+              element={
+                <OwnerRoute>
+                  <BusinessMessagesPage />
+                </OwnerRoute>
+              }
+            />
+          </Route>
 
           {/* Admin routes */}
           <Route
