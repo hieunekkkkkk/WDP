@@ -30,23 +30,26 @@ const DashboardPage = () => {
     <>
       {/* Bảng dữ liệu */}
       <div className="business-card table-section">
-        <h2 className="card-title">Quản lý</h2>
+        <h2 className="card-title">Quản lý doanh thu</h2>
         <table className="data-table">
           <thead>
             <tr>
+              <th>Tên</th>
               <th>Ngày/Tháng</th>
-              <th>Doanh Thu</th>
-              <th>Lãi</th>
-              <th>Chi phí</th>
+              <th>Doanh thu</th>
+              <th>Mô tả</th>
             </tr>
           </thead>
           <tbody>
             {tableData.map((row, index) => (
               <tr key={index}>
-                <td>{row.date}</td>
-                <td>{row.revenue}</td>
-                <td>{row.profit}</td>
-                <td>{row.cost}</td>
+                <td>{row.revenue_name}</td>
+                <td>{row.revenue_date}</td>
+                <td>{row.revenue_amount}</td>
+                <td>
+                  {row.revenue_description}
+                  <button className="detail-btn">Chi tiết</button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -56,17 +59,17 @@ const DashboardPage = () => {
       {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
-          <h3 className="card-title">Lượt truy cập trong tuần </h3>
+          <h3 className="card-title">Lượt truy cập trong tuần</h3>
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">
-                <span className="bar-label">{item.day}</span>
+                <span className="bar-label">{item.view_date}</span>
                 <div className="bar-container">
                   <div
                     className="bar"
-                    style={{ height: `${(item.value / 150) * 100}%` }}
+                    style={{ height: `${(item.view_count / 150) * 100}%` }}
                   >
-                    {item.value}
+                    {item.view_count}
                   </div>
                 </div>
               </div>
