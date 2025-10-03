@@ -16,10 +16,20 @@ function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentServicePage, setCurrentServicePage] = useState(0);
+  const [direction, setDirection] = useState(0); 
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const query = searchParams.get("query") || "";
+
+    const handleNextService = useCallback(() => {
+    setDirection(1);
+    const totalServicePages = Math.ceil(categories.length / 4);
+    setCurrentServicePage((prev) =>
+      prev === totalServicePages - 1 ? 0 : prev + 1
+    );
+  }, [categories.length]);
 
   useEffect(() => {
     if (query) {
@@ -311,7 +321,7 @@ function DiscoverPage() {
         </div>
       </div>
       <div className="discover-page">
-        <div className="">
+        <div className="container">
           {searchQuery && (
             <section className="search-results-section">
               <p className="search-heading">
