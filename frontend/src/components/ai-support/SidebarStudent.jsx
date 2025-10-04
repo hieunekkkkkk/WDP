@@ -34,7 +34,6 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
 
   // Menu student
   const menus = [
-    { icon: <FaHome />, label: "Dashboard", path: "/dashboard" },
     {
       icon: <FaEnvelope />,
       label: "Messages",
