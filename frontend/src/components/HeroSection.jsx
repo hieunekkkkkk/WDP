@@ -32,7 +32,7 @@ const HeroSection = () => {
               placeholder="Tìm kiếm địa điểm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              className="hero-search-input"
             />
             <button type="submit" className="search-btn">Tìm kiếm</button>
           </div>

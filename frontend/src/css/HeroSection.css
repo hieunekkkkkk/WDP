@@ -70,7 +70,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.search-input {
+.hero-search-input {
   flex: 1;
   padding: 1.5rem 2rem;
   border: none;
@@ -79,7 +79,7 @@
   color: #333;
 }
 
-.search-input::placeholder {
+.hero-search-input::placeholder {
   color: #999;
 }
 
