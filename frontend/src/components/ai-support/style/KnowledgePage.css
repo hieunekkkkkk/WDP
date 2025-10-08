@@ -1,0 +1,279 @@
+.knowledge-page {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 20px;
+  font-family: "Segoe UI", sans-serif;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+.actions-col {
+  display: flex;
+  justify-content: center;  
+  align-items: center;      
+}
+
+
+.knowledge-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.knowledge-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.knowledge-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+/* Nút thêm kiến thức trên cùng */
+.add-knowledge-top {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Nút thêm kiến thức */
+.knowledge-btn {
+  width: 100%;
+  max-width: 600px; /* chiều ngang tối đa */
+  padding: 14px 16px; /* to + cao */
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  background: #6b7280; /* xám tối */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.knowledge-btn:hover {
+  background: #4b5563; /* xám đậm hơn khi hover */
+}
+
+.knowledge-btn:active {
+  transform: scale(0.98);
+}
+
+/* Panel danh sách */
+.knowledge-list-panel {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  background: #fff;
+}
+
+.bot-info-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  background: #fdfdfd;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #111827;
+}
+.bot-info-box p {
+  margin: 4px 0;
+}
+
+/* Filter */
+.filter-box {
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-box select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Table */
+.knowledge-table {
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+}
+.knowledge-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+  font-size: 14px;
+}
+.knowledge-row.header {
+  font-weight: bold;
+  background: #f3f4f6;
+  padding: 12px 0;
+}
+.col {
+  padding: 0 8px;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.actions button {
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  margin: 0;
+}
+
+.actions button svg {
+  width: 14px;
+  height: 14px;
+  color: #ffffff;
+  fill: currentColor;
+}
+
+.actions .view-btn {
+  background: #059669; /* Green */
+}
+.actions .view-btn:hover {
+  background: #047857;
+  transform: scale(1.05);
+}
+
+.actions .edit-btn {
+  background: #0ea5e9; /* Lighter blue */
+  border: none;
+}
+.actions .edit-btn:hover {
+  background: #0284c7;
+  transform: scale(1.05);
+}
+
+.actions .delete-btn {
+  background: #dc2626; /* Red */
+}
+.actions .delete-btn:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+.empty {
+  padding: 12px;
+  font-style: italic;
+  color: #888;
+  text-align: center;
+}
+
+/* -------- Modal -------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-box {
+  background: white;
+  width: 600px;
+  max-height: 80vh;
+  padding: 20px;
+  border-radius: 10px;
+  overflow-y: auto;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #111827;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #374151;
+}
+.knowledge-content {
+  background: #f9fafb;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  margin-top: 8px;
+}
+
+/* Form trong modal */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+.form-group label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+.button {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+.save-button {
+  background: #2563eb;
+  color: #fff;
+}
+.save-button:hover {
+  background: #1d4ed8;
+}
+.cancel-button {
+  background: #6b7280;
+  color: #fff;
+}
+.cancel-button:hover {
+  background: #4b5563;
+}
