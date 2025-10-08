@@ -1,0 +1,15 @@
+.cl-navbar{
+  padding-top: 70px;
+}
+.cl-navbarButton__custom-page-2{
+  position: absolute;
+  top: 12px;
+}
+.cl-userProfile-root{
+  background-image: url('../public/1.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 91vh;
+  overflow: hidden;
+}

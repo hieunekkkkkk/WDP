@@ -1,0 +1,194 @@
+.manage-user-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  min-height: 65vh;
+}
+
+.manage-user-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.manage-user-search-bar {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  min-width: 250px;
+}
+
+.manage-user-search-bar input {
+  width: 100%;
+  padding: 12px 40px 12px 20px;
+  border: 2px solid #e0e6ed;
+  border-radius: 25px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+.manage-user-sort-select select {
+  padding: 8px;
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  background-color: white;
+  font-weight: 500;
+}
+
+.manage-user-sort-select label {
+  font-size: 14px;
+  color: #6c757d;
+  margin-right: 10px;
+}
+
+.manage-user-table-container {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.manage-user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.manage-user-table th {
+  background: #f8f9fa;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #9aa3b4;
+  font-size: 14px;
+  border-bottom: 1px solid #e9ecef;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.manage-user-table tr {
+  transition: background-color 0.2s ease;
+}
+
+.manage-user-table td {
+  padding: 5px 15px;
+  border-bottom: 1px solid #f1f3f4;
+  color: #495057;
+  vertical-align: middle;
+}
+
+.manage-user-status {
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+.manage-user-status.active {
+  background-color: #00d100;
+}
+
+.manage-user-status.inactive {
+  background-color: #d10000;
+}
+
+.manage-user-actions {
+  font-size: 37px;
+  transition: all 0.2s;
+  padding: 0 7px;
+}
+
+.manage-user-actions-icons {
+  display: flex;
+  align-items: center;
+}
+
+.manage-user-actions.action-inactive {
+  font-size: 40px;
+}
+
+.manage-user-actions.action-active:hover {
+  color: green;
+}
+
+.manage-user-actions.action-inactive:hover {
+  color: red;
+}
+
+.manage-user-actions.disable {
+  color: #ccc;
+  font-size: 40px;
+}
+
+.manage-user-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.manage-user-pagination button {
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+.manage-user-pagination button:hover:not(.active):not(:disabled) {
+  background-color: #409444;
+  color: #fff;
+}
+
+.manage-user-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.manage-user-pagination .page-btn.active {
+  background-color: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+}
+
+.manage-user-pagination .nav-btn {
+  font-weight: bold;
+  padding: 6px 10px;
+}
+
+.manage-user-table th,
+.manage-user-table td {
+  padding: 12px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.manage-user-table th:nth-child(1),
+.manage-user-table td:nth-child(1) {
+  width: 100px;
+}
+.manage-user-table th:nth-child(2),
+.manage-user-table td:nth-child(2) {
+  width: 300px;
+}
+.manage-user-table th:last-child,
+.manage-user-table td:last-child {
+  text-align: center;
+}
+
+.manage-user-table-role {
+  text-transform: capitalize;
+}

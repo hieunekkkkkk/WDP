@@ -41,6 +41,7 @@ function DiscoverPage() {
       prev === totalServicePages - 1 ? 0 : prev + 1
     );
   }, [categories.length]);
+
   useEffect(() => {
     if (query) {
       fetchSearchResults(query);
