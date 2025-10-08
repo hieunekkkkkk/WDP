@@ -72,12 +72,6 @@ const Header = () => {
           >
             Hỗ trợ học tập
           </Link>
-          <Link
-            to="/business-registration"
-            className={`header-nav-link ${isActive("/business-registration", true) ? "active" : ""}`}
-          >
-            Đăng ký doanh nghiệp
-          </Link>
         </>
       )}
 
