@@ -81,9 +81,8 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
       )}
 
       <aside
-        className={`sidebar ${open ? "open" : "collapsed"} ${
-          isMobile ? "mobile" : ""
-        }`}
+        className={`sidebar ${open ? "open" : "collapsed"} ${isMobile ? "mobile" : ""
+          }`}
       >
         {/* Header */}
         <div className="sidebar-header">

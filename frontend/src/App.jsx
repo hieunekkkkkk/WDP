@@ -73,8 +73,10 @@ const AppRoutes = () => {
             </ClientRoute>
           }
         >
+
           <Route index element={<MyAi />} />
           <Route path="messages" element={<StudentMessagesPage />} />
+          <Route path="ai-module" element={<StudentAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
           <Route path="calendar" element={<MyCalendar />} />
           <Route path="ai-available" element={<AiSupportDocument />} />
@@ -118,21 +120,6 @@ const AppRoutes = () => {
               <>
                 <SignedIn>
                   <UserProfilePage />
-                </SignedIn>
-                <SignedOut>
-                  <LoginPage />
-                </SignedOut>
-              </>
-            }
-          />
-          <Route
-            path="/student-support"
-            element={
-              <>
-                <SignedIn>
-                  <AiChatLayout>
-                    <BusinessMessagesPage />
-                  </AiChatLayout>
                 </SignedIn>
                 <SignedOut>
                   <LoginPage />
@@ -185,7 +172,7 @@ const AppRoutes = () => {
             element={
               <>
                 <SignedIn>
-                  <BusinessMessagesPage />
+                  <MessagesPage />
                 </SignedIn>
                 <SignedOut>
                   <LoginPage />

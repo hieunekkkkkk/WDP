@@ -5,11 +5,19 @@ import "../../css/BusinessRegistrationPage.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUserId } from "../../utils/useCurrentUserId";
+<<<<<<< HEAD
+import { PuffLoader } from "react-spinners";
+=======
+>>>>>>> origin/hieu
 import { toast } from "react-toastify";
 import { convertFilesToBase64 } from "../../utils/imageToBase64";
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary";
 import { sendEmail } from "../../utils/sendEmail";
 import MapModal from "../../components/MapModal";
+<<<<<<< HEAD
+import { motion } from "framer-motion";
+=======
+>>>>>>> origin/hieu
 
 const BusinessRegistrationPage = () => {
   const navigate = useNavigate();
@@ -40,6 +48,24 @@ const BusinessRegistrationPage = () => {
   const userId = getCurrentUserId();
 
   useEffect(() => {
+<<<<<<< HEAD
+    const fetchStacks = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/stack`
+        );
+        setStacks(response.data.stacks || []);
+      } catch (err) {
+        console.error("Error fetching stacks:", err);
+        setError("Không thể tải dữ liệu gói đăng ký.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+=======
+>>>>>>> origin/hieu
     const fetchCategories = async () => {
       try {
         setLoading(true);
