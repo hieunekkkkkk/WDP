@@ -1,66 +1,3 @@
-<<<<<<< HEAD
-import React from "react";
-import "../../css/DashboardPage.css";
-
-const DashboardPage = () => {
-  const tableData = [
-    {
-      date: "2025-06-05",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-    {
-      date: "2025-06-05",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-    {
-      date: "2025-06-05",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-    {
-      date: "2025-06-12",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-    {
-      date: "2025-06-05",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-    {
-      date: "2025-06-05",
-      revenue: "100,000 VND",
-      profit: "Lorem ipsum",
-      cost: "Chi tiết",
-    },
-  ];
-
-  const weeklyData = [
-    { day: "Mon", value: 150 },
-    { day: "Tue", value: 90 },
-    { day: "Wed", value: 74 },
-    { day: "Thu", value: 150 },
-    { day: "Fri", value: 120 },
-    { day: "Sat", value: 80 },
-    { day: "Sun", value: 100 },
-  ];
-
-  const monthlyData = [
-    { month: "Jan", value: 25 },
-    { month: "Feb", value: 28 },
-    { month: "Mar", value: 20 },
-    { month: "Apr", value: 27 },
-    { month: "May", value: 26 },
-    { month: "Jun", value: 29 },
-  ];
-=======
 import React, { useEffect, useState } from 'react';
 import '../../css/DashboardPage.css';
 
@@ -88,7 +25,6 @@ const DashboardPage = () => {
       .then((data) => setMonthlyData(data))
       .catch(() => setMonthlyData([]));
   }, []);
->>>>>>> origin/hieu
 
   return (
     <>
@@ -120,11 +56,7 @@ const DashboardPage = () => {
       {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
-<<<<<<< HEAD
-          <h3 className="card-title">Lượt truy cập trong tuần</h3>
-=======
           <h3 className="card-title">Lượt truy cập trong tuần </h3>
->>>>>>> origin/hieu
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">
@@ -150,11 +82,7 @@ const DashboardPage = () => {
               <polyline
                 points={monthlyData
                   .map((d, i) => `${i * 60 + 30},${150 - d.value * 5}`)
-<<<<<<< HEAD
-                  .join(" ")}
-=======
                   .join(' ')}
->>>>>>> origin/hieu
                 fill="none"
                 stroke="#283593"
                 strokeWidth="2"
