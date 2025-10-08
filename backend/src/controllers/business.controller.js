@@ -60,7 +60,7 @@ class BusinessController {
       res.status(404).json({ error: error.message });
     }
   }
-  
+
   async getBusinessByPriority(req, res) {
     try {
       const { page = 1, limit = 10 } = req.query;
@@ -119,6 +119,16 @@ class BusinessController {
         parseInt(limit)
       );
       res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async getBusinessesByOwner(req, res) {
+    try {
+      const { ownerId } = req.params;
+      const businesses = await BusinessService.getBussinessByOwner(ownerId);
+      res.status(200).json(businesses);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
