@@ -15,6 +15,7 @@ const businessRevenueRoutes = require('./businessRevenue.routes');
 const AiBotRoutes = require('./aibot.routes');
 const conversationRoutes = require('./conversation.routes');
 const BotKnowledgeRoutes = require('./botknowledge');
+const calendarRoutes = require('./calendar.route');
 // const redisRoutes = require('./redisRouter');
 
 // Tập trung các routes
@@ -33,6 +34,7 @@ router.use('/ai', aiRoutes);
 router.use('/auth', authRoutes);
 router.use('/aibot', AiBotRoutes);
 router.use('/botknowledge', BotKnowledgeRoutes);
+router.use('/calendar', calendarRoutes);
 
 
 // router.use('/redis', redisRoutes);
