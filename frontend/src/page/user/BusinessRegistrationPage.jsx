@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentUserId } from "../../utils/useCurrentUserId";
 import { toast } from "react-toastify";
 import { convertFilesToBase64 } from "../../utils/imageToBase64";
+import { uploadToCloudinary } from "../../utils/uploadToCloudinary";
 import { sendEmail } from "../../utils/sendEmail";
 import MapModal from "../../components/MapModal";
 
@@ -57,17 +58,14 @@ const BusinessRegistrationPage = () => {
   }, [userId]);
 
   const handleAddImage = async (event) => {
-    const input = event.target;
-    const files = Array.from(input.files);
-
+    const files = Array.from(event.target.files);
     try {
-      const base64Images = await convertFilesToBase64(files);
-      setImages((prevImages) => [...prevImages, ...base64Images]);
-    } catch (error) {
-      console.error("Error converting images to base64:", error);
+      const uploadedUrls = await uploadToCloudinary(files);
+      setImages((prev) => [...prev, ...uploadedUrls]);
+    } catch (err) {
+      toast.error("Không thể tải ảnh lên Cloudinary");
+      console.log(("Cloudinary upload error:", err));
     }
-
-    input.value = "";
   };
 
   const handleInputChange = (e) => {
@@ -328,7 +326,8 @@ const BusinessRegistrationPage = () => {
                     value={formData.businessDescription}
                     onChange={handleInputChange}
                     rows="7"
-                  />
+                  />{" "}
+                  handleAddImage
                 </div>
                 <div className="business-register-form-group">
                   <label htmlFor="business-image">
@@ -472,9 +471,7 @@ const BusinessRegistrationPage = () => {
               <button
                 type="submit"
                 className="business-register-submit-btn"
-                disabled={
-                  creatingBusiness
-                }
+                disabled={creatingBusiness}
               >
                 {creatingBusiness ? " Đang xử lý..." : "Đăng ký"}
               </button>

@@ -34,7 +34,6 @@ import AiChatLayout from "./layout/AiChatLayout.jsx";
 import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
 import DashboardPage from "./page/user/DashboardPage.jsx";
 import AiChatStudentLayout from "./layout/AiChatStudentLayout.jsx";
-import StudentAiChat from "./components/ai-support/StudentAiChat.jsx";
 import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
 import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
 import AiSupportDocument from "./components/ai-support/AiSupportDocument.jsx";
@@ -76,7 +75,6 @@ const AppRoutes = () => {
         >
           <Route index element={<MyAi />} />
           <Route path="messages" element={<StudentMessagesPage />} />
-          <Route path="ai-module" element={<StudentAiChat />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
           <Route path="calendar" element={<MyCalendar />} />
           <Route path="ai-available" element={<AiSupportDocument />} />
