@@ -218,6 +218,8 @@ router.delete("/:id", BusinessController.deleteBusiness);
  */
 router.get("/category/:categoryId", BusinessController.getBusinessByCategory);
 
+router.get("/owner/:ownerId", BusinessController.getBusinessesByOwner);
+
 router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
 router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);
 router.get('/priority/top', BusinessController.getBusinessByPriority);

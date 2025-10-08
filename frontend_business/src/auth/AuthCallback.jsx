@@ -28,13 +28,10 @@ const AuthCallback = () => {
           };
 
           const hasRoleField = Object.prototype.hasOwnProperty.call(user.publicMetadata, 'role');
-          console.log(hasRoleField);
           
           if (!hasRoleField) {
             requestOptions.body = JSON.stringify({ role: 'owner' });
           }
-
-          console.log(requestOptions);
 
           const response = await fetch(`${import.meta.env.VITE_BE_URL}/api/auth`, requestOptions);
 
@@ -52,7 +49,7 @@ const AuthCallback = () => {
           }
 
           localStorage.setItem('accessToken', data.accessToken);
-          navigate('/my-business');
+          navigate('/');
 
         } catch (err) {
           console.error('Lỗi xác thực:', err);
