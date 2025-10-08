@@ -198,12 +198,6 @@ const BusinessRegistrationPage = () => {
         console.error("Email error:", error);
       }
 
-      await axios.put(`${import.meta.env.VITE_BE_URL}/api/user/${userId}`, {
-        publicMetadata: {
-          role: "owner",
-        },
-      });
-
       toast.update(toastId, {
         render: "Doanh nghiệp đã được tạo thành công và đang chờ phê duyệt.",
         type: "success",

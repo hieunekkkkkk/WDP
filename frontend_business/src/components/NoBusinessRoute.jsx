@@ -4,12 +4,12 @@ import axios from "axios";
 import LoadingScreen from "./LoadingScreen";
 import { getCurrentUserId } from "../utils/useCurrentUserId";
 
-const OwnerRoute = ({ children }) => {
+const NoBusinessRoute = ({ children }) => {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const verifyBusiness = async () => {
+    const checkBusinessStatus = async () => {
       try {
         const ownerId = await getCurrentUserId();
         if (!ownerId) {
@@ -22,19 +22,20 @@ const OwnerRoute = ({ children }) => {
         );
 
         const hasBusiness = response.data && response.data.length > 0;
-        if (!hasBusiness) {
-          navigate("/business-registration");
+
+        if (hasBusiness) {
+          navigate("/my-business");
           return;
         }
 
         setChecking(false);
       } catch (error) {
-        console.error("Error verifying business existence:", error);
-        navigate("/business-registration");
+        console.error("Error checking business registration:", error);
+        setChecking(false);
       }
     };
 
-    verifyBusiness();
+    checkBusinessStatus();
   }, [navigate]);
 
   if (checking) {
@@ -44,4 +45,4 @@ const OwnerRoute = ({ children }) => {
   return children;
 };
 
-export default OwnerRoute;
+export default NoBusinessRoute;
