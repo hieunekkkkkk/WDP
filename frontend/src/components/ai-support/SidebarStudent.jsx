@@ -45,11 +45,6 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
       path: "/dashboard/my-ai",
     },
     {
-      icon: <FaCog />,
-      label: "AI Module",
-      path: "/dashboard/ai-module",
-    },
-    {
       icon: (
         <span
           style={{
