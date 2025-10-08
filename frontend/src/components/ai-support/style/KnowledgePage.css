@@ -1,4 +1,7 @@
+<<<<<<< HEAD
+=======
 /* ========== Layout ========== */
+>>>>>>> origin/hieu
 .knowledge-page {
   display: flex;
   flex-direction: column;
@@ -8,6 +11,15 @@
   background: #f9fafb;
   min-height: 100vh;
 }
+<<<<<<< HEAD
+.actions-col {
+  display: flex;
+  justify-content: center;  
+  align-items: center;      
+}
+
+
+=======
 
 /* Card container */
 .knowledge-container,
@@ -21,13 +33,18 @@
 }
 
 /* ========== Header ========== */
+>>>>>>> origin/hieu
 .knowledge-header {
   text-align: center;
   margin-bottom: 10px;
 }
 
 .knowledge-title {
+<<<<<<< HEAD
+  font-size: 24px;
+=======
   font-size: 22px;
+>>>>>>> origin/hieu
   font-weight: 600;
   color: #1f2937;
   margin: 0;
@@ -37,6 +54,59 @@
   justify-content: center;
   gap: 8px;
 }
+<<<<<<< HEAD
+.knowledge-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+/* Nút thêm kiến thức trên cùng */
+.add-knowledge-top {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Nút thêm kiến thức */
+.knowledge-btn {
+  width: 100%;
+  max-width: 600px; /* chiều ngang tối đa */
+  padding: 14px 16px; /* to + cao */
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  background: #6b7280; /* xám tối */
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.knowledge-btn:hover {
+  background: #4b5563; /* xám đậm hơn khi hover */
+}
+
+.knowledge-btn:active {
+  transform: scale(0.98);
+}
+
+/* Panel danh sách */
+.knowledge-list-panel {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  background: #fff;
+}
+
+.bot-info-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  background: #fdfdfd;
+=======
 
 /* ========== Action bar ========== */
 .action-bar {
@@ -91,11 +161,32 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
+>>>>>>> origin/hieu
   margin-bottom: 16px;
   font-size: 14px;
   color: #111827;
 }
 .bot-info-box p {
+<<<<<<< HEAD
+  margin: 4px 0;
+}
+
+/* Filter */
+.filter-box {
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-box select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Table */
+=======
   margin: 6px 0;
 }
 .bot-id {
@@ -116,6 +207,7 @@
 }
 
 /* ========== Knowledge table ========== */
+>>>>>>> origin/hieu
 .knowledge-table {
   border-top: 1px solid #eee;
   margin-top: 10px;
@@ -123,7 +215,11 @@
 .knowledge-row {
   display: grid;
   grid-template-columns: 3fr 1fr;
+<<<<<<< HEAD
+  padding: 10px 0;
+=======
   padding: 12px 16px;
+>>>>>>> origin/hieu
   border-bottom: 1px solid #f1f5f9;
   align-items: center;
   font-size: 14px;
@@ -131,6 +227,23 @@
 .knowledge-row.header {
   font-weight: bold;
   background: #f3f4f6;
+<<<<<<< HEAD
+  padding: 12px 0;
+}
+.col {
+  padding: 0 8px;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.actions button {
+  border: none;
+  width: 32px;
+  height: 32px;
+=======
   padding: 12px 16px;
 }
 .knowledge-row:nth-child(even):not(.header) {
@@ -150,11 +263,17 @@
   border: none;
   width: 28px;
   height: 28px;
+>>>>>>> origin/hieu
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   cursor: pointer;
+<<<<<<< HEAD
+  transition: all 0.2s;
+  padding: 0;
+  margin: 0;
+=======
   transition: transform 0.2s;
   padding: 0;
   margin: 0;
@@ -171,14 +290,46 @@
 }
 .actions .delete-btn {
   background: #dc2626;
+>>>>>>> origin/hieu
 }
 
 .actions button svg {
   width: 14px;
   height: 14px;
+<<<<<<< HEAD
+  color: #ffffff;
   fill: currentColor;
 }
 
+.actions .view-btn {
+  background: #059669; /* Green */
+}
+.actions .view-btn:hover {
+  background: #047857;
+  transform: scale(1.05);
+}
+
+.actions .edit-btn {
+  background: #0ea5e9; /* Lighter blue */
+  border: none;
+}
+.actions .edit-btn:hover {
+  background: #0284c7;
+  transform: scale(1.05);
+}
+
+.actions .delete-btn {
+  background: #dc2626; /* Red */
+}
+.actions .delete-btn:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+=======
+  fill: currentColor;
+}
+
+>>>>>>> origin/hieu
 .empty {
   padding: 12px;
   font-style: italic;
@@ -186,7 +337,11 @@
   text-align: center;
 }
 
+<<<<<<< HEAD
+/* -------- Modal -------- */
+=======
 /* ========== Modal ========== */
+>>>>>>> origin/hieu
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -281,6 +436,8 @@
 .cancel-button:hover {
   background: #4b5563;
 }
+<<<<<<< HEAD
+=======
 
 /* ========== Responsive ========== */
 @media (max-width: 640px) {
@@ -307,3 +464,4 @@
 .bot-id-link:hover {
   color: #1d4ed8;
 }
+>>>>>>> origin/hieu

@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+<<<<<<< HEAD
+=======
 import { toast } from "react-toastify";
+>>>>>>> origin/hieu
 import "../../components/ai-support/style/KnowledgePage.css";
 
 const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
@@ -8,6 +11,10 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     title: knowledge.title || "",
     content: knowledge.content || "",
     tags: knowledge.tags ? knowledge.tags.join(", ") : "",
+<<<<<<< HEAD
+    type: knowledge.type || "Liên kết",
+=======
+>>>>>>> origin/hieu
   });
 
   const handleChange = (e) => {
@@ -15,17 +22,31 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
+<<<<<<< HEAD
+    if (!form.title.trim()) return alert("Tên không được để trống");
+=======
     if (!form.title.trim()) {
       toast.error("Tên không được để trống");
       return;
     }
 
+>>>>>>> origin/hieu
     try {
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledge._id}`,
         {
           title: form.title,
           content: form.content,
+<<<<<<< HEAD
+          tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+          type: form.type,
+        }
+      );
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Error updating knowledge:", err);
+=======
           tags: form.tags
             .split(",")
             .map((t) => t.trim())
@@ -39,6 +60,7 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     } catch (err) {
       console.error(" Error updating knowledge:", err.response?.data || err);
       toast.error("Có lỗi khi cập nhật kiến thức");
+>>>>>>> origin/hieu
     }
   };
 
@@ -58,12 +80,32 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             name="title"
             value={form.title}
             onChange={handleChange}
+<<<<<<< HEAD
+            placeholder="Nhập tên file"
+=======
             placeholder="Nhập tên kiến thức"
+>>>>>>> origin/hieu
             className="form-input"
           />
         </div>
 
         <div className="form-group">
+<<<<<<< HEAD
+          <label>Loại</label>
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            className="form-select"
+          >
+            <option>Liên kết</option>
+            <option>Văn bản</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+=======
+>>>>>>> origin/hieu
           <label>Nội dung</label>
           <textarea
             name="content"
@@ -81,7 +123,11 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             name="tags"
             value={form.tags}
             onChange={handleChange}
+<<<<<<< HEAD
+            placeholder="VD: C++, Source"
+=======
             placeholder="VD: AI, NodeJS"
+>>>>>>> origin/hieu
             className="form-input"
           />
         </div>
@@ -99,4 +145,8 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
   );
 };
 
+<<<<<<< HEAD
 export default KnowledgeEditModal;
+=======
+export default KnowledgeEditModal;
+>>>>>>> origin/hieu

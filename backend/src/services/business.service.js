@@ -6,14 +6,12 @@ class BusinessService {
     // Create a new business
     async createBusiness(businessData) {
         try {
-            const { business_category_id, business_stack_id } = businessData;
+            const { business_category_id } = businessData;
             const categoryId = business_category_id ? new mongoose.Types.ObjectId(business_category_id) : null;
-            const stackId = business_stack_id ? new mongoose.Types.ObjectId(business_stack_id) : null;
 
             const business = new Business({
                 ...businessData,
                 business_category_id: categoryId,
-                business_stack_id: stackId
             });
 
             return await business.save();
@@ -36,7 +34,6 @@ class BusinessService {
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
-                .populate('business_stack_id');
 
             const total = await Business.countDocuments();
 
@@ -51,6 +48,15 @@ class BusinessService {
         }
     }
 
+    async getBussinessByOwner(ownerId) {
+        try {
+            const businesses = await Business.find({ business_owner_id: ownerId });
+            return businesses;
+        } catch (error) {
+            throw new Error(`Error fetching businesses by owner: ${error.message}`);
+        }
+    }
+
     async getAllBusinessesWithRating(page = 1, limit = 10) {
         try {
             const skip = (page - 1) * limit;
@@ -58,7 +64,6 @@ class BusinessService {
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
-                .populate('business_stack_id')
                 .select('-__v') // Loại bỏ version key
                 .sort({ business_rating: -1 }); // Sắp xếp theo rating cao nhất
             const total = await Business.countDocuments();
@@ -78,7 +83,6 @@ class BusinessService {
         try {
             const business = await Business.findById(id)
                 .populate('business_category_id')
-                .populate('business_stack_id');
             if (!business) {
                 throw new Error('Business not found');
             }
@@ -125,7 +129,6 @@ class BusinessService {
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
-                .populate('business_stack_id');
             const total = await Business.countDocuments({
                 business_category_id: categoryId
             });
@@ -145,9 +148,6 @@ class BusinessService {
         try {
             if (updateData.business_category_id) {
                 updateData.business_category_id = new mongoose.Types.ObjectId(updateData.business_category_id);
-            }
-            if (updateData.business_stack_id) {
-                updateData.business_stack_id = new mongoose.Types.ObjectId(updateData.business_stack_id);
             }
             const business = await Business.findByIdAndUpdate(
                 id,
@@ -223,7 +223,6 @@ class BusinessService {
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
-                .populate('business_stack_id');
             const total = await Business.countDocuments({
                 business_name: { $regex: query, $options: 'i' }
             });
@@ -263,7 +262,6 @@ class BusinessService {
 
             const businesses = await Business.find(query)
                 .populate('business_category_id')
-                .populate('business_stack_id')
                 .select('-__v')
                 .limit(3)
                 .sort({ business_rating: -1 });
