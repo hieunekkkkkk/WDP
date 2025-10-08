@@ -8,4 +8,8 @@ router.get('/:id', AiBotController.getBotById.bind(AiBotController));
 router.put('/:id', AiBotController.updateBot.bind(AiBotController));
 router.delete('/:id', AiBotController.deleteBot.bind(AiBotController));
 
+
+// localhost:3000/aibot/:botId/:message
+router.post('/:botId/:message', AiBotController.testHandleMessage.bind(AiBotController));
+
 module.exports = router;

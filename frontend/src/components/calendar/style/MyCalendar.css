@@ -1,3 +1,162 @@
+<<<<<<< HEAD
+.calendar-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 24px;
+  font-family: "Inter", sans-serif;
+  color: #111827;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.calendar-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.calendar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.calendar-btn {
+  padding: 8px 14px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #111827;
+}
+
+.calendar-btn:hover {
+  background: #e5e7eb;
+}
+
+/* React-calendar override */
+.react-calendar {
+  width: 100%;
+  background: #fff;
+  border: none;
+}
+
+.react-calendar__navigation {
+  display: none; /* Ẩn navigation mặc định */
+}
+
+.react-calendar__month-view__weekdays {
+  background: #f9fafb;
+  text-align: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  padding: 10px 0;
+}
+
+.react-calendar__month-view__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #e5e7eb;
+}
+
+.react-calendar__tile {
+  background: #fff;
+  min-height: 100px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: none;
+  position: relative;
+}
+
+/* Ẩn số ngày mặc định */
+.react-calendar__tile abbr {
+  display: none;
+}
+
+.react-calendar__tile--neighboringMonth {
+  color: #d1d5db;
+}
+
+.react-calendar__tile--now {
+  background: none;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background: #f9fafb;
+}
+
+.react-calendar__tile--active {
+  background: none;
+}
+
+.calendar-date {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.calendar-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-label {
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.event-label.blue {
+  color: #3b82f6;
+}
+
+.event-label.orange {
+  color: #f59e0b;
+}
+
+.event-label.red {
+  color: #ef4444;
+}
+/* DatePicker style để giống Google */
+.date-picker-input {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  color: #111827;
+}
+
+/* Hover & focus cho đẹp */
+.date-picker-input:hover {
+  border-color: #9ca3af;
+}
+
+.date-picker-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+=======
 /* MyCalendar.css - Complete Version */
 
 /* ==================== Wrapper & Container ==================== */
@@ -775,3 +934,4 @@
     display: none;
   }
 }
+>>>>>>> origin/hieu

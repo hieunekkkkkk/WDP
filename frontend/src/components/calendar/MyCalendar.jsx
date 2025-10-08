@@ -144,9 +144,8 @@ export default function MyCalendar() {
               return (
                 <div
                   key={index}
-                  className={`calendar-day ${
-                    !day.isCurrentMonth ? "calendar-day-other-month" : ""
-                  } ${day.isToday ? "calendar-day-today" : ""}`}
+                  className={`calendar-day ${!day.isCurrentMonth ? "calendar-day-other-month" : ""
+                    } ${day.isToday ? "calendar-day-today" : ""}`}
                   onClick={() => handleDayClick(day)}
                 >
                   <div className="calendar-day-number">{day.date}</div>

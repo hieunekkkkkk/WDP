@@ -12,13 +12,14 @@ const clerk = new Clerk({
 
 router.post('/', authMiddleware, async (req, res) => {
     try {
+        const { role } = req.body;
         const decoded = req.user;
         let user = await clerk.users.getUser(decoded.sub);
         if (!user.publicMetadata?.role) {
             await clerk.users.updateUser(decoded.sub, {
                 publicMetadata: {
                     ...user.publicMetadata,
-                    role: 'client',
+                    role: role || 'client',
                 },
             });
             user = await clerk.users.getUser(decoded.sub);

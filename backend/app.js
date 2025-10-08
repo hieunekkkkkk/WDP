@@ -54,6 +54,7 @@ app.use(metricsMiddleware);
 app.use(cors({
     origin: [
         'http://localhost:5173',
+        'http://localhost:5174',
         'https://smearch.io.vn',
         'http://smearch.io.vn',  // Nếu chưa có SSL
         'http://react-app:5173',  // Docker container name
