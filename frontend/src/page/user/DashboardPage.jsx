@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React from "react";
 import "../../css/DashboardPage.css";
 
@@ -59,6 +60,35 @@ const DashboardPage = () => {
     { month: "May", value: 26 },
     { month: "Jun", value: 29 },
   ];
+=======
+import React, { useEffect, useState } from 'react';
+import '../../css/DashboardPage.css';
+
+const DashboardPage = () => {
+  const [tableData, setTableData] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+
+  useEffect(() => {
+    // Fetch doanh thu/lợi nhuận/chi phí
+    fetch('/api/businessRevenue')
+      .then((res) => res.json())
+      .then((data) => setTableData(data))
+      .catch(() => setTableData([]));
+
+    // Fetch lượt truy cập tuần
+    fetch('/api/businessView/weekly')
+      .then((res) => res.json())
+      .then((data) => setWeeklyData(data))
+      .catch(() => setWeeklyData([]));
+
+    // Fetch giao dịch tháng
+    fetch('/api/businessRevenue/monthly')
+      .then((res) => res.json())
+      .then((data) => setMonthlyData(data))
+      .catch(() => setMonthlyData([]));
+  }, []);
+>>>>>>> origin/hieu
 
   return (
     <>
@@ -90,7 +120,11 @@ const DashboardPage = () => {
       {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
+<<<<<<< HEAD
           <h3 className="card-title">Lượt truy cập trong tuần</h3>
+=======
+          <h3 className="card-title">Lượt truy cập trong tuần </h3>
+>>>>>>> origin/hieu
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">
@@ -116,7 +150,11 @@ const DashboardPage = () => {
               <polyline
                 points={monthlyData
                   .map((d, i) => `${i * 60 + 30},${150 - d.value * 5}`)
+<<<<<<< HEAD
                   .join(" ")}
+=======
+                  .join(' ')}
+>>>>>>> origin/hieu
                 fill="none"
                 stroke="#283593"
                 strokeWidth="2"

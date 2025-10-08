@@ -57,6 +57,19 @@ class AiBotController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
+    async testHandleMessage(req, res) {
+        try {
+            const { botId } = req.params;
+            const { message } = req.params;
+            if (!message) return res.status(400).json({ error: 'Message is required' });
+            const response = await AiBotService.testHandleMessage(botId, message);
+            res.status(200).json({ response });
+        } catch (err) {
+            console.error('Error testing bot message handling:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 }
 
 module.exports = new AiBotController();

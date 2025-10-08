@@ -34,7 +34,6 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
 
   // Menu student
   const menus = [
-    { icon: <FaHome />, label: "Dashboard", path: "/dashboard" },
     {
       icon: <FaEnvelope />,
       label: "Messages",
@@ -87,9 +86,8 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
       )}
 
       <aside
-        className={`sidebar ${open ? "open" : "collapsed"} ${
-          isMobile ? "mobile" : ""
-        }`}
+        className={`sidebar ${open ? "open" : "collapsed"} ${isMobile ? "mobile" : ""
+          }`}
       >
         {/* Header */}
         <div className="sidebar-header">

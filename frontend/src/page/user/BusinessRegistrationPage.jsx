@@ -5,12 +5,18 @@ import "../../css/BusinessRegistrationPage.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUserId } from "../../utils/useCurrentUserId";
+<<<<<<< HEAD
 import { PuffLoader } from "react-spinners";
+=======
+>>>>>>> origin/hieu
 import { toast } from "react-toastify";
 import { convertFilesToBase64 } from "../../utils/imageToBase64";
 import { sendEmail } from "../../utils/sendEmail";
 import MapModal from "../../components/MapModal";
+<<<<<<< HEAD
 import { motion } from "framer-motion";
+=======
+>>>>>>> origin/hieu
 
 const BusinessRegistrationPage = () => {
   const navigate = useNavigate();
@@ -18,7 +24,6 @@ const BusinessRegistrationPage = () => {
     const savedImages = localStorage.getItem("businessImages");
     return savedImages ? JSON.parse(savedImages) : [];
   });
-  const [stacks, setStacks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,6 +47,7 @@ const BusinessRegistrationPage = () => {
   const userId = getCurrentUserId();
 
   useEffect(() => {
+<<<<<<< HEAD
     const fetchStacks = async () => {
       try {
         setLoading(true);
@@ -57,6 +63,8 @@ const BusinessRegistrationPage = () => {
       }
     };
 
+=======
+>>>>>>> origin/hieu
     const fetchCategories = async () => {
       try {
         setLoading(true);
@@ -71,8 +79,6 @@ const BusinessRegistrationPage = () => {
         setLoading(false);
       }
     };
-
-    fetchStacks();
     fetchCategories();
   }, [userId]);
 

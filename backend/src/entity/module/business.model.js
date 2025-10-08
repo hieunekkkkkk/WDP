@@ -23,7 +23,6 @@ const businessSchema = new mongoose.Schema({
   },
   business_phone: String,
   business_image: [String],
-  business_stack_id: { type: mongoose.Schema.Types.ObjectId, ref: 'stack' },
   business_total_vote: Number,
   business_rating: Number,
   business_status: Boolean,
