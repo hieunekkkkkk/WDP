@@ -68,10 +68,10 @@ const ChatSection = React.memo(({ section, items, activeChat }) => (
 
 ChatSection.displayName = "ChatSection";
 
-// No Bot View Component - Single Card
+// No Bot View Component - Single Card in Center
 const NoBotView = ({ stack, onActivate }) => (
   <div className="myai-container">
-    {/* Blurred background */}
+    {/* Blurred background content */}
     <div className="myai-blur-content">
       <div className="myai-center">
         <img src={DEFAULT_AVATAR} alt="AI avatar" className="myai-avatar" />
@@ -82,19 +82,19 @@ const NoBotView = ({ stack, onActivate }) => (
       </div>
     </div>
 
-    {/* Single card overlay */}
+    {/* Single centered stack card overlay */}
     <div className="stack-overlay">
       {!stack ? (
         <div className="stack-card">
           <h3>Không tìm thấy gói "Bot hỗ trợ cá nhân"</h3>
-          <p>Vui lòng liên hệ quản trị viên để được hỗ trợ</p>
+          <p>Vui lòng liên hệ quản trị viên</p>
         </div>
       ) : (
         <div className="stack-card">
           <h3>{stack.stack_name}</h3>
           <p>{stack.stack_detail}</p>
           <div className="stack-price">
-            {stack.stack_price?.toLocaleString()}₫
+            {stack.stack_price.toLocaleString()}₫
           </div>
           <button
             className="stack-activate-btn"
@@ -178,6 +178,7 @@ const AISidebar = ({ bot, onNavigate }) => {
         ))}
       </div>
 
+      {/* Only show Knowledge button when user has AI */}
       <button
         className="button save-button"
         style={{ marginTop: "auto" }}
@@ -265,7 +266,7 @@ export default function MyAi() {
 
         // Find the specific stack
         const personalBotStack = stackList.find(
-          (s) => s.stack_name?.trim() === "Bot hỗ trợ cá nhân"
+          (s) => s.stack_name.trim() === "Bot hỗ trợ cá nhân"
         );
 
         setStack(personalBotStack || null);
@@ -285,8 +286,6 @@ export default function MyAi() {
   const handleActivateStack = useCallback((selectedStack) => {
     toast.info("Tính năng kích hoạt AI sẽ được cập nhật sớm!");
     console.log("Activating stack:", selectedStack);
-    // TODO: Implement activation API call
-    // After successful activation, refetch data
   }, []);
 
   const handleNavigateToKnowledge = useCallback(() => {
