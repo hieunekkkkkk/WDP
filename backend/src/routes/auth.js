@@ -19,7 +19,7 @@ router.post('/', authMiddleware, async (req, res) => {
             await clerk.users.updateUser(decoded.sub, {
                 publicMetadata: {
                     ...user.publicMetadata,
-                    role: role || 'user',
+                    role: role || 'client',
                 },
             });
             user = await clerk.users.getUser(decoded.sub);
