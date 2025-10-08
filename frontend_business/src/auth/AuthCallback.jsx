@@ -19,12 +19,24 @@ const AuthCallback = () => {
           const clerkToken = await getToken({ template: 'node-backend' });
           if (!clerkToken) throw new Error("Không lấy được token từ Clerk");
 
-          const response = await fetch(`${import.meta.env.VITE_BE_URL}/api/auth`, {
+          const requestOptions = {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${clerkToken}`,
+              'Content-Type': 'application/json',
             },
-          });
+          };
+
+          const hasRoleField = Object.prototype.hasOwnProperty.call(user.publicMetadata, 'role');
+          console.log(hasRoleField);
+          
+          if (!hasRoleField) {
+            requestOptions.body = JSON.stringify({ role: 'owner' });
+          }
+
+          console.log(requestOptions);
+
+          const response = await fetch(`${import.meta.env.VITE_BE_URL}/api/auth`, requestOptions);
 
           const data = await response.json();
           if (!response.ok) throw new Error(data.message || 'Lỗi xác thực từ server');
@@ -33,7 +45,7 @@ const AuthCallback = () => {
           setRole(role);
 
           if (role !== 'owner') {
-            toast.error('Chỉ chủ doanh nghiệp (owner) mới được phép đăng nhập.');
+            toast.error('Chỉ doanh nghiệp mới được phép đăng nhập.');
             await signOut();
             navigate('/');
             return;
@@ -45,7 +57,8 @@ const AuthCallback = () => {
         } catch (err) {
           console.error('Lỗi xác thực:', err);
           toast.error('Không thể xác thực. Vui lòng thử lại sau.');
-          // await signOut();
+          await signOut();
+          navigate('/');
         }
       }
     };
