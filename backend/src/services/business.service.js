@@ -50,7 +50,7 @@ class BusinessService {
 
     async getBussinessByOwner(ownerId) {
         try {
-            const businesses = await Business.find({ business_owner_id: ownerId });
+            const businesses = await Business.find({ owner_id: ownerId });
             return businesses;
         } catch (error) {
             throw new Error(`Error fetching businesses by owner: ${error.message}`);

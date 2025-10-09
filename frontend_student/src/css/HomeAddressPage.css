@@ -1,0 +1,110 @@
+.address-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #fff;
+  font-family: inherit;
+}
+
+.address-form-group {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  gap: 1.5rem;
+}
+
+.address-form-group label {
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0.375rem 0;
+  gap: 0.25rem;
+  width: 22rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.38462;
+  color: inherit;
+}
+
+div[data-clerk-component="UserProfile"] *{
+  font-size: 16px;
+}
+
+.address-form-group :is(#city, #district, #ward){
+  width: 100%;
+  margin-left: 2rem;
+}
+
+.address-form-group input {
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  /* width: 500px; */
+  margin: 0;
+  background-color: unset;
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  line-height: 1.38462;
+  padding: 0.375rem 0.75rem 0.375rem 0.625rem;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  outline: none;
+  cursor: pointer;
+  border-radius: 0;
+  --accent: #2f3037;
+  --accentHover: #3b3c45;
+  --border: #2f3037;
+  --accentContrast: white;
+  --alpha: hsla(0, 0%, 0%, 0.03);
+  font-size: 16px;
+}
+
+.address-form-group select {
+  padding: 8px;
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  background-color: white;
+  font-weight: 500;
+  width: 500px;
+}
+
+.address-save-button {
+  align-self: flex-end;
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-weight: 500;
+  background-color: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.address-save-button:hover {
+  background-color: #e7602f;
+}
+
+.address-header {
+  color: rgb(33, 33, 38);
+  margin: 0 0 1rem;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  text-align: center;
+}
+
+.address-save-button-container {
+  display: flex;
+  justify-content: end;
+}
