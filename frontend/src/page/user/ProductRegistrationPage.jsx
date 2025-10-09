@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import '../../css/ProductRegistrationPage.css';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { getCurrentUserId } from '../../utils/useCurrentUserId';
-import { convertFilesToBase64 } from '../../utils/imageToBase64'; // Giả định file util này tồn tại
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import "../../css/ProductRegistrationPage.css";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { getCurrentUserId } from "../../utils/useCurrentUserId";
+import { convertFilesToBase64 } from "../../utils/imageToBase64"; // Giả định file util này tồn tại
+import { uploadToCloudinary } from "../../utils/uploadToCloudinary";
+import { toast } from "react-toastify";
 
 const ProductRegistrationPage = () => {
   const navigate = useNavigate();
   const userId = getCurrentUserId();
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
-    productName: '',
-    productDescription: '',
-    productPrice: '',
-    productNumber: '',
+    productName: "",
+    productDescription: "",
+    productPrice: "",
+    productNumber: "",
     policyConfirmation: false,
   });
   const [loading, setLoading] = useState(false);
@@ -25,11 +26,13 @@ const ProductRegistrationPage = () => {
   const handleAddImage = async (event) => {
     const files = Array.from(event.target.files);
     try {
-      const base64Images = await convertFilesToBase64(files);
-      setImages((prevImages) => [...prevImages, ...base64Images]);
+      toast.info("Đang tải ảnh lên Cloudinary...");
+      const uploadedUrls = await uploadToCloudinary(files);
+      setImages((prevImages) => [...prevImages, ...uploadedUrls]);
+      toast.success("Upload ảnh thành công!");
     } catch (error) {
-      console.error('Error converting images to base64:', error);
-      setError('Không thể chuyển đổi ảnh. Vui lòng thử lại.');
+      console.error("Error uploading images:", error);
+      toast.error("Không thể tải ảnh lên Cloudinary.");
     }
   };
 
@@ -37,7 +40,7 @@ const ProductRegistrationPage = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -47,27 +50,27 @@ const ProductRegistrationPage = () => {
     setError(null);
 
     if (!formData.productName.trim()) {
-      toast.error('Tên sản phẩm là bắt buộc.');
+      toast.error("Tên sản phẩm là bắt buộc.");
       setLoading(false);
       return;
     }
     if (!formData.productPrice || formData.productPrice <= 0) {
-      toast.error('Giá thành phải là số dương.');
+      toast.error("Giá thành phải là số dương.");
       setLoading(false);
       return;
     }
     if (!formData.productNumber || formData.productNumber <= 0) {
-      toast.error('Số lượng phải là số dương.');
+      toast.error("Số lượng phải là số dương.");
       setLoading(false);
       return;
     }
     if (!formData.policyConfirmation) {
-      toast.error('Vui lòng xác nhận tuân thủ chính sách.');
+      toast.error("Vui lòng xác nhận tuân thủ chính sách.");
       setLoading(false);
       return;
     }
     if (images.length === 0) {
-      toast.error('Vui lòng thêm ít nhất một hình ảnh.');
+      toast.error("Vui lòng thêm ít nhất một hình ảnh.");
       setLoading(false);
       return;
     }
@@ -77,7 +80,7 @@ const ProductRegistrationPage = () => {
       const businessesResponse = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/business`,
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
           params: { page: 1, limit: 100 },
         }
       );
@@ -85,14 +88,12 @@ const ProductRegistrationPage = () => {
       if (businesses.businesses && Array.isArray(businesses.businesses)) {
         businesses = businesses.businesses; // Lấy mảng businesses nếu có
       } else if (!Array.isArray(businesses)) {
-        throw new Error('Dữ liệu từ API không phải là mảng doanh nghiệp.');
+        throw new Error("Dữ liệu từ API không phải là mảng doanh nghiệp.");
       }
 
-      const userBusiness = businesses.find(
-        (b) => b.owner_id === userId
-      );
+      const userBusiness = businesses.find((b) => b.owner_id === userId);
       if (!userBusiness) {
-        throw new Error('Không tìm thấy doanh nghiệp của bạn.');
+        throw new Error("Không tìm thấy doanh nghiệp của bạn.");
       }
       const businessId = userBusiness._id;
 
@@ -111,15 +112,15 @@ const ProductRegistrationPage = () => {
         `${import.meta.env.VITE_BE_URL}/api/product`,
         productData,
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
 
-      toast.success('Sản phẩm đã được tạo thành công.');
-      navigate('/my-business');
+      toast.success("Sản phẩm đã được tạo thành công.");
+      navigate("/my-business");
     } catch (err) {
       console.error(
-        'Error creating product:',
+        "Error creating product:",
         err.response ? err.response.data : err.message
       );
       setError(`Không thể tạo sản phẩm. Chi tiết: ${err.message}`);
@@ -209,7 +210,7 @@ const ProductRegistrationPage = () => {
                       <img
                         src={image}
                         alt={`Preview ${index + 1}`}
-                        style={{ width: '100px', height: '100px' }}
+                        style={{ width: "100px", height: "100px" }}
                       />
                       <button
                         type="button"
@@ -228,7 +229,7 @@ const ProductRegistrationPage = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleAddImage}
-                      style={{ display: 'none' }}
+                      style={{ display: "none" }}
                       multiple
                     />
                   </label>
@@ -273,9 +274,9 @@ const ProductRegistrationPage = () => {
             </label>
           </div>
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+            {loading ? "Đang xử lý..." : "Đăng ký"}
           </button>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {error && <p style={{ color: "red" }}>{error}</p>}
         </form>
       </main>
       <Footer />
