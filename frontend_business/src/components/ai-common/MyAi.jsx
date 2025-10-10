@@ -68,54 +68,45 @@ const ChatSection = React.memo(({ section, items, activeChat }) => (
 
 ChatSection.displayName = "ChatSection";
 
-// No Bot View Component - Enhanced Single Card
-const NoBotView = ({ stack, onActivate }) => (
+// No Bot View Component - Stack Cards Display
+const NoBotView = ({ stacks = [], onActivate }) => (
   <div className="myai-container">
     {/* Blurred background content */}
     <div className="myai-blur-content">
       <div className="myai-center">
         <img src={DEFAULT_AVATAR} alt="AI avatar" className="myai-avatar" />
-        <h2 className="myai-title">AI Hỗ Trợ Học Tập</h2>
+        <h2 className="myai-title">My AI</h2>
         <p className="myai-desc">
-          Trợ lý AI thông minh sẽ giúp bạn học tập hiệu quả hơn. Hãy kích hoạt
-          để bắt đầu sử dụng.
+          Bạn chưa có AI cá nhân. Hãy chọn một trong các gói dưới đây để sử
+          dụng.
         </p>
       </div>
     </div>
 
-    {/* Enhanced single card overlay */}
+    {/* Stack cards overlay */}
     <div className="stack-overlay">
-      {!stack ? (
-        <div className="stack-card student-ai">
-          <h3>Đang tải thông tin gói AI...</h3>
-          <p>Vui lòng chờ trong giây lát</p>
+      {stacks.length === 0 ? (
+        <div className="stack-card">
+          <h3>Không tìm thấy gói AI nào</h3>
+          <p>Vui lòng liên hệ quản trị viên</p>
         </div>
       ) : (
-        <div className="stack-card student-ai">
-          <div className="stack-card-badge">Dành cho sinh viên</div>
-          <h3>{stack.stack_name || "Gói AI Sinh Viên"}</h3>
-          <div className="stack-features">
-            <div className="stack-feature">✓ Trợ giúp làm bài tập</div>
-            <div className="stack-feature">✓ Giải đáp thắc mắc 24/7</div>
-            <div className="stack-feature">✓ Hỗ trợ nghiên cứu</div>
-            <div className="stack-feature">
-              ✓ Luyện tập & kiểm tra kiến thức
+        <div className="stack-cards-container">
+          {stacks.map((stack, index) => (
+            <div key={stack._id || index} className="stack-card">
+              <h3>{stack.stack_name}</h3>
+              <p>{stack.stack_detail}</p>
+              <div className="stack-price">
+                {Number(stack.stack_price).toLocaleString()}₫
+              </div>
+              <button
+                className="stack-activate-btn"
+                onClick={() => onActivate(stack)}
+              >
+                🔓 Kích hoạt gói này
+              </button>
             </div>
-          </div>
-          <p className="stack-description">
-            {stack.stack_detail ||
-              "Trợ lý AI thông minh giúp bạn học tập hiệu quả"}
-          </p>
-          <div className="stack-price">
-            {Number(stack.stack_price).toLocaleString()}₫
-            <span className="price-period">/tháng</span>
-          </div>
-          <button
-            className="stack-activate-btn"
-            onClick={() => onActivate(stack)}
-          >
-            🎓 Kích hoạt ngay
-          </button>
+          ))}
         </div>
       )}
     </div>
@@ -176,13 +167,10 @@ const AISidebar = ({ bot, onNavigate }) => {
       onMouseDown={handleMouseDown}
     >
       <div className="ai-search">
-        <input placeholder="Tìm kiếm cuộc trò chuyện..." />
-        <button className="ai-search-clear">✕</button>
+        <input placeholder="Search chats..." />
+        <button className="ai-close">✕</button>
       </div>
-      <div className="ai-newchat">
-        <span className="newchat-icon">✨</span>
-        <span>Cuộc trò chuyện mới</span>
-      </div>
+      <div className="ai-newchat">New chat</div>
 
       <div className="ai-chatlist">
         {Object.entries(CHAT_HISTORY).map(([section, items]) => (
@@ -257,7 +245,7 @@ export default function MyAi() {
   const navigate = useNavigate();
 
   const [bot, setBot] = useState(null);
-  const [stack, setStack] = useState(null);
+  const [stacks, setStacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -274,19 +262,13 @@ export default function MyAi() {
       if (botRes.data?.length > 0) {
         setBot(botRes.data[0]);
       } else {
-        // Fetch stack services and find "Bot hỗ trợ cá nhân"
+        // Fetch all stack services
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
         const data = stackRes.data;
         const stackList = Array.isArray(data) ? data : data.stacks || [];
-
-        // Find the specific stack
-        const personalBotStack = stackList.find(
-          (s) => s.stack_name.trim() === "Bot hỗ trợ cá nhân"
-        );
-
-        setStack(personalBotStack || null);
+        setStacks(stackList);
       }
     } catch (err) {
       console.error("❌ Lỗi khi tải My AI:", err);
@@ -315,14 +297,14 @@ export default function MyAi() {
 
   // Show activation view if no bot
   if (!bot) {
-    return <NoBotView stack={stack} onActivate={handleActivateStack} />;
+    return <NoBotView stacks={stacks} onActivate={handleActivateStack} />;
   }
 
   // Show AI chat interface if user has bot
   return (
     <div className="ai-layout">
       <AIMainContent bot={bot} user={user} />
-      <AISidebar bot={bot} onNavigate={handleNavigateToKnowledge} />
+      <AISidebar onNavigate={handleNavigateToKnowledge} />
     </div>
   );
 }
