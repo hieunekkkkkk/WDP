@@ -68,40 +68,45 @@ const ChatSection = React.memo(({ section, items, activeChat }) => (
 
 ChatSection.displayName = "ChatSection";
 
-// No Bot View Component - Single Card
-const NoBotView = ({ stack, onActivate }) => (
+// No Bot View Component - Stack Cards Display
+const NoBotView = ({ stacks = [], onActivate }) => (
   <div className="myai-container">
-    {/* Blurred background */}
+    {/* Blurred background content */}
     <div className="myai-blur-content">
       <div className="myai-center">
         <img src={DEFAULT_AVATAR} alt="AI avatar" className="myai-avatar" />
         <h2 className="myai-title">My AI</h2>
         <p className="myai-desc">
-          Bạn chưa có AI cá nhân. Hãy kích hoạt gói bên dưới để sử dụng.
+          Bạn chưa có AI cá nhân. Hãy chọn một trong các gói dưới đây để sử
+          dụng.
         </p>
       </div>
     </div>
 
-    {/* Single card overlay */}
+    {/* Stack cards overlay */}
     <div className="stack-overlay">
-      {!stack ? (
+      {stacks.length === 0 ? (
         <div className="stack-card">
-          <h3>Không tìm thấy gói "Bot hỗ trợ cá nhân"</h3>
-          <p>Vui lòng liên hệ quản trị viên để được hỗ trợ</p>
+          <h3>Không tìm thấy gói AI nào</h3>
+          <p>Vui lòng liên hệ quản trị viên</p>
         </div>
       ) : (
-        <div className="stack-card">
-          <h3>{stack.stack_name}</h3>
-          <p>{stack.stack_detail}</p>
-          <div className="stack-price">
-            {stack.stack_price?.toLocaleString()}₫
-          </div>
-          <button
-            className="stack-activate-btn"
-            onClick={() => onActivate(stack)}
-          >
-            🔓 Kích hoạt gói này
-          </button>
+        <div className="stack-cards-container">
+          {stacks.map((stack, index) => (
+            <div key={stack._id || index} className="stack-card">
+              <h3>{stack.stack_name}</h3>
+              <p>{stack.stack_detail}</p>
+              <div className="stack-price">
+                {Number(stack.stack_price).toLocaleString()}₫
+              </div>
+              <button
+                className="stack-activate-btn"
+                onClick={() => onActivate(stack)}
+              >
+                🔓 Kích hoạt gói này
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -178,6 +183,7 @@ const AISidebar = ({ bot, onNavigate }) => {
         ))}
       </div>
 
+      {/* Only show Knowledge button when user has AI */}
       <button
         className="button save-button"
         style={{ marginTop: "auto" }}
@@ -239,7 +245,7 @@ export default function MyAi() {
   const navigate = useNavigate();
 
   const [bot, setBot] = useState(null);
-  const [stack, setStack] = useState(null);
+  const [stacks, setStacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -256,19 +262,13 @@ export default function MyAi() {
       if (botRes.data?.length > 0) {
         setBot(botRes.data[0]);
       } else {
-        // Fetch stack services and find "Bot hỗ trợ cá nhân"
+        // Fetch all stack services
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
         const data = stackRes.data;
         const stackList = Array.isArray(data) ? data : data.stacks || [];
-
-        // Find the specific stack
-        const personalBotStack = stackList.find(
-          (s) => s.stack_name?.trim() === "Bot hỗ trợ cá nhân"
-        );
-
-        setStack(personalBotStack || null);
+        setStacks(stackList);
       }
     } catch (err) {
       console.error("❌ Lỗi khi tải My AI:", err);
@@ -285,8 +285,6 @@ export default function MyAi() {
   const handleActivateStack = useCallback((selectedStack) => {
     toast.info("Tính năng kích hoạt AI sẽ được cập nhật sớm!");
     console.log("Activating stack:", selectedStack);
-    // TODO: Implement activation API call
-    // After successful activation, refetch data
   }, []);
 
   const handleNavigateToKnowledge = useCallback(() => {
@@ -299,14 +297,14 @@ export default function MyAi() {
 
   // Show activation view if no bot
   if (!bot) {
-    return <NoBotView stack={stack} onActivate={handleActivateStack} />;
+    return <NoBotView stacks={stacks} onActivate={handleActivateStack} />;
   }
 
   // Show AI chat interface if user has bot
   return (
     <div className="ai-layout">
       <AIMainContent bot={bot} user={user} />
-      <AISidebar bot={bot} onNavigate={handleNavigateToKnowledge} />
+      <AISidebar onNavigate={handleNavigateToKnowledge} />
     </div>
   );
 }
