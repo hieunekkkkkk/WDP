@@ -1,8 +1,9 @@
 /* Footer.css */
 
-.footer {
+.main-footer {
   background: #1a237e;
   color: white;
+  padding: 0;
 }
 
 .footer-top {

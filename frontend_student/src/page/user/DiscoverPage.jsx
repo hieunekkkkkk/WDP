@@ -3,17 +3,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import HeroSection from "../../components/HeroSection";
 import LoadingScreen from "../../components/LoadingScreen";
+import DiscoverAISearch from "../../components/DiscoverAISearch";
 import "../../css/DiscoverPage.css";
 import { FaXmark } from "react-icons/fa6";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaCoffee } from "react-icons/fa";
-import { MdFoodBank } from "react-icons/md";
-import { RiHotelLine } from "react-icons/ri";
-import { PiPark } from "react-icons/pi";
-import { GiMaterialsScience } from "react-icons/gi";
 import { PuffLoader } from "react-spinners";
+import { LuUtensils } from "react-icons/lu";
+import { FiCoffee } from "react-icons/fi";
+import { IoGameControllerOutline } from "react-icons/io5";
+import { LuShoppingBag } from "react-icons/lu";
+import { FaDumbbell } from "react-icons/fa6";
+import { PiStudent } from "react-icons/pi";
+import { FaHouse } from "react-icons/fa6";
+
 
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
@@ -143,15 +145,15 @@ function DiscoverPage() {
   };
 
   const handleCategoryClick = useCallback(
-    (categoryId) => {
-      const newCategory = categoryId === selectedCategory ? "all" : categoryId;
+  (categoryId) => {
+    const newCategory = categoryId === selectedCategory ? "all" : categoryId;
 
-      setSelectedCategory(newCategory);
-      setLoadingFilter(true);
-      fetchBusinessesByCategory(newCategory);
-    },
-    [selectedCategory]
-  );
+    setSelectedCategory(newCategory);
+    setLoadingFilter(true);
+    fetchBusinessesByCategory(newCategory);
+  },
+  [selectedCategory]
+);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -162,16 +164,18 @@ function DiscoverPage() {
 
   const getCategoryIcon = (iconName, categoryName) => {
     const iconMap = {
-      FaCoffee: <FaCoffee />,
-      MdFoodBank: <MdFoodBank />,
-      RiHotelLine: <RiHotelLine />,
-      PiPark: <PiPark />,
-      GiMaterialsScience: <GiMaterialsScience />,
-      Coffee: <FaCoffee />,
-      "Hàng ăn": <MdFoodBank />,
-      "Nhà trọ": <RiHotelLine />,
-      "Khu vui chơi": <PiPark />,
-      "Nguyên vật liệu": <GiMaterialsScience />,
+      LuUtensils: <LuUtensils />,
+      FiCoffee: <FiCoffee />,
+      IoGameControllerOutline: <IoGameControllerOutline />,
+      LuShoppingBag: <LuShoppingBag />,
+      FaDumbbell: <FaDumbbell />,
+      PiStudent: <PiStudent />,
+      FaHouse: <FaHouse />,
+      // Coffee: <FaCoffee />,
+      // "Hàng ăn": <MdFoodBank />,
+      // "Nhà trọ": <RiHotelLine />,
+      // "Khu vui chơi": <PiPark />,
+      // "Nguyên vật liệu": <GiMaterialsScience />,
     };
 
     return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
@@ -360,7 +364,6 @@ function DiscoverPage() {
       <div className="landing-page-new">
         {!isSearching && (
           <div className="container">
-            {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
             <section className="best-places-section">
               <h2>Best of HOLA</h2>
 
@@ -536,6 +539,8 @@ function DiscoverPage() {
           )}
         </div>
       </div>
+
+      <DiscoverAISearch/>
 
       <Footer />
     </>

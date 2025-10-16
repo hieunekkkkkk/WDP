@@ -4,6 +4,7 @@ import axios from "axios";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LoadingScreen from "../../components/LoadingScreen";
+import DiscoverAISearch from "../../components/DiscoverAISearch";
 import "../../css/DiscoverPage.css";
 import { FaXmark } from "react-icons/fa6";
 import { PuffLoader } from "react-spinners";
@@ -14,6 +15,7 @@ import { LuShoppingBag } from "react-icons/lu";
 import { FaDumbbell } from "react-icons/fa6";
 import { PiStudent } from "react-icons/pi";
 import { FaHouse } from "react-icons/fa6";
+
 
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
@@ -362,7 +364,6 @@ function DiscoverPage() {
       <div className="landing-page-new">
         {!isSearching && (
           <div className="container">
-            {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
             <section className="best-places-section">
               <h2>Best of HOLA</h2>
 
@@ -538,6 +539,8 @@ function DiscoverPage() {
           )}
         </div>
       </div>
+
+      <DiscoverAISearch/>
 
       <Footer />
     </>

@@ -11,6 +11,7 @@
 
 .hero-section.admin{
   height: 30vh;
+  z-index: 100;
 }
 
 .hero-background {
@@ -26,6 +27,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background-image: url('../public/1.png');
 }
 
 .hero-overlay {
@@ -70,7 +72,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.search-input {
+.hero-search-input {
   flex: 1;
   padding: 1.5rem 2rem;
   border: none;
@@ -79,7 +81,7 @@
   color: #333;
 }
 
-.search-input::placeholder {
+.hero-search-input::placeholder {
   color: #999;
 }
 
