@@ -88,7 +88,7 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
 
         <div className="form-buttons">
           <button className="button save-button" onClick={handleSubmit}>
-            💾 Lưu thay đổi
+            💾 Lưu
           </button>
           <button className="button cancel-button" onClick={onClose}>
             ✗ Hủy

@@ -161,7 +161,7 @@
   color: #fff;
 }
 .actions button:hover {
-  transform: scale(1.05);
+  transform: scale(1.1); /* Enhanced hover effect */
 }
 .actions .view-btn {
   background: #059669;
@@ -190,7 +190,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -199,36 +199,41 @@
 .modal-box {
   background: white;
   width: 600px;
-  max-height: 80vh;
+  max-height: 85vh; /* Increased height limit */
   padding: 20px;
   border-radius: 10px;
   overflow-y: auto;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); /* Stronger shadow */
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb; /* Added separator */
 }
 .modal-header h2 {
-  font-size: 16px;
+  font-size: 18px; /* Larger header text */
   font-weight: bold;
   color: #111827;
 }
 .close-btn {
   background: transparent;
   border: none;
-  font-size: 20px;
+  font-size: 24px; /* Larger close button */
   cursor: pointer;
   color: #374151;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: #dc2626; /* Red on hover for emphasis */
 }
 .knowledge-content {
   background: #f9fafb;
   border: 1px solid #ddd;
   padding: 10px;
   font-size: 13px;
-  max-height: 300px;
+  max-height: 350px; /* Increased content height */
   overflow-y: auto;
   border-radius: 6px;
   white-space: pre-wrap;
@@ -239,33 +244,43 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 12px;
+  margin-bottom: 16px; /* Increased spacing */
 }
 .form-group label {
-  font-size: 13px;
-  margin-bottom: 4px;
+  font-size: 14px; /* Larger label text */
+  margin-bottom: 6px;
   font-weight: 500;
+  color: #1f2937; /* Darker label color */
 }
 .form-group input,
 .form-group textarea,
 .form-group select {
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 13px;
+  padding: 10px 12px; /* Increased padding */
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); /* Focus ring */
+  outline: none;
 }
 .form-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 12px; /* Increased gap */
+  margin-top: 16px; /* Increased top margin */
 }
 .button {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 8px 16px; /* Larger button padding */
+  font-size: 14px;
   border-radius: 6px;
   cursor: pointer;
   border: none;
+  transition: background-color 0.2s, transform 0.2s;
 }
 .save-button {
   background: #2563eb;
@@ -273,6 +288,7 @@
 }
 .save-button:hover {
   background: #1d4ed8;
+  transform: translateY(-1px); /* Slight lift on hover */
 }
 .cancel-button {
   background: #6b7280;
@@ -280,6 +296,7 @@
 }
 .cancel-button:hover {
   background: #4b5563;
+  transform: translateY(-1px); /* Slight lift on hover */
 }
 
 /* ========== Responsive ========== */
@@ -293,6 +310,10 @@
   .add-button {
     width: 100%;
   }
+  .modal-box {
+    width: 90%; /* Full width on small screens */
+    max-height: 90vh;
+  }
 }
 .bot-id-link {
   background: none;
@@ -301,7 +322,7 @@
   cursor: pointer;
   font-size: 13px;
   padding: 0;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .bot-id-link:hover {
