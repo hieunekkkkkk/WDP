@@ -33,6 +33,7 @@ import ManageTransactionPage from "./page/admin/ManageTransactionPage";
 import MyCalendar from "./components/calendar/MyCalendar.jsx";
 import TaskCalendar from "./components/calendar/TaskCalendar.jsx";
 import HistoryCalendar from "./components/calendar/TaskHistory.jsx";
+import AnalyticsDashboard from "./components/analytics/AnalyticsDashboard.jsx";
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -58,8 +59,10 @@ const AppRoutes = () => {
           <Route path="/dashboard/calendar" element={<MyCalendar />} />
            <Route path="/dashboard/tasks" element={<TaskCalendar />} />
            <Route path="/dashboard/task-history" element={<HistoryCalendar />} />
+           <Route path="/dashboard/analytics" element={<AnalyticsDashboard />} />
           <Route path="ai-available" element={<AiSupportDocument />} />
           <Route path="my-ai" element={<MyAi />} />
+          
         </Route>
 
         <Route

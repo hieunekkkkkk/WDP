@@ -305,7 +305,10 @@ const TaskCalendar = () => {
             {" "}
             <FaClock size={14} /> Lịch sử tasks{" "}
           </button>
-          <button className="task-nav-btn btn-green">
+          <button
+            className="task-nav-btn btn-green"
+            onClick={() => navigate("/dashboard/analytics")}
+          >
             {" "}
             <FaChartBar size={14} /> Phân tích dữ liệu{" "}
           </button>
