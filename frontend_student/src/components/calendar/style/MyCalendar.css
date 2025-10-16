@@ -19,7 +19,6 @@
 }
 
 html,body{
-  height:100%;
   margin:0;
   padding:0;
   background: var(--gray-bg);
@@ -630,7 +629,7 @@ html,body{
 *::before,
 *::after { box-sizing: border-box; }
 
-html,body{ height:100%; margin:0; padding:0; background:var(--gray-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+html,body{ margin:0; padding:0; background:var(--gray-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
 
 /* ==================== LAYOUT CHUNG ==================== */
 .calendar-wrapper { min-height:100vh; background:var(--gray-bg); }
