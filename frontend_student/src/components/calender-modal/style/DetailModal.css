@@ -1,0 +1,354 @@
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica Neue, Arial;
+  background: #f6f8fb;
+  color: #111;
+  margin: 0;
+  padding: 0;
+}
+.detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.detail-modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 650px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.detail-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 25px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.detail-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.detail-modal-close {
+  background: none;
+  border: none;
+  font-size: 30px;
+  font-weight: 300;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.detail-modal-close:hover {
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.detail-modal-body {
+  padding: 25px;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+.detail-modal-description {
+  color: #4a5568;
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 1rem;
+}
+
+.detail-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+@media (min-width: 500px) {
+  .detail-modal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.detail-modal-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-modal-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detail-modal-value {
+  font-size: 1rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.detail-modal-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.detail-modal-time {
+  font-family: "Roboto Mono", monospace;
+  background-color: #edf2f7;
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.detail-modal-footer {
+  padding: 18px 25px;
+  text-align: right;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.detail-modal-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.detail-modal-btn-secondary:hover {
+  background-color: #f3f4f6;
+  border-color: #c9ccd0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+/* ui task calendars here*/
+/* Styles for the main Task Calendar layout */
+.task-calendar-container {
+  min-height: 100vh;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-calendar-wrapper {
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  padding-bottom: 2rem; /* To avoid sticking to the footer */
+}
+
+.task-calendar-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #db2777;
+  margin-bottom: 1.5rem;
+}
+
+/* Navigation Buttons */
+.task-nav-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.task-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.3rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button color variants */
+.btn-blue {
+  background-color: #3b82f6;
+}
+.btn-purple {
+  background-color: #a855f7;
+}
+.btn-cyan {
+  background-color: #06b6d4;
+}
+.btn-teal {
+  background-color: #14b8a6;
+}
+.btn-pink {
+  background-color: #ec4899;
+}
+.btn-green {
+  background-color: #10b981;
+}
+
+/* Filter and Search Section */
+.filter-container {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-search-input {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 1rem;
+}
+
+.filter-selects {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-select {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* Task Card */
+.task-card {
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 1.5rem 2rem;
+}
+
+.task-card-header {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-top: 0;
+}
+
+.task-card-description {
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.task-card-priority-tag {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.3rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.task-card-time {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.task-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.task-card-actions button,
+.task-card-actions select {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.task-card-actions .btn-view {
+  background-color: #3b82f6;
+  color: #fff;
+}
+.task-card-actions .btn-edit {
+  background-color: #f59e0b;
+  color: #fff;
+}
+
+.task-card-actions .select-status {
+  border: 1px solid #ddd;
+}
+
+.task-status-ribbon {
+  position: absolute;
+  top: 1rem;
+  right: 0;
+  padding: 0.55rem 1.5rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  clip-path: polygon(8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
+}
