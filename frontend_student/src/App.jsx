@@ -31,6 +31,7 @@ import ManageUserPage from "./page/admin/ManageUserPage";
 import ManageBusinessPage from "./page/admin/ManageBusinessPage";
 import ManageTransactionPage from "./page/admin/ManageTransactionPage";
 import MyCalendar from "./components/calendar/MyCalendar.jsx";
+import TaskCalendar from "./components/calendar/TaskCalendar.jsx";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -55,6 +56,7 @@ const AppRoutes = () => {
           <Route path="messages" element={<StudentMessagesPage />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
           <Route path="calendar" element={<MyCalendar />} />
+           <Route path="tasks" element={<TaskCalendar />} />
           <Route path="ai-available" element={<AiSupportDocument />} />
           <Route path="my-ai" element={<MyAi />} />
         </Route>

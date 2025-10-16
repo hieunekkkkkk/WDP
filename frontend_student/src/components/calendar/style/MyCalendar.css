@@ -1,4 +1,33 @@
-/* MyCalendar.css - Improved Version to Match Design */
+/* ==================== BIẾN VÀ THIẾT LẬP CƠ BẢN ==================== */
+:root {
+  --primary-color: #3b97d3;
+  --primary-hover: #2e7fb8;
+  --gray-border: #e0e0e0;
+  --gray-bg: #f8f9fa;
+  --text-dark: #111827;
+  --text-light: #495057;
+  --event-purple: #8e44ad;
+  --event-yellow: #f1c40f;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.calendar-wrapper {
+  min-height: 100vh;
+  background: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.calendar-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
 
 /* ==================== Wrapper & Container ==================== */
 .calendar-wrapper {
@@ -25,9 +54,9 @@
 .calendar-header {
   padding: 12px 20px;
   border-bottom: 1px solid #e0e0e0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   background: #ffffff;
   gap: 20px;
   flex-shrink: 0;
@@ -37,6 +66,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-start;
+}
+
+.calendar-header-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-header-right {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.current-range {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
 }
 
 /* Navigation Buttons - Blue style like in image */
@@ -51,7 +99,7 @@
   justify-content: center;
   color: #ffffff;
   transition: all 0.2s ease;
-  border-radius: 4px;
+  border-radius: 6px; /* <-- Thay đổi từ 4px thành 6px */
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
@@ -82,6 +130,16 @@
   user-select: none;
   flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-title h1 {
+  font-size: 24px;
+  margin: 0;
+  font-weight: 700;
 }
 
 /* Top block (emoji + title + actions) */
@@ -93,6 +151,7 @@
   padding: 18px 12px;
   background: linear-gradient(90deg, #ffffff, #ffffff);
   gap: 10px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .calendar-emoji {
@@ -112,14 +171,30 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
+  transition: all 0.2s;
 }
+
+.big-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 .big-action-work {
   background: #3b97d3;
   color: #fff;
 }
+
+.big-action-work:hover {
+  background: #2e7fb8;
+}
+
 .big-action-task {
   background: #27ae60;
   color: #fff;
+}
+
+.big-action-task:hover {
+  background: #229954;
 }
 
 /* Month Picker */
@@ -157,26 +232,38 @@
 
 .calendar-filters {
   display: flex;
-  gap: 4px;
+  gap: 0; /* <-- Thay đổi từ 4px thành 0 */
   overflow: visible;
-  background: #f8f9fa;
+  background: #e9ecef; /* <-- Thay đổi nền */
   padding: 4px;
   border-radius: 8px;
 }
 
+/* Thay đổi kiểu dáng của từng nút filter */
 .calendar-filter-btn {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  background: #ffffff;
+  background: transparent; /* <-- Thay nền thành trong suốt */
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  color: #4a5568;
+  color: #495057;
   border: 1px solid transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
+}
+
+.calendar-filter-btn:hover {
+  background: #dee2e6;
+  border-color: transparent;
+}
+
+.calendar-filter-btn.active {
+  background: #3b97d3;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-filter-btn:last-child {
@@ -241,17 +328,17 @@
   background: #229954;
 }
 
+/* MyCalendar.css */
+
 /* ==================== Calendar Content ==================== */
 .calendar-content {
   padding: 0;
   flex: 1;
-  overflow: auto;
+  overflow-y: scroll; /* Luôn hiển thị thanh cuộn để bố cục ổn định */
   display: flex;
   flex-direction: column;
-  /* Ensure grid columns stay aligned */
   contain: strict;
   min-width: 0;
-  /* Prevent overflow issues */
   isolation: isolate;
 }
 
@@ -275,6 +362,7 @@
   color: #333;
   padding: 12px 0;
   text-transform: capitalize;
+  /* Dùng border-right cho cột và last-child để loại bỏ đường viền cuối */
   border-right: 1px solid #e0e0e0;
 }
 
@@ -286,30 +374,26 @@
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0;
-  background: #e0e0e0;
+  gap: 0; /* Không có khoảng trống giữa các ô */
   flex: 1;
   grid-auto-rows: 1fr;
 }
 
 /* ==================== Individual Day Cell ==================== */
 .calendar-day {
-  min-height: 100px;
+  min-height: 120px;
   padding: 8px;
   background: #ffffff;
-  border: 1px solid #e0e0e0;
+  /* Chỉ vẽ đường viền bên phải và bên dưới cho mỗi ô */
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   transition: all 0.15s ease;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
-}
-
-.calendar-day:hover {
-  background: #f9f9f9;
-  box-shadow: inset 0 0 0 2px #3b97d3;
+  overflow: visible;
 }
 
 .calendar-day-number {
@@ -319,6 +403,7 @@
   color: #333;
   user-select: none;
   align-self: flex-end;
+  z-index: 5;
 }
 
 .calendar-day-other-month {
@@ -332,51 +417,168 @@
 .calendar-day-today {
   background: #fffbf0;
 }
-
 .calendar-day-today .calendar-day-number {
   background: #3b97d3;
   color: #ffffff;
   font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  padding: 0;
+  align-self: flex-end;
 }
 
 /* ==================== Events ==================== */
 .calendar-events {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
-  overflow: hidden;
-  margin-top: 4px;
+  overflow: visible;
+  margin-top: 6px;
+  position: relative;
 }
 
 .calendar-event {
-  padding: 3px 6px;
-  border-radius: 3px;
+  padding: 5px 8px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  cursor: default; /* non-clickable to avoid edit behavior */
+  cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .calendar-event:hover {
-  opacity: 0.8;
-  transform: translateX(2px);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.calendar-event .event-emoji {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.calendar-event .event-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Show more button */
+.calendar-show-more {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #3b97d3;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 2px;
+}
+
+.calendar-show-more:hover {
+  color: #2e7fb8;
+  text-decoration: underline;
+  background: #f0f9ff;
+  border-radius: 4px;
+}
+
+/* Popup hiển thị tất cả tasks */
+.calendar-tasks-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+  padding: 8px;
+}
+
+.calendar-tasks-popup-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  padding: 4px 8px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-tasks-popup-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.calendar-tasks-popup-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.calendar-tasks-popup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-tasks-popup .calendar-event {
+  margin: 0;
+  width: 100%;
+}
+
+/* Overlay để đóng popup khi click bên ngoài */
+.calendar-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: transparent;
 }
 
 /* Event colors matching the design */
 .calendar-event-blue {
-  background: #9b59b6;
+  background: #599db6;
   color: #ffffff;
 }
 
 .calendar-event-orange {
-  background: #e67e22;
+  background: #f39c12;
   color: #ffffff;
 }
 
@@ -388,6 +590,35 @@
 .calendar-event-gray {
   background: #95a5a6;
   color: #ffffff;
+}
+
+.calendar-event-hotpink {
+  background: #e91e63;
+  color: #ffffff;
+}
+
+/* Multi-day event spanning */
+.calendar-event-span {
+  position: absolute;
+  z-index: 3;
+  left: 8px;
+  right: 8px;
+}
+
+.calendar-event-span-start {
+  border-radius: 4px 0 0 4px;
+  padding-right: 4px;
+}
+
+.calendar-event-span-middle {
+  border-radius: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.calendar-event-span-end {
+  border-radius: 0 4px 4px 0;
+  padding-left: 4px;
 }
 
 /* ==================== Modal Overlay ==================== */
@@ -800,8 +1031,8 @@
     justify-content: center;
   }
 
-  .calendar-title {
-    font-size: 18px;
+  .calendar-title h1 {
+    font-size: 20px;
   }
 
   .calendar-actions {
@@ -816,13 +1047,25 @@
   }
 
   .calendar-weekday {
-    font-size: 11px;
-    padding: 10px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    padding: 12px 0;
+    text-transform: capitalize;
+
+    /* THAY ĐỔI Ở ĐÂY */
+    border-right: none; /* Xóa hoặc đặt là 'none' */
+    box-shadow: inset 0 0 0 1px #e0e0e0; /* Thêm dòng này */
   }
 
   .calendar-day {
-    min-height: 80px;
+    min-height: 100px;
     padding: 6px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .calendar-day-number {
@@ -831,6 +1074,7 @@
 
   .calendar-event {
     font-size: 10px;
+    padding: 4px 6px;
   }
 
   .modal-content {
@@ -852,7 +1096,7 @@
   }
 
   .calendar-day {
-    min-height: 70px;
+    min-height: 90px;
     padding: 4px;
   }
 
@@ -862,7 +1106,11 @@
 
   .calendar-event {
     font-size: 9px;
-    padding: 2px 4px;
+    padding: 3px 5px;
+  }
+
+  .calendar-show-more {
+    font-size: 9px;
   }
 }
 
@@ -884,4 +1132,183 @@
   .modal-overlay {
     display: none;
   }
+}
+/* ==================== VIEW: MONTH ==================== */
+.calendar--month .calendar-content {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+.calendar--month .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 600;
+  padding: 12px 0;
+  border-bottom: 2px solid var(--gray-border);
+}
+.calendar--month .calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 1px;
+  background: var(--gray-border);
+  overflow: auto;
+}
+.calendar--month .calendar-day {
+  padding: 8px;
+  background: #fff;
+  position: relative;
+}
+.calendar--month .calendar-day-number {
+  float: right;
+}
+.calendar--month .calendar-event {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.calendar--month .calendar-event.yellow {
+  background: var(--event-yellow);
+  color: #333;
+}
+.calendar--month .calendar-show-more {
+  color: var(--primary-color);
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* ==================== VIEW: WEEK & DAY ==================== */
+.calendar--week .calendar-content,
+.calendar--day .calendar-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.time-grid-container {
+  height: 100%;
+  overflow-y: scroll; /* Thanh cuộn chính ở đây */
+  flex: 1;
+  display: grid;
+  grid-template-columns: 60px 1fr; /* Cột giờ và cột sự kiện */
+  grid-template-rows: repeat(24, 60px); /* 24 giờ, mỗi giờ 60px */
+}
+.time-labels {
+  grid-column: 1 / 2;
+  font-size: 12px;
+  text-align: right;
+  padding-right: 10px;
+  color: var(--text-light);
+  position: relative;
+}
+.time-label {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+}
+.event-grid-container {
+  grid-column: 2 / -1;
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(1440, 1px); /* Lưới phút (24 * 60) */
+  border-left: 1px solid var(--gray-border);
+}
+.hour-line {
+  grid-column: 1 / -1;
+  border-bottom: 1px solid var(--gray-border);
+}
+.hour-line:nth-child(2n) {
+  border-bottom-style: dotted;
+}
+
+/* ==================== VIEW: WEEK (RIÊNG) ==================== */
+.calendar--week .event-grid-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 ngày trong tuần */
+  grid-template-rows: auto 1fr; /* Header thứ và lưới sự kiện */
+}
+.calendar--week .week-day-header {
+  grid-row: 1 / 2;
+  text-align: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-border);
+}
+.calendar--week .day-column {
+  grid-row: 2 / 3;
+  position: relative;
+  border-right: 1px solid var(--gray-border);
+}
+.calendar--week .day-column:last-child {
+  border-right: none;
+}
+.calendar--week .event-slot {
+  position: absolute;
+  background: var(--event-purple);
+  color: #fff;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 11px;
+  overflow: hidden;
+  left: 5%;
+  width: 90%;
+}
+
+/* ==================== VIEW: DAY (RIÊNG) ==================== */
+.calendar--day .event-grid-container {
+  display: block; /* Chỉ 1 cột sự kiện */
+}
+.calendar--day .event-slot {
+  position: absolute;
+  background: var(--event-purple);
+  color: #fff;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 13px;
+  overflow: hidden;
+  left: 2%;
+  width: 96%;
+}
+
+/* ==================== VIEW: AGENDA ==================== */
+.calendar--agenda .calendar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.agenda-day-group {
+  margin-bottom: 24px;
+}
+.agenda-day-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-color);
+  margin-bottom: 12px;
+}
+.agenda-event-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--gray-border);
+}
+.agenda-event-row:hover {
+  background: var(--gray-bg);
+}
+.agenda-event-time {
+  font-weight: 500;
+  color: var(--text-light);
+}
+.agenda-event-details {
+  background: var(--event-purple);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
 }
