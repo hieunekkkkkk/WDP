@@ -8,20 +8,32 @@ import LoadingScreen from "../../components/LoadingScreen";
 import "../../css/DiscoverPage.css";
 import { FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaCoffee } from "react-icons/fa";
+import { MdFoodBank } from "react-icons/md";
+import { RiHotelLine } from "react-icons/ri";
+import { PiPark } from "react-icons/pi";
+import { GiMaterialsScience } from "react-icons/gi";
+import { PuffLoader } from "react-spinners";
 
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingFilter, setLoadingFilter] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [currentServicePage, setCurrentServicePage] = useState(0);
   const [direction, setDirection] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const query = searchParams.get("query") || "";
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
+    useState([]);
+
   const handleNextService = useCallback(() => {
     setDirection(1);
     const totalServicePages = Math.ceil(categories.length / 4);
@@ -29,6 +41,7 @@ function DiscoverPage() {
       prev === totalServicePages - 1 ? 0 : prev + 1
     );
   }, [categories.length]);
+
   useEffect(() => {
     if (query) {
       fetchSearchResults(query);
@@ -52,6 +65,7 @@ function DiscoverPage() {
 
       setFilteredBusinesses(filteredBusinesses || []);
       setSearchQuery(query);
+      setIsSearching(true);
     } catch (err) {
       console.error("Search failed:", err);
       setError("Không thể tìm kiếm dữ liệu. Vui lòng thử lại sau.");
@@ -72,13 +86,40 @@ function DiscoverPage() {
         (b) => b.business_active === "active"
       );
 
+      console.log(catRes);
+
       setCategories(catRes.data.categories || []);
       setBusinesses(activeBusinesses || []);
+      setFilteredBusinessesByCategory(activeBusinesses || []);
     } catch (err) {
       console.error("Fetch failed:", err);
       setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBusinessesByCategory = async (categoryId) => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/business`
+      );
+      let activeBusinesses = res.data.businesses.filter(
+        (b) => b.business_active === "active"
+      );
+
+      if (categoryId !== "all") {
+        activeBusinesses = activeBusinesses.filter(
+          (b) => b.business_category_id?._id === categoryId
+        );
+      }
+
+      setFilteredBusinessesByCategory(activeBusinesses);
+    } catch (err) {
+      console.error("Fetch businesses failed:", err);
+      setError("Không thể tải dữ liệu doanh nghiệp. Vui lòng thử lại sau.");
+    } finally {
+      setLoadingFilter(false);
     }
   };
 
@@ -99,6 +140,41 @@ function DiscoverPage() {
 
   const handleBusinessClick = (businessId) => {
     navigate(`/business/${businessId}`);
+  };
+
+  const handleCategoryClick = useCallback(
+    (categoryId) => {
+      const newCategory = categoryId === selectedCategory ? "all" : categoryId;
+
+      setSelectedCategory(newCategory);
+      setLoadingFilter(true);
+      fetchBusinessesByCategory(newCategory);
+    },
+    [selectedCategory]
+  );
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() !== "") {
+      navigate(`/discover?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const getCategoryIcon = (iconName, categoryName) => {
+    const iconMap = {
+      FaCoffee: <FaCoffee />,
+      MdFoodBank: <MdFoodBank />,
+      RiHotelLine: <RiHotelLine />,
+      PiPark: <PiPark />,
+      GiMaterialsScience: <GiMaterialsScience />,
+      Coffee: <FaCoffee />,
+      "Hàng ăn": <MdFoodBank />,
+      "Nhà trọ": <RiHotelLine />,
+      "Khu vui chơi": <PiPark />,
+      "Nguyên vật liệu": <GiMaterialsScience />,
+    };
+
+    return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
   };
 
   if (loading) {
@@ -225,98 +301,102 @@ function DiscoverPage() {
   return (
     <>
       <Header />
-      <HeroSection />
-      <div className="landing-page-new">
-        <div className="container">
-          {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
-          <section className="best-places-section">
-            <h2>Best of HOLA</h2>
+      <section className="hero-section-landing">
+        <div className="hero-background">
+          <img src="/1.png" alt="Mountains" className="hero-bg-image" />
+          <div className="hero-overlay"></div>
+        </div>
+        <div className="hero-content">
+          <div className="hero-text">
+            <h1>Lựa chọn điểm đến lý tưởng</h1>
+            <p>Cùng cập nhật thông tin hữu ích</p>
+          </div>
 
-            <div className="places-grid-new">
-              {businesses.slice(0, 8).map((business) => (
-                <PlaceCard
-                  key={business._id}
-                  business={business}
-                  onClick={handleBusinessClick}
-                />
+          <div className="search-form">
+            <form className="search-box" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Tìm kiếm địa điểm"
+                className="hero-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="search-btn">
+                Tìm kiếm
+              </button>
+            </form>
+          </div>
+
+          <div className="category-pills">
+            <p>Đã đăng theo danh mục</p>
+            <div className="pills-container">
+              <button
+                onClick={() => handleCategoryClick("all")}
+                className={`category-pill ${
+                  selectedCategory === "all" ? "active" : ""
+                }`}
+              >
+                <span className="pill-icon">🏠</span>
+                <span>Tất cả</span>
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category._id}
+                  onClick={() => handleCategoryClick(category._id)}
+                  className={`category-pill ${
+                    selectedCategory === category._id ? "active" : ""
+                  }`}
+                >
+                  <span className="pill-icon">
+                    {getCategoryIcon(category.icon, category.category_name)}
+                  </span>
+                  <span>{category.category_name}</span>
+                </button>
               ))}
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
+      <div className="landing-page-new">
+        {!isSearching && (
+          <div className="container">
+            {/* Best Places Section - ĐỘNG từ bestBusinesses API */}
+            <section className="best-places-section">
+              <h2>Best of HOLA</h2>
 
-          {/* Services Section - ĐỘNG từ categories API */}
-          <section className="services-section-new">
-            <h2>Danh mục dịch vụ</h2>
-            <div
-              className="services-container"
-              style={{
-                position: "relative",
-                maxWidth: "1200px",
-                margin: "0 auto",
-              }}
-            >
-              {showServiceNav && (
-                <button
-                  className="service-nav-btn prev-btn"
-                  aria-label="Xem danh mục trước"
+              {loadingFilter ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "20vh",
+                    flexDirection: "column",
+                  }}
                 >
-                  ←
-                </button>
-              )}
-
-              <div className="services-grid-new">
-                {categories.length > 0 ? (
-                  categories.map((category, index) => (
-                    <ServiceCard
-                      key={category._id}
-                      category={category}
-                      businesses={businesses}
-                      index={index}
-                      onSeeMore={handleSeeMore}
-                    />
-                  ))
-                ) : (
-                  <div
+                  <PuffLoader size={90} />
+                  <p
                     style={{
-                      gridColumn: "1 / -1",
-                      textAlign: "center",
-                      padding: "2rem",
-                      color: "#666",
+                      marginTop: "16px",
+                      fontSize: "18px",
+                      color: "#333",
                     }}
-                  >
-                    <p>Chưa có danh mục nào</p>
-                  </div>
-                )}
-              </div>
-
-              {showServiceNav && (
-                <button
-                  className="service-nav-btn next-btn"
-                  onClick={handleNextService}
-                  aria-label="Xem danh mục tiếp theo"
-                >
-                  →
-                </button>
-              )}
-
-              {/* Dots indicator - ĐỘNG theo số categories */}
-              {showServiceNav && (
-                <div className="service-dots-container">
-                  {Array.from({ length: Math.ceil(categories.length / 4) }).map(
-                    (_, idx) => (
-                      <button
-                        key={idx}
-                        className={`service-dot ${
-                          currentServicePage === idx ? "active" : ""
-                        }`}
-                        onClick={() => setCurrentServicePage(idx)}
-                      />
-                    )
-                  )}
+                  ></p>
+                </div>
+              ) : (
+                <div className="places-grid-new">
+                  {filteredBusinessesByCategory.slice(0, 8).map((business) => (
+                    <PlaceCard
+                      key={business._id}
+                      business={business}
+                      onClick={handleBusinessClick}
+                    />
+                  ))}
                 </div>
               )}
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
+        )}
       </div>
       <div className="discover-page">
         <div className="container">
@@ -330,6 +410,7 @@ function DiscoverPage() {
                   onClick={() => {
                     setSearchQuery("");
                     setFilteredBusinesses([]);
+                    setIsSearching(false);
                     navigate("/discover", { replace: true });
                   }}
                 >

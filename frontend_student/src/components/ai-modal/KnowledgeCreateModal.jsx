@@ -80,45 +80,93 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         </div>
 
         <div className="form-group">
-          <label>Tên</label>
+          <label>
+            <span>📝 Tên kiến thức</span>
+          </label>
           <input
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Nhập tên kiến thức"
+            placeholder="VD: Hướng dẫn sử dụng React Hooks"
             className="form-input"
           />
         </div>
 
         <div className="form-group">
-          <label>Nội dung (nếu không tải file)</label>
+          <label>
+            <span>📄 Nội dung</span>
+            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+              (hoặc tải file ở bên dưới)
+            </small>
+          </label>
           <textarea
             name="content"
             rows={6}
             value={form.content}
             onChange={handleChange}
-            placeholder="Nhập nội dung văn bản..."
+            placeholder="Nhập nội dung chi tiết về kiến thức..."
             className="form-textarea"
           />
         </div>
 
         <div className="form-group">
-          <label>Tải file (PDF, Word, TXT...)</label>
-          <input
-            type="file"
-            accept=".pdf,.doc,.docx,.txt"
-            onChange={handleFileChange}
-            className="form-input"
-          />
+          <label>
+            <span>📎 Tải tài liệu</span>
+            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+              (PDF, Word, TXT)
+            </small>
+          </label>
+          <div
+            style={{
+              border: "2px dashed #e5e7eb",
+              borderRadius: "12px",
+              padding: "20px",
+              textAlign: "center",
+              background: "#f9fafb",
+              cursor: "pointer",
+            }}
+            onClick={() => document.getElementById("file-input").click()}
+          >
+            <p style={{ margin: 0, color: "#6b7280" }}>
+              Kéo thả file vào đây hoặc click để chọn file
+            </p>
+            <input
+              id="file-input"
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+            {file && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  color: "#059669",
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
+              >
+                ✅ Đã chọn: {file.name}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="form-group">
-          <label>Tags (cách nhau bằng dấu phẩy)</label>
+          <label>
+            <span>🏷️ Tags</span>
+            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+              (phân cách bằng dấu phẩy)
+            </small>
+          </label>
           <input
             name="tags"
             value={form.tags}
             onChange={handleChange}
-            placeholder="VD: AI, NodeJS"
+            placeholder="VD: react, frontend, web-development"
             className="form-input"
           />
         </div>

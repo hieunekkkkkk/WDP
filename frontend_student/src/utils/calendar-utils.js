@@ -7,7 +7,11 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
-
+export const levelColor = {
+  "quan trọng": "red",
+  "bình thường": "blue",
+  "rảnh rỗi": "hotpink",
+};
 // Nội bộ UI dùng chuẩn này
 export const WEEKDAY_ENUM = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -70,7 +74,7 @@ export const getDaysInMonth = (date) => {
 
 /** Lọc items xuất hiện ở 1 ngày theo nghiệp vụ BE */
 export const getTasksForDate = (date, tasks) => {
-  const dayEnum = JS_DAY_TO_ENUM[date.getDay()]; // "SUN" | "MON" ...
+  const dayEnum = JS_DAY_TO_ENUM[date.getDay()]; 
   return tasks.filter((t) => {
     if (t.task_mode === "dài hạn") {
       const d = new Date(date).setHours(0, 0, 0, 0);
