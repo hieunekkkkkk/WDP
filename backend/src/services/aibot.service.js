@@ -42,6 +42,12 @@ class AiBotService {
         return await AiBot.findByIdAndDelete(id);
     }
 
+    async testHandleMessage(botId, message) {
+        const bot = await AiBot.findById(botId);
+        if (!bot) throw new Error('Bot not found');
+        return await this.handleMessage(bot, message);
+    }
+
 
 
     async handleMessage(bot, message) {
