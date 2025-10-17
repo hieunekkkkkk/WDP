@@ -17,6 +17,7 @@ import TaskModal from "../../components/calender-modal/TaskModal.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
 import DetailModal from "../../components/calender-modal/DetailModal.jsx";
 import "../calender-modal/style/DetailModal.css";
+import FloatingWorkWidget from "../calender-modal/FloatingWorkWidget.jsx";
 const TaskCalendar = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const TaskCalendar = () => {
   const [openWorkModal, setOpenWorkModal] = useState(false);
   const [taskDraft, setTaskDraft] = useState(null);
   const [workDraft, setWorkDraft] = useState(null);
-
+  const [workTasks, setWorkTasks] = useState([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -67,7 +68,9 @@ const TaskCalendar = () => {
           t.task_mode === "dài hạn" ||
           (t.task_type !== "work" && t.task_mode !== "hàng ngày")
       );
-
+      setTasks(projectTasks);
+      const recurringTasks = all.filter((t) => t.task_mode === "hàng ngày");
+      setWorkTasks(recurringTasks);
       const activeTasks = projectTasks.filter(
         (t) => t.task_status !== "đã hoàn thành" && t.task_status !== "đã huỷ"
       );
@@ -218,7 +221,18 @@ const TaskCalendar = () => {
       toast.error("Cập nhật trạng thái thất bại.");
     }
   };
-
+  const handleDeleteWork = async (taskId) => {
+    if (window.confirm("Bạn có chắc muốn xóa công việc này?")) {
+      try {
+        await axios.delete(`${CALENDAR_URL}/${taskId}`);
+        toast.success("Đã xóa công việc!");
+        fetchTasks(); // Tải lại dữ liệu
+      } catch (error) {
+        toast.error("Xóa công việc thất bại.");
+        console.error("Delete work failed:", error);
+      }
+    }
+  };
   // ===== Helpers for opening modals =====
   const handleView = (task) => {
     setSelectedTask(task);
@@ -268,7 +282,73 @@ const TaskCalendar = () => {
     });
     setOpenWorkModal(true);
   };
+  const handleEditWork = (task) => {
+    // Chuyển đổi task_day từ tên đầy đủ (Monday) về mã (MON)
+    const dayNameMap = {
+      Monday: "MON",
+      Tuesday: "TUE",
+      Wednesday: "WED",
+      Thursday: "THU",
+      Friday: "FRI",
+      Saturday: "SAT",
+      Sunday: "SUN",
+    };
 
+    setWorkDraft({
+      _id: task._id, // Quan trọng để phân biệt edit và create
+      task_name: task.task_name,
+      task_description: task.task_description,
+      start_time: new Date(task.start_time),
+      end_time: new Date(task.end_time),
+      selectedDays: [dayNameMap[task.task_day]], // Chỉ có 1 ngày được chọn
+    });
+    setOpenWorkModal(true);
+  };
+  const saveEditedWork = async (payload) => {
+    if (!payload?._id) return;
+    try {
+      const dayCodeToFullName = {
+        MON: "Monday",
+        TUE: "Tuesday",
+        WED: "Wednesday",
+        THU: "Thursday",
+        FRI: "Friday",
+        SAT: "Saturday",
+        SUN: "Sunday",
+      };
+
+      const dayCode = payload.selectedDays[0]; // Ví dụ: "MON"
+      const dayFullName = dayCodeToFullName[dayCode]; // Chuyển thành "Monday"
+
+      if (!dayFullName) {
+        toast.error("Ngày không hợp lệ.");
+        return;
+      }
+
+      const body = {
+        task_name: payload.task_name,
+        task_description: payload.task_description,
+        start_time: new Date(payload.start_time).toISOString(),
+        end_time: new Date(payload.end_time).toISOString(),
+        task_day: dayFullName, // Gửi đi tên đầy đủ
+        // Giữ nguyên các thuộc tính khác từ payload
+        task_type: "work",
+        task_mode: "hàng ngày",
+        creator_id: userId,
+        task_status: payload.task_status || "chưa làm",
+        task_level: payload.task_level || "bình thường",
+      };
+
+      await axios.put(`${CALENDAR_URL}/${payload._id}`, body);
+      await fetchTasks();
+      setOpenWorkModal(false);
+      setWorkDraft(null);
+      toast.success("Cập nhật công việc thành công!");
+    } catch (err) {
+      console.error("Cập nhật work thất bại:", err);
+      toast.error("Cập nhật công việc thất bại.");
+    }
+  };
   // ===== UI Render =====
   return (
     <div className="task-calendar-container">
@@ -445,7 +525,13 @@ const TaskCalendar = () => {
             setOpenWorkModal(false);
             setWorkDraft(null);
           }}
-          onSave={() => saveWork(workDraft)}
+          onSave={() => {
+            if (workDraft._id) {
+              saveEditedWork(workDraft);
+            } else {
+              saveWork(workDraft);
+            }
+          }}
         />
       )}
       {detailOpen && selectedTask && (
@@ -460,6 +546,11 @@ const TaskCalendar = () => {
           priorityConfig={priorityConfig}
         />
       )}
+      <FloatingWorkWidget
+        tasks={workTasks}
+        onEdit={handleEditWork}
+        onDelete={handleDeleteWork}
+      />
     </div>
   );
 };

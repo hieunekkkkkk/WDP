@@ -6,7 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { useNavigate } from "react-router-dom";
 import StatCard from "./StatCard";
 import DashboardTabs from "./DashboardTabs";
 import OverviewTab from "./OverviewTab";
@@ -14,9 +14,17 @@ import ReportTab from "./ReportTab";
 import ProgressTab from "./ProgressTab";
 
 import "./style/AnalyticsDashboard.css";
+import {
+  FaArrowLeft,
+  FaChartLine,
+  FaClipboardList,
+  FaExclamationTriangle,
+  FaTasks,
+} from "react-icons/fa";
 
 const AnalyticsDashboard = () => {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -24,7 +32,6 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     if (!userId) {
-      // Nếu chưa có userId (Clerk chưa mount hoặc chưa login), clear data
       setAnalyticsData(null);
       setLoading(false);
       return;
@@ -47,8 +54,6 @@ const AnalyticsDashboard = () => {
 
         console.log("analytics raw response:", response?.data);
         setAnalyticsData(response?.data?.data || null);
-
-        toast.success("Tải dữ liệu phân tích thành công!");
       } catch (error) {
         console.error(
           "Failed to fetch analytics data",
@@ -66,42 +71,64 @@ const AnalyticsDashboard = () => {
     fetchData();
   }, [selectedDate, userId]);
 
+  const kpi = analyticsData?.kpi || {
+    incompleteTasks: 0,
+    completionRate: 0,
+    overdueTasks: 0,
+    totalTasks: 0,
+  };
+
   const renderActiveTabContent = () => {
-    if (!analyticsData) {
-      return <div className="info-message">Không có dữ liệu để hiển thị.</div>;
-    }
+    if (!analyticsData) return null;
+
+    const { overview, summary, report, progress } = analyticsData;
+
+    const reportData = {
+      summary: summary,
+      ...(report?.charts || {}),
+    };
 
     switch (activeTab) {
-      case "report":
-        return <ReportTab data={analyticsData.report} />;
-      case "progress":
-        return <ProgressTab data={analyticsData.progress} />;
       case "overview":
+        return <OverviewTab data={overview} />;
+      case "report":
+        return <ReportTab data={reportData} />;
+      case "progress":
+        return <ProgressTab data={progress} />;
       default:
-        return <OverviewTab data={analyticsData.overview} />;
+        return <ReportTab data={reportData} />;
     }
   };
 
-  const kpi = analyticsData?.kpi || {};
-
   return (
     <div className="analytics-container">
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      <ToastContainer />
       <header className="analytics-header">
-        <h1>Data Analytics Dashboard</h1>
-        <p>Track your task performance and productivity insights</p>
+        {/* THÊM NÚT BACK TẠI ĐÂY */}
+        <button
+          onClick={() => navigate("/dashboard/tasks")}
+          className="back-button"
+        >
+          <FaArrowLeft />
+          <span>Back</span>
+        </button>
+        <h1>Analytics Dashboard</h1>
+        <p>Hiểu rõ hơn về hiệu suất công việc của bạn</p>
       </header>
 
       <section className="monthly-progress-section">
         <div className="section-header">
           <h2>Tiến độ công việc tháng</h2>
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            dateFormat="MMMM yyyy"
-            showMonthYearPicker
-            className="month-picker"
-          />
+          {/* BỌC DATEPICKER TRONG MỘT DIV */}
+          <div className="date-picker-wrapper">
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="MMMM yyyy"
+              showMonthYearPicker
+              className="month-picker"
+            />
+          </div>
         </div>
         {loading ? (
           <div className="info-message">Đang tải chỉ số...</div>
@@ -111,18 +138,26 @@ const AnalyticsDashboard = () => {
               title="Incomplete Tasks"
               value={kpi.incompleteTasks}
               color="red"
+              icon={<FaClipboardList />}
             />
             <StatCard
               title="Completion Rate"
               value={`${kpi.completionRate}%`}
               color="green"
+              icon={<FaChartLine />}
             />
             <StatCard
               title="Overdue Tasks"
               value={kpi.overdueTasks}
               color="orange"
+              icon={<FaExclamationTriangle />}
             />
-            <StatCard title="Total Tasks" value={kpi.totalTasks} color="blue" />
+            <StatCard
+              title="Total Tasks"
+              value={kpi.totalTasks}
+              color="blue"
+              icon={<FaTasks />}
+            />
           </div>
         )}
       </section>
@@ -132,8 +167,10 @@ const AnalyticsDashboard = () => {
       <main className="tab-content">
         {loading ? (
           <div className="loading-message">Đang tải dữ liệu chi tiết...</div>
-        ) : (
+        ) : analyticsData ? (
           renderActiveTabContent()
+        ) : (
+          <div className="info-message">Không có dữ liệu để hiển thị.</div>
         )}
       </main>
     </div>
