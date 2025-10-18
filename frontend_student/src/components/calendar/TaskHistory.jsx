@@ -34,22 +34,18 @@ const formatDate = (dateString) => {
 const TaskHistory = () => {
   const { userId } = useAuth();
   const nav = useNavigate();
-  // State for data and loading status
   const [allTasks, setAllTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // State for filter inputs
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // API Configuration
   const CALENDAR_URL = import.meta.env.VITE_BE_URL + "/api/calendar";
   const CALENDAR_BY_CREATOR_URL = `${CALENDAR_URL}/creator/${userId}`;
 
-  // useEffect to fetch data from the API when the component mounts or userId changes
   useEffect(() => {
     if (!userId) {
       setLoading(false);
@@ -82,7 +78,6 @@ const TaskHistory = () => {
     fetchHistoryTasks();
   }, [userId]);
 
-  // useEffect to apply filters on the client-side whenever a filter value changes
   useEffect(() => {
     let result = allTasks;
 
@@ -110,7 +105,6 @@ const TaskHistory = () => {
     setFilteredTasks(result);
   }, [searchTerm, filterStatus, startDate, endDate, allTasks]);
 
-  // Function to render the main content based on loading and data state
   const renderContent = () => {
     if (loading) {
       return (
@@ -200,9 +194,12 @@ const TaskHistory = () => {
             >
               <FaClock /> Lịch sử tasks
             </button>
-            {/* <button className="history-nav-btn">
+            <button
+              className="history-nav-btn"
+              onclick={() => nav("/dashboard/analytics")}
+            >
               <FaChartBar /> Phân tích dữ liệu
-            </button> */}
+            </button>
           </nav>
         </header>
 

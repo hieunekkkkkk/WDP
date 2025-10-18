@@ -14,11 +14,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import TaskModal from "../../components/calender-modal/TaskModal.jsx";
+import EmptyState from "../../components/card/EmptyState.jsx";
+import TaskCard from "../../components/card/TaskCard.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
 import DetailModal from "../../components/calender-modal/DetailModal.jsx";
 import "../calender-modal/style/DetailModal.css";
 import FloatingWorkWidget from "../calender-modal/FloatingWorkWidget.jsx";
-const TaskCalendar = () => {
+const TaskCalendar = (props) => {
   const { userId } = useAuth();
   const navigate = useNavigate();
 
@@ -200,15 +202,45 @@ const TaskCalendar = () => {
     }
   };
 
-  const updateStatus = async (task, newStatus) => {
+  const updateStatus = async (idOrTask, newStatus) => {
     try {
-      const updated = { ...task, task_status: newStatus };
-      await axios.put(`${CALENDAR_URL}/${task._id}`, {
-        ...updated,
-        start_time: new Date(updated.start_time).toISOString(),
-        end_time: new Date(updated.end_time).toISOString(),
-      });
+      const task =
+        typeof idOrTask === "string"
+          ? tasks.find((t) => t._id === idOrTask)
+          : idOrTask;
 
+      if (!task) {
+        toast.error("Không tìm thấy task để cập nhật.");
+        return;
+      }
+
+      if ((task.task_status ?? task.status) === newStatus) {
+        toast.info("Trạng thái không thay đổi.");
+        return;
+      }
+      const updated = {
+        ...task,
+        task_status: newStatus,
+      };
+
+
+      const payload = {
+        ...updated,
+        ...(updated.start_time && !isNaN(new Date(updated.start_time))
+          ? { start_time: new Date(updated.start_time).toISOString() }
+          : {}),
+        ...(updated.end_time && !isNaN(new Date(updated.end_time))
+          ? { end_time: new Date(updated.end_time).toISOString() }
+          : {}),
+      };
+
+      await axios.put(`${CALENDAR_URL}/${task._id}`, payload);
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t._id === task._id ? { ...t, task_status: newStatus } : t
+        )
+      );
       await fetchTasks();
 
       toast.info(
@@ -216,11 +248,10 @@ const TaskCalendar = () => {
       );
     } catch (err) {
       console.error("Cập nhật trạng thái lỗi:", err);
-
-      // THÊM: Toast thông báo khi có lỗi
       toast.error("Cập nhật trạng thái thất bại.");
     }
   };
+
   const handleDeleteWork = async (taskId) => {
     if (window.confirm("Bạn có chắc muốn xóa công việc này?")) {
       try {
@@ -433,68 +464,21 @@ const TaskCalendar = () => {
           </div>
         </div>
 
-        {/* Tasks list */}
-        {tasks.map((t) => (
-          <div key={t._id} className="task-card">
-            <div
-              className="task-status-ribbon"
-              style={{
-                backgroundColor: (
-                  statusConfig[t.task_status] || statusConfig["chưa làm"]
-                ).bg,
-              }}
-            >
-              {statusConfig[t.task_status]?.label || t.task_status}
-            </div>
-            <h3 className="task-card-header">{t.task_name}</h3>
-            <p className="task-card-description">{t.task_description}</p>
-            <span
-              className="task-card-priority-tag"
-              style={{
-                background:
-                  (priorityConfig[t.task_level] || {}).bg || "#e0f2fe",
-                color: (priorityConfig[t.task_level] || {}).color || "#0369a1",
-              }}
-            >
-              {(priorityConfig[t.task_level] || {}).label || t.task_level}
-            </span>
-            <div className="task-card-time">
-              <p>Bắt đầu: {new Date(t.start_time).toLocaleString()}</p>
-              <p>Kết thúc: {new Date(t.end_time).toLocaleString()}</p>
-            </div>
-            <div className="task-card-actions">
-              <button className="btn-view" onClick={() => handleView(t)}>
-                {" "}
-                <FaEye /> Xem chi tiết{" "}
-              </button>
-              <button className="btn-edit" onClick={() => handleEdit(t)}>
-                {" "}
-                <FaEdit /> Sửa{" "}
-              </button>
-              <select
-                value={t.task_status}
-                onChange={(e) => updateStatus(t, e.target.value)}
-                className="select-status"
-                style={{
-                  background:
-                    (statusConfig[t.task_status] &&
-                      statusConfig[t.task_status].bg) ||
-                    "#fff",
-                  color:
-                    (statusConfig[t.task_status] &&
-                      statusConfig[t.task_status].color) ||
-                    "#000",
-                }}
-              >
-                {Object.keys(statusConfig).map((status) => (
-                  <option key={status} value={status}>
-                    {statusConfig[status].label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
+        {tasks.length === 0 ? (
+          <EmptyState />
+        ) : (
+          tasks.map((t) => (
+            <TaskCard
+              key={t._id}
+              task={t}
+              statusConfig={statusConfig}
+              priorityConfig={priorityConfig}
+              onView={handleView}
+              onEdit={handleEdit}
+              onChangeStatus={updateStatus}
+            />
+          ))
+        )}
       </div>
 
       {/* ==== MODALS ==== */}

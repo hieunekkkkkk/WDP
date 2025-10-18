@@ -7,7 +7,6 @@ import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import TaskModal from "../../components/calender-modal/TaskModal.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
-// Đã loại bỏ import MonthView vì logic MonthView đã nhúng trong MyCalendar.jsx
 import WeekView from "./views/WeekView.jsx";
 import DayView from "./views/DayView.jsx";
 import AgendaView from "./views/AgendaView.jsx";
@@ -343,7 +342,6 @@ export default function MyCalendar() {
             {t.task_name} {isMultiDay && ` (${daysDuration} ngày)`}
           </p>
           <div style={{ marginTop: "5px", fontSize: "12px" }}>
-            {/* ... (Giữ nguyên phần nội dung Toast đã có, đảm bảo đúng style) */}
             <p style={{ margin: 0, color: "#3b97d3" }}>
               Trạng thái:
               <span style={{ fontWeight: "600", marginLeft: "5px" }}>
@@ -391,11 +389,11 @@ export default function MyCalendar() {
               }\nTrạng thái: ${t.task_status}\nMức độ: ${t.task_level}`}
               onClick={(e) => {
                 e.stopPropagation();
-                renderDetailToast(t); 
+                renderDetailToast(t);
               }}
             >
               <span className="event-emoji">
-                {t.task_type === "work" ? "💼" : "📦"} 
+                {t.task_type === "work" ? "💼" : "📦"}
               </span>
               <span className="event-name">
                 {t.task_name}
@@ -529,8 +527,7 @@ export default function MyCalendar() {
             </button>
             <button
               className="big-action big-action-list"
-              onClick={()=>navigate("/dashboard/tasks")}
-              
+              onClick={() => navigate("/dashboard/tasks")}
             >
               Danh sách task
             </button>
