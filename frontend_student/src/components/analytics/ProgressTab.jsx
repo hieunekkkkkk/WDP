@@ -7,10 +7,17 @@ const ProgressTab = ({ data }) => {
       <div className="info-message">Không có công việc nào đang tiến hành.</div>
     );
 
-  const levelColor = {
-    "quan trọng": "#fee2e2",
-    "bình thường": "#dbeafe",
-    "rảnh rỗi": "#d1fae5",
+  const levelStyle = {
+    "quan trọng": { backgroundColor: "#fee2e2", color: "#b91c1c" },
+    "bình thường": { backgroundColor: "#dbeafe", color: "#1d4ed8" },
+    "rảnh rỗi": { backgroundColor: "#d1fae5", color: "#047857" },
+  };
+
+  const statusColor = {
+    "chưa làm": "#9ca3af",
+    "đang làm": "#f97316",
+    "đã huỷ": "#ef4444",
+    "đã hoàn thành": "#22c55e",
   };
 
   return (
@@ -29,14 +36,14 @@ const ProgressTab = ({ data }) => {
           {data.map((task) => (
             <tr key={task._id}>
               <td>{task.task_name}</td>
-              <td>{task.task_description}</td>
+              <td>{task.task_description || "-"}</td>
               <td>{new Date(task.end_time).toLocaleDateString("vi-VN")}</td>
               <td>
+                {/* Sử dụng bảng màu mới */}
                 <span
                   className="progress-tag"
                   style={{
-                    backgroundColor:
-                      task.task_status === "đang làm" ? "#ff9f43" : "#9ca3af",
+                    backgroundColor: statusColor[task.task_status] || "#6b7280",
                   }}
                 >
                   {task.task_status}
@@ -45,10 +52,7 @@ const ProgressTab = ({ data }) => {
               <td>
                 <span
                   className="progress-tag"
-                  style={{
-                    backgroundColor: levelColor[task.task_level],
-                    color: "#333",
-                  }}
+                  style={levelStyle[task.task_level]}
                 >
                   {task.task_level}
                 </span>

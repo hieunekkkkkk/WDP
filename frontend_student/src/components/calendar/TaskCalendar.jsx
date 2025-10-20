@@ -14,10 +14,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import TaskModal from "../../components/calender-modal/TaskModal.jsx";
+import EmptyState from "../../components/card/EmptyState.jsx";
+import TaskCard from "../../components/card/TaskCard.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
 import DetailModal from "../../components/calender-modal/DetailModal.jsx";
 import "../calender-modal/style/DetailModal.css";
-const TaskCalendar = () => {
+import FloatingWorkWidget from "../calender-modal/FloatingWorkWidget.jsx";
+const TaskCalendar = (props) => {
   const { userId } = useAuth();
   const navigate = useNavigate();
 
@@ -30,7 +33,7 @@ const TaskCalendar = () => {
   const [openWorkModal, setOpenWorkModal] = useState(false);
   const [taskDraft, setTaskDraft] = useState(null);
   const [workDraft, setWorkDraft] = useState(null);
-
+  const [workTasks, setWorkTasks] = useState([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -67,7 +70,9 @@ const TaskCalendar = () => {
           t.task_mode === "dài hạn" ||
           (t.task_type !== "work" && t.task_mode !== "hàng ngày")
       );
-
+      setTasks(projectTasks);
+      const recurringTasks = all.filter((t) => t.task_mode === "hàng ngày");
+      setWorkTasks(recurringTasks);
       const activeTasks = projectTasks.filter(
         (t) => t.task_status !== "đã hoàn thành" && t.task_status !== "đã huỷ"
       );
@@ -197,15 +202,45 @@ const TaskCalendar = () => {
     }
   };
 
-  const updateStatus = async (task, newStatus) => {
+  const updateStatus = async (idOrTask, newStatus) => {
     try {
-      const updated = { ...task, task_status: newStatus };
-      await axios.put(`${CALENDAR_URL}/${task._id}`, {
-        ...updated,
-        start_time: new Date(updated.start_time).toISOString(),
-        end_time: new Date(updated.end_time).toISOString(),
-      });
+      const task =
+        typeof idOrTask === "string"
+          ? tasks.find((t) => t._id === idOrTask)
+          : idOrTask;
 
+      if (!task) {
+        toast.error("Không tìm thấy task để cập nhật.");
+        return;
+      }
+
+      if ((task.task_status ?? task.status) === newStatus) {
+        toast.info("Trạng thái không thay đổi.");
+        return;
+      }
+      const updated = {
+        ...task,
+        task_status: newStatus,
+      };
+
+
+      const payload = {
+        ...updated,
+        ...(updated.start_time && !isNaN(new Date(updated.start_time))
+          ? { start_time: new Date(updated.start_time).toISOString() }
+          : {}),
+        ...(updated.end_time && !isNaN(new Date(updated.end_time))
+          ? { end_time: new Date(updated.end_time).toISOString() }
+          : {}),
+      };
+
+      await axios.put(`${CALENDAR_URL}/${task._id}`, payload);
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t._id === task._id ? { ...t, task_status: newStatus } : t
+        )
+      );
       await fetchTasks();
 
       toast.info(
@@ -213,12 +248,22 @@ const TaskCalendar = () => {
       );
     } catch (err) {
       console.error("Cập nhật trạng thái lỗi:", err);
-
-      // THÊM: Toast thông báo khi có lỗi
       toast.error("Cập nhật trạng thái thất bại.");
     }
   };
 
+  const handleDeleteWork = async (taskId) => {
+    if (window.confirm("Bạn có chắc muốn xóa công việc này?")) {
+      try {
+        await axios.delete(`${CALENDAR_URL}/${taskId}`);
+        toast.success("Đã xóa công việc!");
+        fetchTasks(); // Tải lại dữ liệu
+      } catch (error) {
+        toast.error("Xóa công việc thất bại.");
+        console.error("Delete work failed:", error);
+      }
+    }
+  };
   // ===== Helpers for opening modals =====
   const handleView = (task) => {
     setSelectedTask(task);
@@ -268,7 +313,73 @@ const TaskCalendar = () => {
     });
     setOpenWorkModal(true);
   };
+  const handleEditWork = (task) => {
+    // Chuyển đổi task_day từ tên đầy đủ (Monday) về mã (MON)
+    const dayNameMap = {
+      Monday: "MON",
+      Tuesday: "TUE",
+      Wednesday: "WED",
+      Thursday: "THU",
+      Friday: "FRI",
+      Saturday: "SAT",
+      Sunday: "SUN",
+    };
 
+    setWorkDraft({
+      _id: task._id, // Quan trọng để phân biệt edit và create
+      task_name: task.task_name,
+      task_description: task.task_description,
+      start_time: new Date(task.start_time),
+      end_time: new Date(task.end_time),
+      selectedDays: [dayNameMap[task.task_day]], // Chỉ có 1 ngày được chọn
+    });
+    setOpenWorkModal(true);
+  };
+  const saveEditedWork = async (payload) => {
+    if (!payload?._id) return;
+    try {
+      const dayCodeToFullName = {
+        MON: "Monday",
+        TUE: "Tuesday",
+        WED: "Wednesday",
+        THU: "Thursday",
+        FRI: "Friday",
+        SAT: "Saturday",
+        SUN: "Sunday",
+      };
+
+      const dayCode = payload.selectedDays[0]; // Ví dụ: "MON"
+      const dayFullName = dayCodeToFullName[dayCode]; // Chuyển thành "Monday"
+
+      if (!dayFullName) {
+        toast.error("Ngày không hợp lệ.");
+        return;
+      }
+
+      const body = {
+        task_name: payload.task_name,
+        task_description: payload.task_description,
+        start_time: new Date(payload.start_time).toISOString(),
+        end_time: new Date(payload.end_time).toISOString(),
+        task_day: dayFullName, // Gửi đi tên đầy đủ
+        // Giữ nguyên các thuộc tính khác từ payload
+        task_type: "work",
+        task_mode: "hàng ngày",
+        creator_id: userId,
+        task_status: payload.task_status || "chưa làm",
+        task_level: payload.task_level || "bình thường",
+      };
+
+      await axios.put(`${CALENDAR_URL}/${payload._id}`, body);
+      await fetchTasks();
+      setOpenWorkModal(false);
+      setWorkDraft(null);
+      toast.success("Cập nhật công việc thành công!");
+    } catch (err) {
+      console.error("Cập nhật work thất bại:", err);
+      toast.error("Cập nhật công việc thất bại.");
+    }
+  };
   // ===== UI Render =====
   return (
     <div className="task-calendar-container">
@@ -353,68 +464,21 @@ const TaskCalendar = () => {
           </div>
         </div>
 
-        {/* Tasks list */}
-        {tasks.map((t) => (
-          <div key={t._id} className="task-card">
-            <div
-              className="task-status-ribbon"
-              style={{
-                backgroundColor: (
-                  statusConfig[t.task_status] || statusConfig["chưa làm"]
-                ).bg,
-              }}
-            >
-              {statusConfig[t.task_status]?.label || t.task_status}
-            </div>
-            <h3 className="task-card-header">{t.task_name}</h3>
-            <p className="task-card-description">{t.task_description}</p>
-            <span
-              className="task-card-priority-tag"
-              style={{
-                background:
-                  (priorityConfig[t.task_level] || {}).bg || "#e0f2fe",
-                color: (priorityConfig[t.task_level] || {}).color || "#0369a1",
-              }}
-            >
-              {(priorityConfig[t.task_level] || {}).label || t.task_level}
-            </span>
-            <div className="task-card-time">
-              <p>Bắt đầu: {new Date(t.start_time).toLocaleString()}</p>
-              <p>Kết thúc: {new Date(t.end_time).toLocaleString()}</p>
-            </div>
-            <div className="task-card-actions">
-              <button className="btn-view" onClick={() => handleView(t)}>
-                {" "}
-                <FaEye /> Xem chi tiết{" "}
-              </button>
-              <button className="btn-edit" onClick={() => handleEdit(t)}>
-                {" "}
-                <FaEdit /> Sửa{" "}
-              </button>
-              <select
-                value={t.task_status}
-                onChange={(e) => updateStatus(t, e.target.value)}
-                className="select-status"
-                style={{
-                  background:
-                    (statusConfig[t.task_status] &&
-                      statusConfig[t.task_status].bg) ||
-                    "#fff",
-                  color:
-                    (statusConfig[t.task_status] &&
-                      statusConfig[t.task_status].color) ||
-                    "#000",
-                }}
-              >
-                {Object.keys(statusConfig).map((status) => (
-                  <option key={status} value={status}>
-                    {statusConfig[status].label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
+        {tasks.length === 0 ? (
+          <EmptyState />
+        ) : (
+          tasks.map((t) => (
+            <TaskCard
+              key={t._id}
+              task={t}
+              statusConfig={statusConfig}
+              priorityConfig={priorityConfig}
+              onView={handleView}
+              onEdit={handleEdit}
+              onChangeStatus={updateStatus}
+            />
+          ))
+        )}
       </div>
 
       {/* ==== MODALS ==== */}
@@ -445,7 +509,13 @@ const TaskCalendar = () => {
             setOpenWorkModal(false);
             setWorkDraft(null);
           }}
-          onSave={() => saveWork(workDraft)}
+          onSave={() => {
+            if (workDraft._id) {
+              saveEditedWork(workDraft);
+            } else {
+              saveWork(workDraft);
+            }
+          }}
         />
       )}
       {detailOpen && selectedTask && (
@@ -460,6 +530,11 @@ const TaskCalendar = () => {
           priorityConfig={priorityConfig}
         />
       )}
+      <FloatingWorkWidget
+        tasks={workTasks}
+        onEdit={handleEditWork}
+        onDelete={handleDeleteWork}
+      />
     </div>
   );
 };
