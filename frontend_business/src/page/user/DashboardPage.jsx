@@ -16,7 +16,6 @@ const DashboardPage = () => {
 
   const { userId } = useAuth();
 
-  // Bước 1: Lấy businessId từ userId (ĐÚNG, GIỮ NGUYÊN)
   useEffect(() => {
     if (userId) {
       setAppStatus('Đang tải thông tin business...');
@@ -49,7 +48,6 @@ const DashboardPage = () => {
     if (!businessId) return;
     setIsLoadingTable(true);
 
-    // SỬA LỖI 1: Đổi trở lại SỐ NHIỀU (thêm "s")
     fetch(`${BACKEND_URL}/api/business/${businessId}/business_revenues`)
       .then((res) => {
         if (!res.ok) throw new Error('Network response was not ok');
@@ -67,7 +65,7 @@ const DashboardPage = () => {
       });
   };
 
-  // Bước 2: Lấy dữ liệu dashboard
+  // Lấy dữ liệu dashboard
   useEffect(() => {
     if (!businessId) return;
     fetchTableData();
@@ -85,7 +83,6 @@ const DashboardPage = () => {
     try {
       setIsLoadingTable(true);
 
-      // SỬA LỖI 2: Đổi trở lại SỐ NHIỀU (thêm "s")
       const res = await fetch(
         `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
         {
@@ -95,7 +92,6 @@ const DashboardPage = () => {
       );
 
       if (!res.ok) {
-        // Cải thiện thông báo lỗi để dễ đọc hơn
         const errorData = await res.json();
         throw new Error(
           `Import file thất bại (HTTP ${res.status}): ${
@@ -109,7 +105,6 @@ const DashboardPage = () => {
       fetchTableData();
     } catch (err) {
       console.error('Error importing file:', err);
-      // Sửa lỗi hiển thị alert
       alert(err.message);
       setIsLoadingTable(false);
     } finally {
@@ -117,7 +112,6 @@ const DashboardPage = () => {
     }
   };
 
-  // ... (Phần còn lại của file không thay đổi)
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('vi-VN');
@@ -218,7 +212,7 @@ const DashboardPage = () => {
         </table>
       </div>
 
-      {/* Biểu đồ (Giữ nguyên) */}
+      {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
           <h3 className="card-title">Lượt truy cập trong tuần</h3>
