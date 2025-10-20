@@ -1,5 +1,6 @@
 const AiBotService = require('../services/aibot.service');
 
+
 class AiBotController {
     async createBot(req, res) {
         try {
@@ -7,6 +8,16 @@ class AiBotController {
             res.status(201).json(bot);
         } catch (err) {
             console.error('Error creating bot:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async getAllBotsWithKnowledge(req, res) {
+        try {
+            const bots = await AiBotService.getAllBotsWithKnowledge();
+            res.status(200).json(bots);
+        } catch (err) {
+            console.error('Error fetching bots with knowledge:', err);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
