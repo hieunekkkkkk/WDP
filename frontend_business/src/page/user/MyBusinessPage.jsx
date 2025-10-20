@@ -7,7 +7,7 @@ import Footer from '../../components/Footer';
 import { FaPlus } from 'react-icons/fa';
 import BusinessProductModal from '../../components/BusinessProductModal';
 import { getCurrentUserId } from '../../utils/useCurrentUserId';
-import { convertFilesToBase64 } from '../../utils/imageToBase64';
+import{uploadToCloudinary} from '../../utils/uploadToCloudinary';
 import '../../css/MyBusinessPage.css';
 import { sendEmail } from '../../utils/sendEmail';
 import { toast } from 'react-toastify';
@@ -286,18 +286,19 @@ const MyBusinessPage = () => {
     if (files.length === 0) return;
 
     try {
-      const base64Images = await convertFilesToBase64(files);
-      setNewImages((prevImages) => [...prevImages, ...base64Images]);
+      const uploadedUrls = await uploadToCloudinary(files);
+      setNewImages((prevImages) => [...prevImages, ...uploadedUrls]);
       setError(null);
     } catch (error) {
-      console.error('Error converting images to base64:', error);
-      setError('Không thể chuyển đổi ảnh. Vui lòng thử lại.');
+      console.error("Error uploading images:", error);
+      toast.error("Không thể tải ảnh lên Cloudinary.");
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
+
 
   const handleSaveImages = async () => {
     if (newImages.length > 0 && business) {
