@@ -1,0 +1,330 @@
+/* 1) Page background & container */
+:root {
+  --bg-grad-start: #cbb7ff;
+  --bg-grad-mid: #efbdd4;
+  --bg-grad-end: #a9c8ff;
+
+  --card-bg: #ffffff;
+  --ink-900: #0f172a;
+  --ink-800: #111827;
+  --ink-700: #374151;
+  --ink-600: #475569;
+  --ink-500: #6b7280;
+
+  --line: #e6e8ee;
+
+  --primary: #2fa2ea;
+  --accent: #f59e0b;
+  --pill-yellow: #fbbf24;
+
+  --radius-xl: 22px;
+  --radius-md: 12px;
+  --shadow-lg: 0 12px 28px rgba(17, 24, 39, 0.12);
+  --shadow-md: 0 8px 18px rgba(17, 24, 39, 0.1);
+  --shadow-sm: 0 4px 12px rgba(17, 24, 39, 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.history-container {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    var(--bg-grad-start) 0%,
+    var(--bg-grad-mid) 35%,
+    var(--bg-grad-end) 100%
+  );
+  background: #f8fafc; /* hoặc #ffffff nếu muốn trắng hoàn toàn */
+  padding: 28px 0 56px;
+}
+
+.history-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 2) Header */
+.history-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.history-title {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(22px, 3.2vw, 32px);
+  font-weight: 900;
+  color: var(--ink-900);
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Nav buttons (accessibility friendly focus) */
+.history-nav-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.history-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  background: #646cff;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.history-nav-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+  filter: brightness(1.03);
+}
+.history-nav-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.history-nav-btn:nth-child(1) {
+  background: linear-gradient(135deg, #2fa2ea, #3372ff);
+}
+.history-nav-btn:nth-child(2) {
+  background: linear-gradient(135deg, #14b8a6, #0e9f91);
+}
+.history-nav-btn:nth-child(3) {
+  background: linear-gradient(135deg, #fb7185, #ec4899);
+}
+.history-nav-btn:nth-child(4) {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.filter-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.filter-group:nth-child(1) {
+  grid-column: span 6;
+}
+.filter-group:nth-child(2) {
+  grid-column: span 2;
+}
+.filter-group:nth-child(3) {
+  grid-column: span 2;
+}
+.filter-group:nth-child(4) {
+  grid-column: span 2;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4b5563;
+}
+.filter-group input,
+.filter-group select,
+.date-picker-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--ink-800);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.05);
+}
+.filter-group input::placeholder {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .filter-card {
+    grid-template-columns: 1fr;
+  }
+  .filter-group:nth-child(n) {
+    grid-column: span 1;
+  }
+}
+
+/* 4) List area */
+.task-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 60px;
+}
+
+/* 5) History item card */
+.history-item-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  padding: 26px 24px 18px;
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1px 320px auto; /* left | divider | right | chevron */
+  gap: 22px;
+  align-items: start;
+}
+.history-item-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.14);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* left */
+.history-item-main {
+  min-width: 0;
+}
+.history-item-title {
+  margin: 0 0 6px;
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--ink-900);
+}
+.history-item-description {
+  margin: 0 0 10px;
+  color: var(--ink-600);
+  line-height: 1.55;
+}
+
+/* tags (priority + status) */
+.history-item-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.history-item-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.86rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* priority tags */
+.level-quan-trọng {
+  background: #ffe2e2;
+  color: #b42318;
+}
+.level-bình-thường {
+  background: #fff7cc;
+  color: #a16207;
+}
+.level-rảnh-rỗi {
+  background: #e7f9f0;
+  color: #0d7a5f;
+}
+
+/* divider */
+.history-item-card > div:nth-child(2) {
+  width: 1px;
+  background: var(--line);
+  height: 90%;
+  align-self: start;
+  justify-self: center;
+}
+
+/* right (dates) */
+.history-item-details {
+  display: grid;
+  gap: 12px;
+  padding-top: 2px;
+}
+.history-item-date-group {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px;
+}
+.date-label {
+  color: #98a3b0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.date-value {
+  color: var(--ink-900);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* chevron */
+.history-item-action {
+  color: #9ca3af;
+  align-self: center;
+}
+
+/* Loading / Empty states */
+.loading-message,
+.empty-message {
+  text-align: center;
+  padding: 48px 16px;
+  font-size: 1.15rem;
+  color: var(--ink-600);
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 6) A11y & motion */
+:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 7) Print-friendly (SEO + share) */
+@media print {
+  .history-container {
+    background: #fff;
+    padding: 0;
+  }
+  .history-wrapper {
+    padding: 0;
+    max-width: none;
+  }
+  .history-nav-buttons,
+  .filter-card,
+  .history-item-action {
+    display: none !important;
+  }
+  .history-item-card {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}

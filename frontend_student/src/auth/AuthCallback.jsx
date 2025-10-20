@@ -58,7 +58,7 @@ const AuthCallback = () => {
           }
         } catch (err) {
           console.error("Lỗi xác thực, start backend :", err);
-          // await signOut(); //auto logout nếu không start be hoặc k thể gọi tới /auth
+          await signOut(); //auto logout nếu không start be hoặc k thể gọi tới /auth
         }
       }
     };

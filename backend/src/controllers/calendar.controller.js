@@ -110,7 +110,51 @@ class CalendarController {
       res.status(500).json({ message: error.message });
     }
   }
-  
+  async getAnalytics(req, res) {
+    try {
+      const userId =
+        (req.auth && req.auth.userId) ||
+        req.query.userId ||
+        req.headers["x-user-id"] ||
+        req.body?.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          message:
+            "userId is required (send as query/header/body or mount auth middleware)",
+        });
+      }
+
+      const { year, month } = req.query;
+      if (!year || !month) {
+        return res
+          .status(400)
+          .json({ message: "Year and month are required query parameters." });
+      }
+
+      const yearNum = parseInt(year, 10);
+      const monthNum = parseInt(month, 10);
+
+      if (Number.isNaN(yearNum) || Number.isNaN(monthNum)) {
+        return res
+          .status(400)
+          .json({ message: "Year and month must be numbers." });
+      }
+
+      const data = await CalendarService.getAnalyticsData(
+        userId,
+        yearNum,
+        monthNum
+      );
+
+      res.status(200).json({
+        data: data || { kpi: {}, overview: {}, report: {}, progress: [] },
+      });
+    } catch (error) {
+      console.error("[CalendarController.getAnalytics] ", error);
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new CalendarController();

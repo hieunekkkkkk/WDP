@@ -1,6 +1,14 @@
 import React, { useMemo } from "react";
+import{ levelColor } from "../../../utils/calendar-utils";
 
 export default function AgendaView({ tasks, currentDate }) {
+  const calculateTaskDuration = (start, end) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diff = endDate - startDate;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
   const sortedTasks = useMemo(() => {
     return [...tasks].sort(
       (a, b) => new Date(a.start_time) - new Date(b.start_time)
@@ -32,22 +40,39 @@ export default function AgendaView({ tasks, currentDate }) {
           <div key={dateKey} className="agenda-day-group">
             <div className="agenda-day-header">{dateKey}</div>
             <div className="agenda-events-list">
-              {groupedTasks[dateKey].map((task) => (
-                <div key={task._id} className="agenda-event-row">
-                  <div className="agenda-event-time">
-                    {new Date(task.start_time).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    -{" "}
-                    {new Date(task.end_time).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+              {groupedTasks[dateKey].map((task) => {
+                const color =
+                  task.task_status === "đã huỷ"
+                    ? "orange"
+                    : levelColor[task.task_level] || "gray"; // Use imported levelColor
+                const daysDuration = calculateTaskDuration(
+                  task.start_time,
+                  task.end_time
+                );
+                const isMultiDay = daysDuration > 1;
+
+                return (
+                  <div key={task._id} className="agenda-event-row">
+                    <div className="agenda-event-time">
+                      {new Date(task.start_time).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      -{" "}
+                      {new Date(task.end_time).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <div className={`agenda-event-details agenda-event-${color}`}>
+                      {task.task_name}
+                      {isMultiDay && (
+                        <span className="event-badge">({daysDuration}d)</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="agenda-event-details">{task.task_name}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))

@@ -1,0 +1,162 @@
+
+.fab-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 999;
+}
+
+.fab {
+  background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+}
+
+.work-widget-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 350px;
+  max-height: 400px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.work-widget-popup.open {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+
+.widget-header {
+  background-color: #6c5ce7;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.widget-header-icon {
+  font-size: 20px;
+}
+
+.widget-title-toggle {
+  flex-grow: 1;
+  background: white;
+  color: #6c5ce7;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.widget-title-toggle:hover {
+  background-color: #f0f0f0;
+}
+
+.widget-close-btn {
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.widget-close-btn:hover {
+  opacity: 1;
+}
+
+.widget-task-list {
+  padding: 8px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.widget-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #f4f7f9;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.widget-task-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-task-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.widget-task-time {
+  font-size: 13px;
+  color: #667;
+}
+
+.widget-task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.widget-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.widget-action-btn.edit {
+  color: #fd79a8;
+}
+.widget-action-btn.edit:hover {
+  background-color: #fd79a820;
+}
+
+.widget-action-btn.delete {
+  color: #747d8c;
+}
+.widget-action-btn.delete:hover {
+  background-color: #747d8c20;
+}
+
+.widget-empty-message {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}

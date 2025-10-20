@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { FaPlus, FaTrash } from 'react-icons/fa';
-import { convertFilesToBase64 } from '../utils/imageToBase64';
-import '../css/ProductDetailModal.css';
-import MyBusinessProductFeedback from './MyBusinessProductFeedback';
+import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { FaPlus, FaTrash } from "react-icons/fa";
+import { convertFilesToBase64 } from "../utils/imageToBase64";
+import "../css/ProductDetailModal.css";
+import MyBusinessProductFeedback from "./MyBusinessProductFeedback.jsx";
 import { LuTextCursorInput } from "react-icons/lu";
-import { toast } from 'react-toastify';
-
+import { toast } from "react-toastify";
 
 const BusinessProductModal = ({
   showModal,
@@ -30,10 +29,10 @@ const BusinessProductModal = ({
 
   // Field mapping to align frontend and backend field names
   const fieldMapping = {
-    name: 'product_name',
-    price: 'product_price',
-    description: 'product_description',
-    thumbnails: 'product_image',
+    name: "product_name",
+    price: "product_price",
+    description: "product_description",
+    thumbnails: "product_image",
   };
 
   const closeModal = () => {
@@ -46,29 +45,32 @@ const BusinessProductModal = ({
   };
 
   useEffect(() => {
-    if (showModal) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => (document.body.style.overflow = '');
+    if (showModal) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => (document.body.style.overflow = "");
   }, [showModal]);
 
   const handleEdit = (field) => {
     setEditFields((prev) => ({ ...prev, [field]: true }));
     setEditedValues((prev) => ({
       ...prev,
-      [field]: field === 'price' ? parseFloat(selectedProduct[field]).toString() : selectedProduct[field] || '',
+      [field]:
+        field === "price"
+          ? parseFloat(selectedProduct[field]).toString()
+          : selectedProduct[field] || "",
     }));
   };
 
   const handleChange = (e, field) => {
     let value = e.target.value;
-    if (field === 'price') {
-      value = value.replace(/[^0-9]/g, '');
+    if (field === "price") {
+      value = value.replace(/[^0-9]/g, "");
     }
     setEditedValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleKeyDown = (e, field) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleBlur(field);
     }
@@ -80,31 +82,29 @@ const BusinessProductModal = ({
       try {
         const apiField = fieldMapping[field] || field;
         let value = editedValues[field];
-        if (field === 'price') {
+        if (field === "price") {
           value = parseFloat(value) || 0;
         }
         const response = await fetch(
           `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
           {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ [apiField]: value }),
           }
         );
-        if (!response.ok) throw new Error('Cập nhật thất bại');
+        if (!response.ok) throw new Error("Cập nhật thất bại");
         const updatedProduct = await response.json();
 
         setSelectedProduct((prev) => ({
           ...prev,
-          [field]: field === 'price' ? value.toString() : value,
+          [field]: field === "price" ? value.toString() : value,
         }));
 
         if (products && setProducts) {
           setProducts(
             products.map((p) =>
-              p._id === selectedProduct.id
-                ? { ...p, [apiField]: value }
-                : p
+              p._id === selectedProduct.id ? { ...p, [apiField]: value } : p
             )
           );
         }
@@ -130,11 +130,11 @@ const BusinessProductModal = ({
       setNewImages((prevImages) => [...prevImages, ...base64Images]);
       setError(null);
     } catch (error) {
-      console.error('Error converting images to base64:', error);
-      setError('Không thể chuyển đổi ảnh. Vui lòng thử lại.');
+      console.error("Error converting images to base64:", error);
+      setError("Không thể chuyển đổi ảnh. Vui lòng thử lại.");
     } finally {
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -151,13 +151,13 @@ const BusinessProductModal = ({
         const response = await fetch(
           `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
           {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ product_image: updatedThumbnails }),
           }
         );
 
-        if (!response.ok) throw new Error('Cập nhật ảnh thất bại');
+        if (!response.ok) throw new Error("Cập nhật ảnh thất bại");
 
         const updatedProduct = await response.json();
 
@@ -178,13 +178,13 @@ const BusinessProductModal = ({
 
         setNewImages([]);
         setError(null);
-        toast.success('Lưu ảnh thành công!');
+        toast.success("Lưu ảnh thành công!");
       } catch (err) {
-        console.error('Error saving images:', err);
+        console.error("Error saving images:", err);
         setError(
-          'Không thể lưu ảnh. Vui lòng kiểm tra kết nối hoặc liên hệ admin.'
+          "Không thể lưu ảnh. Vui lòng kiểm tra kết nối hoặc liên hệ admin."
         );
-        toast.error('Không thể lưu ảnh. Vui lòng thử lại.');
+        toast.error("Không thể lưu ảnh. Vui lòng thử lại.");
       } finally {
         setLoading(false);
       }
@@ -193,11 +193,11 @@ const BusinessProductModal = ({
 
   const handleDeleteImage = async (index) => {
     if (allThumbnails.length === 1) {
-      toast.warning('Sản phẩm phải có ít nhất một ảnh.');
+      toast.warning("Sản phẩm phải có ít nhất một ảnh.");
       return;
     }
 
-    const confirmDelete = window.confirm('Bạn có chắc muốn xóa ảnh này không?');
+    const confirmDelete = window.confirm("Bạn có chắc muốn xóa ảnh này không?");
     if (!confirmDelete) return;
 
     setLoading(true);
@@ -208,16 +208,16 @@ const BusinessProductModal = ({
       const response = await fetch(
         `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
         {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ product_image: updatedThumbnails }),
         }
       );
 
-      if (!response.ok) throw new Error('Failed to delete image');
+      if (!response.ok) throw new Error("Failed to delete image");
 
-      const updatedNewImages = newImages.filter(
-        (img) => updatedThumbnails.includes(img)
+      const updatedNewImages = newImages.filter((img) =>
+        updatedThumbnails.includes(img)
       );
 
       const updatedProductThumbnails = updatedThumbnails.filter(
@@ -228,8 +228,8 @@ const BusinessProductModal = ({
         index === selectedImage
           ? 0
           : index < selectedImage
-            ? Math.max(0, selectedImage - 1)
-            : selectedImage;
+          ? Math.max(0, selectedImage - 1)
+          : selectedImage;
 
       setSelectedProduct((prev) => ({
         ...prev,
@@ -249,18 +249,21 @@ const BusinessProductModal = ({
       }
 
       setError(null);
-      toast.success('Xóa ảnh thành công!');
+      toast.success("Xóa ảnh thành công!");
     } catch (err) {
-      console.error('Error deleting image:', err);
-      setError('Không thể xóa ảnh. Vui lòng thử lại.');
-      toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
+      console.error("Error deleting image:", err);
+      setError("Không thể xóa ảnh. Vui lòng thử lại.");
+      toast.error("Không thể xóa ảnh. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
   };
 
-  const allThumbnails = [...(selectedProduct?.thumbnails || []), ...(newImages || [])];
-  const modalRoot = document.getElementById('modal-root') || document.body;
+  const allThumbnails = [
+    ...(selectedProduct?.thumbnails || []),
+    ...(newImages || []),
+  ];
+  const modalRoot = document.getElementById("modal-root") || document.body;
 
   return ReactDOM.createPortal(
     <AnimatePresence>
@@ -294,10 +297,10 @@ const BusinessProductModal = ({
               <div className="business-images">
                 <div className="main-image">
                   <img
-                    src={allThumbnails[selectedImage] || '1.png'}
+                    src={allThumbnails[selectedImage] || "1.png"}
                     alt={`${selectedProduct.name} main ${selectedImage + 1}`}
                     className="main-img"
-                    onError={(e) => (e.target.src = '1.png')}
+                    onError={(e) => (e.target.src = "1.png")}
                   />
                 </div>
                 <div className="thumbnail-images">
@@ -305,15 +308,21 @@ const BusinessProductModal = ({
                     allThumbnails.map((thumb, idx) => (
                       <div
                         key={idx}
-                        className={`thumbnail ${selectedImage === idx ? 'active' : ''}`}
-                        style={{ position: 'relative', cursor: 'pointer' }}
+                        className={`thumbnail ${
+                          selectedImage === idx ? "active" : ""
+                        }`}
+                        style={{ position: "relative", cursor: "pointer" }}
                         onClick={() => setSelectedImage(idx)}
                       >
                         <img
-                          src={thumb || '1.png'}
+                          src={thumb || "1.png"}
                           alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                          onError={(e) => (e.target.src = '1.png')}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => (e.target.src = "1.png")}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
                         />
                         {enableEdit && (
                           <button
@@ -342,7 +351,7 @@ const BusinessProductModal = ({
                           multiple
                           ref={fileInputRef}
                           onChange={handleAddImage}
-                          style={{ display: 'none' }}
+                          style={{ display: "none" }}
                         />
                       </label>
                       {newImages.length > 0 && (
@@ -350,17 +359,17 @@ const BusinessProductModal = ({
                           className="business-modal-save-image"
                           onClick={handleSaveImages}
                           style={{
-                            padding: '0.5rem 1rem',
-                            background: '#4CAF50',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            marginTop: '0.5rem',
-                            cursor: loading ? 'not-allowed' : 'pointer',
+                            padding: "0.5rem 1rem",
+                            background: "#4CAF50",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            marginTop: "0.5rem",
+                            cursor: loading ? "not-allowed" : "pointer",
                           }}
                           disabled={loading}
                         >
-                          {loading ? 'Đang lưu...' : 'Lưu ảnh'}
+                          {loading ? "Đang lưu..." : "Lưu ảnh"}
                         </button>
                       )}
                     </>
@@ -373,23 +382,23 @@ const BusinessProductModal = ({
                   className="editable-field"
                   onMouseEnter={() =>
                     enableEdit &&
-                    !editFields['name'] &&
+                    !editFields["name"] &&
                     setEditFields((prev) => ({ ...prev, hoverName: true }))
                   }
                   onMouseLeave={() =>
                     enableEdit &&
-                    !editFields['name'] &&
+                    !editFields["name"] &&
                     setEditFields((prev) => ({ ...prev, hoverName: false }))
                   }
                 >
                   <h1 className="modal-product-title">
-                    {editFields['name'] ? (
+                    {editFields["name"] ? (
                       <input
                         type="text"
-                        value={editedValues['name'] || ''}
-                        onChange={(e) => handleChange(e, 'name')}
-                        onBlur={() => handleBlur('name')}
-                        onKeyDown={(e) => handleKeyDown(e, 'name')}
+                        value={editedValues["name"] || ""}
+                        onChange={(e) => handleChange(e, "name")}
+                        onBlur={() => handleBlur("name")}
+                        onKeyDown={(e) => handleKeyDown(e, "name")}
                         autoFocus
                         disabled={loading}
                       />
@@ -397,37 +406,39 @@ const BusinessProductModal = ({
                       selectedProduct.name
                     )}
                   </h1>
-                  {enableEdit && !editFields['name'] && editFields.hoverName && (
-                    <p
-                      className="edit-btn"
-                      onClick={() => handleEdit('name')}
-                    >
-                      <LuTextCursorInput />
-                    </p>
-                  )}
+                  {enableEdit &&
+                    !editFields["name"] &&
+                    editFields.hoverName && (
+                      <p
+                        className="edit-btn"
+                        onClick={() => handleEdit("name")}
+                      >
+                        <LuTextCursorInput />
+                      </p>
+                    )}
                 </div>
                 <div
                   className="editable-field"
                   onMouseEnter={() =>
                     enableEdit &&
-                    !editFields['price'] &&
+                    !editFields["price"] &&
                     setEditFields((prev) => ({ ...prev, hoverPrice: true }))
                   }
                   onMouseLeave={() =>
                     enableEdit &&
-                    !editFields['price'] &&
+                    !editFields["price"] &&
                     setEditFields((prev) => ({ ...prev, hoverPrice: false }))
                   }
                 >
                   <div className="business-status">
                     <span className="modal-product-price">
-                      {editFields['price'] ? (
+                      {editFields["price"] ? (
                         <input
                           type="text"
-                          value={editedValues['price'] || ''}
-                          onChange={(e) => handleChange(e, 'price')}
-                          onBlur={() => handleBlur('price')}
-                          onKeyDown={(e) => handleKeyDown(e, 'price')}
+                          value={editedValues["price"] || ""}
+                          onChange={(e) => handleChange(e, "price")}
+                          onBlur={() => handleBlur("price")}
+                          onKeyDown={(e) => handleKeyDown(e, "price")}
                           autoFocus
                           disabled={loading}
                           placeholder="Enter price (e.g., 1500000)"
@@ -438,11 +449,11 @@ const BusinessProductModal = ({
                     </span>
                   </div>
                   {enableEdit &&
-                    !editFields['price'] &&
+                    !editFields["price"] &&
                     editFields.hoverPrice && (
                       <p
                         className="edit-btn"
-                        onClick={() => handleEdit('price')}
+                        onClick={() => handleEdit("price")}
                       >
                         <LuTextCursorInput />
                       </p>
@@ -450,14 +461,18 @@ const BusinessProductModal = ({
                 </div>
                 <p className="business-category">Đánh giá bởi người dùng</p>
                 <div className="rating-section">
-                  <div className="stars">{renderStars(selectedProduct.rating)}</div>
-                  <span className="rating-count">{selectedProduct.reviews}</span>
+                  <div className="stars">
+                    {renderStars(selectedProduct.rating)}
+                  </div>
+                  <span className="rating-count">
+                    {selectedProduct.reviews}
+                  </span>
                 </div>
                 <div
                   className="editable-field"
                   onMouseEnter={() =>
                     enableEdit &&
-                    !editFields['description'] &&
+                    !editFields["description"] &&
                     setEditFields((prev) => ({
                       ...prev,
                       hoverDescription: true,
@@ -465,7 +480,7 @@ const BusinessProductModal = ({
                   }
                   onMouseLeave={() =>
                     enableEdit &&
-                    !editFields['description'] &&
+                    !editFields["description"] &&
                     setEditFields((prev) => ({
                       ...prev,
                       hoverDescription: false,
@@ -473,12 +488,12 @@ const BusinessProductModal = ({
                   }
                 >
                   <p className="business-description">
-                    {editFields['description'] ? (
+                    {editFields["description"] ? (
                       <textarea
-                        value={editedValues['description'] || ''}
-                        onChange={(e) => handleChange(e, 'description')}
-                        onBlur={() => handleBlur('description')}
-                        onKeyDown={(e) => handleKeyDown(e, 'description')}
+                        value={editedValues["description"] || ""}
+                        onChange={(e) => handleChange(e, "description")}
+                        onBlur={() => handleBlur("description")}
+                        onKeyDown={(e) => handleKeyDown(e, "description")}
                         autoFocus
                         disabled={loading}
                       />
@@ -487,11 +502,11 @@ const BusinessProductModal = ({
                     )}
                   </p>
                   {enableEdit &&
-                    !editFields['description'] &&
+                    !editFields["description"] &&
                     editFields.hoverDescription && (
                       <p
                         className="edit-btn"
-                        onClick={() => handleEdit('description')}
+                        onClick={() => handleEdit("description")}
                       >
                         <LuTextCursorInput />
                       </p>
@@ -500,8 +515,11 @@ const BusinessProductModal = ({
               </div>
             </div>
 
-            <MyBusinessProductFeedback productId={selectedProduct.id} businessId={businessId} />
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <MyBusinessProductFeedback
+              productId={selectedProduct.id}
+              businessId={businessId}
+            />
+            {error && <p style={{ color: "red" }}>{error}</p>}
           </motion.div>
         </motion.div>
       )}

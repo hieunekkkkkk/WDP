@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import LoadingScreen from '../../components/LoadingScreen';
-import BusinessFeedback from '../../components/BusinessFeedback';
-import { FaFacebookF, FaInstagram, FaGoogle, FaArrowLeft } from 'react-icons/fa';
-import ProductDetailModal from '../../components/ProductDetailModal';
-import ImageZoomModal from '../../components/ImageZoomModal';
-import '../../css/BusinessPage.css';
-import { getCurrentUserId } from '../../utils/useCurrentUserId';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingScreen from "../../components/LoadingScreen";
+import BusinessFeedback from "../../components/BusinessFeedback";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaGoogle,
+  FaArrowLeft,
+} from "react-icons/fa";
+import ProductDetailModal from "../../components/ProductDetailModal";
+import ImageZoomModal from "../../components/ImageZoomModal";
+import "../../css/BusinessPage.css";
+import { getCurrentUserId } from "../../utils/useCurrentUserId";
+import ChatBox from "../../components/ChatBox";
 
 const BusinessPage = () => {
   const { id } = useParams();
@@ -29,14 +35,15 @@ const BusinessPage = () => {
 
   // Image zoom state
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState('');
+  const [zoomedImageUrl, setZoomedImageUrl] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const itemsPerSlide = 3;
 
   useEffect(() => {
     const fetchBusinessData = async () => {
       if (!id) {
-        setError('ID doanh nghiệp không hợp lệ');
+        setError("ID doanh nghiệp không hợp lệ");
         setLoading(false);
         return;
       }
@@ -48,36 +55,37 @@ const BusinessPage = () => {
         // Fetch business details and products in parallel
         const results = await Promise.allSettled([
           axios.get(`${import.meta.env.VITE_BE_URL}/api/business/${id}`),
-          axios.get(`${import.meta.env.VITE_BE_URL}/api/product/business/${id}`)
+          axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/product/business/${id}`
+          ),
         ]);
 
         const [businessResult, productsResult] = results;
 
         // Handle business data
-        if (businessResult.status === 'fulfilled') {
+        if (businessResult.status === "fulfilled") {
           const fetchedBusiness = businessResult.value.data;
           setBusiness(fetchedBusiness);
 
           const currentUserId = getCurrentUserId();
           if (currentUserId && fetchedBusiness.owner_id === currentUserId) {
-            navigate('/my-business');
+            navigate("/my-business");
             return;
           }
         } else {
-          throw new Error('Không thể tải thông tin doanh nghiệp');
+          throw new Error("Không thể tải thông tin doanh nghiệp");
         }
 
         // Handle products data
-        if (productsResult.status === 'fulfilled') {
+        if (productsResult.status === "fulfilled") {
           setProducts(productsResult.value.data?.products || []);
         } else {
-          console.warn('Could not load products:', productsResult.reason);
+          console.warn("Could not load products:", productsResult.reason);
           setProducts([]);
         }
-
       } catch (err) {
-        console.error('Error fetching business data:', err);
-        setError(err.message || 'Không thể tải dữ liệu doanh nghiệp');
+        console.error("Error fetching business data:", err);
+        setError(err.message || "Không thể tải dữ liệu doanh nghiệp");
       } finally {
         setLoading(false);
       }
@@ -96,7 +104,7 @@ const BusinessPage = () => {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Đã sao chép link vào clipboard!');
+      alert("Đã sao chép link vào clipboard!");
     }
   };
 
@@ -109,7 +117,9 @@ const BusinessPage = () => {
   const handleShowOnMap = () => {
     if (business?.business_location?.coordinates) {
       const [lng, lat] = business.business_location.coordinates;
-      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      );
     }
   };
 
@@ -117,7 +127,8 @@ const BusinessPage = () => {
   const totalSlides = Math.ceil(products.length / itemsPerSlide);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  const prevSlide = () =>
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   const goToSlide = (index) => setCurrentSlide(index);
 
   const getCurrentProducts = () => {
@@ -134,15 +145,16 @@ const BusinessPage = () => {
         price: product.product_price,
         rating: product.product_rating || 0,
         reviews: `${product.product_total_vote || 0} Đánh giá`,
-        thumbnails: product.product_image || ['/1.png'],
-        description: product.product_description || 'Không có mô tả',
+        thumbnails: product.product_image || ["/1.png"],
+        description: product.product_description || "Không có mô tả",
       };
       setSelectedProduct(transformedProduct);
       setShowModal(true);
     }
   };
 
-  const renderStars = (rating) => '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+  const renderStars = (rating) =>
+    "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
 
   // Handle image zoom
   const handleImageZoom = (imageUrl) => {
@@ -152,9 +164,8 @@ const BusinessPage = () => {
 
   const closeImageZoom = () => {
     setIsImageZoomOpen(false);
-    setZoomedImageUrl('');
+    setZoomedImageUrl("");
   };
-
 
   if (loading) {
     return <LoadingScreen />;
@@ -164,17 +175,17 @@ const BusinessPage = () => {
     return (
       <>
         <Header />
-        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+        <div style={{ textAlign: "center", padding: "100px 20px" }}>
           <h2>Lỗi: {error}</h2>
           <button
             onClick={() => navigate(-1)}
             style={{
-              marginTop: '20px',
-              padding: '10px 20px',
-              backgroundColor: '#ff6b35',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px'
+              marginTop: "20px",
+              padding: "10px 20px",
+              backgroundColor: "#ff6b35",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
             }}
           >
             Quay lại
@@ -185,9 +196,10 @@ const BusinessPage = () => {
     );
   }
 
-  const images = business.business_image && business.business_image.length > 0
-    ? business.business_image
-    : ['/1.png'];
+  const images =
+    business.business_image && business.business_image.length > 0
+      ? business.business_image
+      : ["/1.png"];
 
   const overallRating = business.business_rating || 0;
   const totalReviews = `${business.business_total_vote || 0} Đánh giá`;
@@ -211,27 +223,33 @@ const BusinessPage = () => {
                     src={images[selectedImage]}
                     alt={`${business.business_name} main ${selectedImage + 1}`}
                     className="main-img"
-                    style={{ cursor: 'zoom-in' }}
+                    style={{ cursor: "zoom-in" }}
                     onClick={() => handleImageZoom(images[selectedImage])}
-                    onError={(e) => { e.target.src = '/1.png'; }}
+                    onError={(e) => {
+                      e.target.src = "/1.png";
+                    }}
                   />
                 </div>
                 <div className="thumbnail-images">
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className={`thumbnail ${selectedImage === idx ? 'active' : ''}`}
+                      className={`thumbnail ${
+                        selectedImage === idx ? "active" : ""
+                      }`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setSelectedImage(idx);
                       }}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                     >
                       <img
                         src={img}
                         alt={`${business.business_name} thumbnail ${idx + 1}`}
-                        onError={(e) => { e.target.src = '/1.png'; }}
+                        onError={(e) => {
+                          e.target.src = "/1.png";
+                        }}
                       />
                     </div>
                   ))}
@@ -242,17 +260,23 @@ const BusinessPage = () => {
                 <h1 className="business-title">{business.business_name}</h1>
 
                 <div className="business-status">
-                  <span className={`status-badge ${business.business_status ? 'open' : 'closed'}`}>
-                    {business.business_status ? 'Đang mở cửa' : 'Đã đóng cửa'}
+                  <span
+                    className={`status-badge ${
+                      business.business_status ? "open" : "closed"
+                    }`}
+                  >
+                    {business.business_status ? "Đang mở cửa" : "Đã đóng cửa"}
                   </span>
                 </div>
 
                 <p className="business-description">
-                  {business.business_detail || 'Không có mô tả chi tiết'}
+                  {business.business_detail || "Không có mô tả chi tiết"}
                 </p>
 
                 <p className="business-category">
-                  Loại hình: {business.business_category_id?.category_name || 'Chưa phân loại'}
+                  Loại hình:{" "}
+                  {business.business_category_id?.category_name ||
+                    "Chưa phân loại"}
                 </p>
 
                 <div className="rating-section">
@@ -261,19 +285,23 @@ const BusinessPage = () => {
                 </div>
 
                 <div className="business-long-description">
-                  <strong>Địa chỉ:</strong> {business.business_address || 'Chưa cập nhật'}
+                  <strong>Địa chỉ:</strong>{" "}
+                  {business.business_address || "Chưa cập nhật"}
                   <br />
-                  <strong>Điện thoại:</strong> {business.business_phone || 'Chưa cập nhật'}
+                  <strong>Điện thoại:</strong>{" "}
+                  {business.business_phone || "Chưa cập nhật"}
                   <br />
-                  <strong>Giờ hoạt động:</strong> {
-                    business.business_time ?
-                      `${business.business_time.open} - ${business.business_time.close}` :
-                      'Chưa cập nhật'
-                  }
+                  <strong>Giờ hoạt động:</strong>{" "}
+                  {business.business_time
+                    ? `${business.business_time.open} - ${business.business_time.close}`
+                    : "Chưa cập nhật"}
                 </div>
 
                 <div className="action-buttons">
-                  <button className="contact-btn" onClick={handleContact}>
+                  <button
+                    className="contact-btn"
+                    onClick={() => setIsChatOpen(true)}
+                  >
                     Chat ngay
                   </button>
                   <button className="map-btn" onClick={handleShowOnMap}>
@@ -314,19 +342,27 @@ const BusinessPage = () => {
                       <div className="product-images">
                         <div className="product-main-image">
                           <img
-                            src={product.product_image?.[0] || '/1.png'}
+                            src={product.product_image?.[0] || "/1.png"}
                             alt={product.product_name}
-                            onError={(e) => { e.target.src = '/1.png'; }}
+                            onError={(e) => {
+                              e.target.src = "/1.png";
+                            }}
                           />
                         </div>
                       </div>
 
                       <div className="product-info">
                         <h3 className="product-name">{product.product_name}</h3>
-                        <div className="product-price">{product.product_price} VND</div>
+                        <div className="product-price">
+                          {product.product_price} VND
+                        </div>
                         <div className="product-rating">
-                          <div className="stars">{renderStars(product.product_rating || 0)}</div>
-                          <span className="reviews-count">{product.product_total_vote || 0} đánh giá</span>
+                          <div className="stars">
+                            {renderStars(product.product_rating || 0)}
+                          </div>
+                          <span className="reviews-count">
+                            {product.product_total_vote || 0} đánh giá
+                          </span>
                         </div>
                         <button
                           className="view-details-btn"
@@ -353,7 +389,7 @@ const BusinessPage = () => {
                   {Array.from({ length: totalSlides }).map((_, idx) => (
                     <button
                       key={idx}
-                      className={`dot ${currentSlide === idx ? 'active' : ''}`}
+                      className={`dot ${currentSlide === idx ? "active" : ""}`}
                       onClick={() => goToSlide(idx)}
                     />
                   ))}
@@ -382,7 +418,12 @@ const BusinessPage = () => {
         onClose={closeImageZoom}
         imageAlt="Phóng to ảnh doanh nghiệp"
       />
-
+      {isChatOpen && (
+        <ChatBox
+          onClose={() => setIsChatOpen(false)}
+          businessName={business.business_name}
+        />
+      )}
       <Footer />
     </>
   );

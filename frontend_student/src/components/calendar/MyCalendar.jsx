@@ -7,7 +7,6 @@ import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import TaskModal from "../../components/calender-modal/TaskModal.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
-// Đã loại bỏ import MonthView vì logic MonthView đã nhúng trong MyCalendar.jsx
 import WeekView from "./views/WeekView.jsx";
 import DayView from "./views/DayView.jsx";
 import AgendaView from "./views/AgendaView.jsx";
@@ -158,6 +157,18 @@ export default function MyCalendar() {
 
     fetchTasks();
   }, [activeFilter, currentDate, userId, CALENDAR_BY_CREATOR_URL]);
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (
+        !e.target.closest(".calendar-tasks-popup") &&
+        !e.target.classList.contains("calendar-show-more")
+      ) {
+        setExpandedDay(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   // CHỈNH SỬA: Loại bỏ MonthView khỏi hàm này, nó sẽ được render trực tiếp bên ngoài.
   const renderActiveView = () => {
@@ -331,7 +342,6 @@ export default function MyCalendar() {
             {t.task_name} {isMultiDay && ` (${daysDuration} ngày)`}
           </p>
           <div style={{ marginTop: "5px", fontSize: "12px" }}>
-            {/* ... (Giữ nguyên phần nội dung Toast đã có, đảm bảo đúng style) */}
             <p style={{ margin: 0, color: "#3b97d3" }}>
               Trạng thái:
               <span style={{ fontWeight: "600", marginLeft: "5px" }}>
@@ -353,7 +363,7 @@ export default function MyCalendar() {
         </div>
       );
 
-      toast.info(toastContent); // ✅ Click vào task để xem chi tiết
+      toast.info(toastContent);
     };
 
     return (
@@ -364,30 +374,30 @@ export default function MyCalendar() {
               ? "orange"
               : levelColor[t.task_level] || "gray";
 
-          // 📅 Tự động tính số ngày từ start_time đến end_time
+          //  Tự động tính số ngày từ start_time đến end_time
           const daysDuration = calculateTaskDuration(t.start_time, t.end_time);
           const isMultiDay = daysDuration > 1;
 
           return (
             <div
               key={t._id || `${t.task_name}_${t.start_time}`}
-              // 🎨 Màu sắc theo design: color được mapping tới class CSS (vd: calendar-event-red)
+              //  Màu sắc theo design: color được mapping tới class CSS (vd: calendar-event-red)
               className={`calendar-event calendar-event-${color}`}
-              // 📅 Tooltip chi tiết khi hover
+              //  Tooltip chi tiết khi hover
               title={`${t.task_name}${
                 isMultiDay ? ` (${daysDuration} ngày)` : ""
               }\nTrạng thái: ${t.task_status}\nMức độ: ${t.task_level}`}
               onClick={(e) => {
                 e.stopPropagation();
-                renderDetailToast(t); // 🎨 Click vào task (UX)
+                renderDetailToast(t);
               }}
             >
               <span className="event-emoji">
-                {t.task_type === "work" ? "💼" : "📦"} {/* 🎨 Icon Work/Task */}
+                {t.task_type === "work" ? "💼" : "📦"}
               </span>
               <span className="event-name">
                 {t.task_name}
-                {/* 📅 Hiển thị (Xd) sau tên task nếu kéo dài nhiều ngày */}
+                {/*  Hiển thị (Xd) sau tên task nếu kéo dài nhiều ngày */}
                 {isMultiDay && ` (${daysDuration}d)`}
               </span>
             </div>
@@ -517,7 +527,7 @@ export default function MyCalendar() {
             </button>
             <button
               className="big-action big-action-list"
-              onClick={() => navigate("calendar")}
+              onClick={() => navigate("/dashboard/tasks")}
             >
               Danh sách task
             </button>
