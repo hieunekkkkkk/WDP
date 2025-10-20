@@ -15,7 +15,9 @@ export default function TaskModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Thêm công việc mới</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button className="modal-close" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <div className="modal-body">
@@ -25,7 +27,9 @@ export default function TaskModal({
               type="text"
               className="form-input"
               value={value.task_name}
-              onChange={(e) => onChange({ ...value, task_name: e.target.value })}
+              onChange={(e) =>
+                onChange({ ...value, task_name: e.target.value })
+              }
               placeholder="Nhập tên công việc..."
             />
           </div>
@@ -106,8 +110,12 @@ export default function TaskModal({
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Hủy bỏ</button>
-          <button className="btn btn-primary" onClick={onSave}>Lưu</button>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Hủy bỏ
+          </button>
+          <button className="btn btn-primary" onClick={onSave}>
+            Lưu
+          </button>
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./page/user/LandingPage";
 import LoginPage from "./page/user/LoginPage";
 import SignupPage from "./page/user/SignupPage";
-import BusinessPage from "./page/user/BusinessPage"; 
+import BusinessPage from "./page/user/BusinessPage";
 import UserProfilePage from "./page/user/UserProfilePage";
 import AuthCallback from "./auth/AuthCallback";
 import PersonalizedPage from "./page/user/PersonalizedPage";
@@ -26,8 +26,14 @@ import AiChatStudentLayout from "./layout/AiChatStudentLayout.jsx";
 import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
 import AiSupportDocument from "./components/ai-support/AiSupportDocument.jsx";
 import MyAi from "./components/ai-common/MyAi.jsx";
+import AdminRoute from "./components/AdminRoute";
+import ManageUserPage from "./page/admin/ManageUserPage";
+import ManageBusinessPage from "./page/admin/ManageBusinessPage";
+import ManageTransactionPage from "./page/admin/ManageTransactionPage";
 import MyCalendar from "./components/calendar/MyCalendar.jsx";
-
+import TaskCalendar from "./components/calendar/TaskCalendar.jsx";
+import HistoryCalendar from "./components/calendar/TaskHistory.jsx";
+import AnalyticsDashboard from "./components/analytics/AnalyticsDashboard.jsx";
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -50,9 +56,13 @@ const AppRoutes = () => {
           <Route index element={<MyAi />} />
           <Route path="messages" element={<StudentMessagesPage />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
-          <Route path="calendar" element={<MyCalendar />} />
+          <Route path="/dashboard/calendar" element={<MyCalendar />} />
+           <Route path="/dashboard/tasks" element={<TaskCalendar />} />
+           <Route path="/dashboard/task-history" element={<HistoryCalendar />} />
+           <Route path="/dashboard/analytics" element={<AnalyticsDashboard />} />
           <Route path="ai-available" element={<AiSupportDocument />} />
           <Route path="my-ai" element={<MyAi />} />
+          
         </Route>
 
         <Route
@@ -78,7 +88,7 @@ const AppRoutes = () => {
         >
           <Route path="/" element={<AboutLandingPage />} />
           <Route path="/landingPage" element={<LandingPage />} />
-          <Route path="/business/:id" element={<BusinessPage />} /> 
+          <Route path="/business/:id" element={<BusinessPage />} />
           <Route path="/personalized" element={<PersonalizedPage />} />
           <Route path="/discover/" element={<DiscoverPage />} />
           <Route
@@ -126,8 +136,31 @@ const AppRoutes = () => {
             }
           />
         </Route>
-      
-
+        {/* Admin routes */}
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <ManageUserPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/businesses"
+          element={
+            <AdminRoute>
+              <ManageBusinessPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/transactions"
+          element={
+            <AdminRoute>
+              <ManageTransactionPage />
+            </AdminRoute>
+          }
+        />
       </Routes>
     </AnimatePresence>
   );

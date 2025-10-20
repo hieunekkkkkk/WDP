@@ -30,6 +30,7 @@ import AiChatLayout from "./layout/AiChatLayout.jsx";
 import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
 import DashboardPage from "./page/user/DashboardPage.jsx";
 import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
+import MyAi from "./components/ai-common/MyAi.jsx";
 import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
 const AppRoutes = () => {
   const location = useLocation();
@@ -52,7 +53,7 @@ const AppRoutes = () => {
         >
           <Route index element={<DashboardPage />} />
           <Route path="messages" element={<BusinessMessagesPage />} />
-          <Route path="ai-assistant" element={<BusinessAiChat />} />
+          <Route path="my-ai" element={<MyAi />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
         </Route>
 

@@ -24,6 +24,7 @@
   justify-content: center;
   color: white;
   text-align: center;
+  z-index: 100;
 }
 
 .hero-background {

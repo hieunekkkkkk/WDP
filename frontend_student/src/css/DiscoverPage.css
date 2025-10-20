@@ -140,7 +140,7 @@
 }
 
 .discover-recommended-section h2::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 50%;
@@ -280,7 +280,7 @@
   margin-top: auto;
 }
 
-.discover-status{
+.discover-status {
   font-size: 0.9rem;
   font-weight: 500;
   padding: 4px 12px;
@@ -348,13 +348,13 @@
   transform: translateY(-1px);
 }
 
-.search-results-section > p{
+.search-results-section > p {
   font-size: 32px;
   padding-bottom: 2rem;
   display: flex;
 }
 
-.search-results-section > p > span{
+.search-results-section > p > span {
   font-size: 22px;
   display: flex;
   align-items: center;
@@ -362,7 +362,7 @@
   transition: all 0.2s;
 }
 
-.search-results-section > p > span:hover{
+.search-results-section > p > span:hover {
   color: red;
 }
 

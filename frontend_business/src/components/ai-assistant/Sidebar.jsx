@@ -38,7 +38,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
     {
       icon: <FaRobot />,
       label: "AI",
-      path: "/business-dashboard/ai-assistant",
+      path: "/business-dashboard/my-ai",
     },
   ];
 

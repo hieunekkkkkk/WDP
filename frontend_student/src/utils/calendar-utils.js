@@ -7,14 +7,15 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
-
-// Nội bộ UI dùng chuẩn này
+export const levelColor = {
+  "quan trọng": "red",
+  "bình thường": "blue",
+  "rảnh rỗi": "hotpink",
+};
 export const WEEKDAY_ENUM = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-// Ánh xạ JS getDay() -> chuẩn nội bộ
 const JS_DAY_TO_ENUM = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-// CHUẨN HÓA string bất kỳ từ BE -> "MON" | "TUE" | ...
 export const normalizeDayForEnum = (raw) => {
   const s = String(raw).trim();
 
@@ -46,7 +47,6 @@ export const normalizeDayForEnum = (raw) => {
   return WEEKDAY_ENUM.includes(s) ? s : null;
 };
 
-/** Lấy 6x7 ô ngày tháng */
 export const getDaysInMonth = (date) => {
   const start = startOfMonth(date);
   const startDay = start.getDay();                   // 0 = Sun
@@ -68,9 +68,8 @@ export const getDaysInMonth = (date) => {
   );
 };
 
-/** Lọc items xuất hiện ở 1 ngày theo nghiệp vụ BE */
 export const getTasksForDate = (date, tasks) => {
-  const dayEnum = JS_DAY_TO_ENUM[date.getDay()]; // "SUN" | "MON" ...
+  const dayEnum = JS_DAY_TO_ENUM[date.getDay()]; 
   return tasks.filter((t) => {
     if (t.task_mode === "dài hạn") {
       const d = new Date(date).setHours(0, 0, 0, 0);
@@ -79,7 +78,6 @@ export const getTasksForDate = (date, tasks) => {
       return d >= s && d <= e;
     }
     if (t.task_mode === "hàng ngày") {
-      // normalize để an toàn nếu có record cũ khác format
       const td = t.task_day ? normalizeDayForEnum(t.task_day) : null;
       return td === dayEnum;
     }
