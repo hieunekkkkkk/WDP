@@ -16,13 +16,11 @@ const Header = () => {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountRef = useRef(null);
 
-  // ✅ Hàm tiện ích check active
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
-  // ✅ Menu cho admin
   const renderAdminMenu = () => (
     <nav className="header-nav">
       <Link
