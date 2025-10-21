@@ -10,7 +10,7 @@
   justify-content: center;
   align-items: center;
 }
-.modal-content {
+.product-modal-content {
   background-color: white;
   border-radius: 8px;
   padding: 24px 40px;
@@ -20,10 +20,10 @@
   overflow-y: auto;
   position: relative;
 }
-.modal-content::-webkit-scrollbar {
+.product-modal-content::-webkit-scrollbar {
   display: none;
 }
-.modal-product-header {
+.product-modal-product-header {
   text-align: center;
 }
 .modal-product-title {

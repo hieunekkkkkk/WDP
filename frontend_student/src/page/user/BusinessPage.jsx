@@ -52,7 +52,6 @@ const BusinessPage = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch business details and products in parallel
         const results = await Promise.allSettled([
           axios.get(`${import.meta.env.VITE_BE_URL}/api/business/${id}`),
           axios.get(
@@ -62,7 +61,6 @@ const BusinessPage = () => {
 
         const [businessResult, productsResult] = results;
 
-        // Handle business data
         if (businessResult.status === "fulfilled") {
           const fetchedBusiness = businessResult.value.data;
           setBusiness(fetchedBusiness);
@@ -76,9 +74,44 @@ const BusinessPage = () => {
           throw new Error("Không thể tải thông tin doanh nghiệp");
         }
 
-        // Handle products data
         if (productsResult.status === "fulfilled") {
-          setProducts(productsResult.value.data?.products || []);
+          const fetchedProducts = productsResult.value.data?.products || [];
+
+          const productWithRatings = await Promise.all(
+            fetchedProducts.map(async (product) => {
+              try {
+                const res = await axios.get(
+                  `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
+                    product._id
+                  }`
+                );
+                const feedbackList = res.data.data || [];
+
+                if (feedbackList.length === 0)
+                  return { ...product, averageRating: 0, totalReviews: 0 };
+
+                const totalStars = feedbackList.reduce(
+                  (sum, fb) => sum + (fb.feedback_rating || 0),
+                  0
+                );
+                const avg = totalStars / feedbackList.length;
+
+                return {
+                  ...product,
+                  averageRating: avg,
+                  totalReviews: feedbackList.length,
+                };
+              } catch (err) {
+                console.warn(
+                  `Could not fetch feedback for ${product._id}`,
+                  err
+                );
+                return { ...product, averageRating: 0, totalReviews: 0 };
+              }
+            })
+          );
+
+          setProducts(productWithRatings);
         } else {
           console.warn("Could not load products:", productsResult.reason);
           setProducts([]);
@@ -94,7 +127,6 @@ const BusinessPage = () => {
     fetchBusinessData();
   }, [id]);
 
-  // Business detail handlers
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -358,10 +390,10 @@ const BusinessPage = () => {
                         </div>
                         <div className="product-rating">
                           <div className="stars">
-                            {renderStars(product.product_rating || 0)}
+                            {renderStars(product.averageRating || 0)}
                           </div>
                           <span className="reviews-count">
-                            {product.product_total_vote || 0} đánh giá
+                            {product.totalReviews || 0} đánh giá
                           </span>
                         </div>
                         <button

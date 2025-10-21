@@ -27,11 +27,10 @@ const ProductFeedback = ({ productId, isModal = false }) => {
 
   const fetchUserInfo = async (userId) => {
     if (!userId || userInfoMap[userId]) return;
-
+    
     try {
       const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${userId}`);
-      const user = response.data?.users;
-      const username = user?.fullName || user?.email?.split('@')[0] || 'Người dùng';
+      const username = response.data?.fullName;
       setUserInfoMap((prev) => ({ ...prev, [userId]: username }));
     } catch (error) {
       console.error('Error fetching user info:', error);

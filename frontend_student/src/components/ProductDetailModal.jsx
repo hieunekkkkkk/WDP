@@ -55,7 +55,7 @@ const ProductDetailModal = ({
           onClick={closeModal}
         >
           <motion.div
-            className="modal-content"
+            className="product-modal-content"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -70,7 +70,7 @@ const ProductDetailModal = ({
               ✕
             </button>
 
-            <h1 className="modal-product-header">Chi tiết sản phẩm</h1>
+            <h1 className="product-modal-product-header">Chi tiết sản phẩm</h1>
 
             <div className="business-content">
               <div className="business-images">

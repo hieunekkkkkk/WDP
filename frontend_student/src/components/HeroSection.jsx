@@ -14,7 +14,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="hero-section">
+    <section className="hero-section-landing">
       <div className="hero-background">
         <img src="/1.png" alt="Mountains" className="hero-bg-image" />
         <div className="hero-overlay"></div>
@@ -32,7 +32,7 @@ const HeroSection = () => {
               placeholder="Tìm kiếm địa điểm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              className="hero-search-input"
             />
             <button type="submit" className="search-btn">Tìm kiếm</button>
           </div>
