@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const BusinessController = require("../controllers/business.controller");
+const businessRevenueRoutes = require('./businessRevenue.routes');
 
 /**
  * @swagger
@@ -223,4 +224,5 @@ router.get("/owner/:ownerId", BusinessController.getBusinessesByOwner);
 router.post('/:id/increase-priority', BusinessController.increaseBusinessPriority);
 router.post('/:id/reset-priority', BusinessController.resetBusinessPriority);
 router.get('/priority/top', BusinessController.getBusinessByPriority);
+router.use('/', businessRevenueRoutes);
 module.exports = router;

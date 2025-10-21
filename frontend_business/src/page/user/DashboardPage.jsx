@@ -1,72 +1,231 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import '../../css/DashboardPage.css';
 
+const BACKEND_URL = 'http://localhost:3000';
+
 const DashboardPage = () => {
+  const [businessId, setBusinessId] = useState(null);
   const [tableData, setTableData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
+  const [isLoadingTable, setIsLoadingTable] = useState(true);
+  const [appStatus, setAppStatus] = useState(
+    'Đang tải thông tin người dùng...'
+  );
+
+  const { userId } = useAuth();
 
   useEffect(() => {
-    // Fetch doanh thu/lợi nhuận/chi phí
-    fetch('/api/businessRevenue')
-      .then((res) => res.json())
-      .then((data) => setTableData(data))
-      .catch(() => setTableData([]));
+    if (userId) {
+      setAppStatus('Đang tải thông tin business...');
+      fetch(`${BACKEND_URL}/api/business/owner/${userId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Không thể tải thông tin business.');
+          return res.json();
+        })
+        .then((businesses) => {
+          if (businesses && businesses.length > 0) {
+            setBusinessId(businesses[0]._id);
+            setAppStatus('');
+          } else {
+            setAppStatus('Không tìm thấy business nào cho tài khoản này.');
+            setIsLoadingTable(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch business:', err);
+          setAppStatus(`Lỗi: ${err.message}`);
+          setIsLoadingTable(false);
+        });
+    } else {
+      setAppStatus('Đang xác thực người dùng...');
+    }
+  }, [userId]);
 
-    // Fetch lượt truy cập tuần
-    fetch('/api/businessView/weekly')
-      .then((res) => res.json())
-      .then((data) => setWeeklyData(data))
-      .catch(() => setWeeklyData([]));
+  // Tách hàm fetch data
+  const fetchTableData = () => {
+    if (!businessId) return;
+    setIsLoadingTable(true);
 
-    // Fetch giao dịch tháng
-    fetch('/api/businessRevenue/monthly')
-      .then((res) => res.json())
-      .then((data) => setMonthlyData(data))
-      .catch(() => setMonthlyData([]));
-  }, []);
+    fetch(`${BACKEND_URL}/api/business/${businessId}/business_revenues`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Network response was not ok');
+        return res.json();
+      })
+      .then((data) => {
+        setTableData(data);
+      })
+      .catch((err) => {
+        console.error('Fetch table data error:', err);
+        setTableData([]);
+      })
+      .finally(() => {
+        setIsLoadingTable(false);
+      });
+  };
+
+  // Lấy dữ liệu dashboard
+  useEffect(() => {
+    if (!businessId) return;
+    fetchTableData();
+  }, [businessId]);
+
+  // Xử lý khi người dùng chọn file Excel
+  const handleFileImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !businessId) {
+      if (!businessId) alert('Lỗi: Không tìm thấy ID của business.');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      setIsLoadingTable(true);
+
+      const res = await fetch(
+        `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          `Import file thất bại (HTTP ${res.status}): ${
+            errorData.error || 'Route not found'
+          }`
+        );
+      }
+
+      const result = await res.json();
+      alert(result.message);
+      fetchTableData();
+    } catch (err) {
+      console.error('Error importing file:', err);
+      alert(err.message);
+      setIsLoadingTable(false);
+    } finally {
+      e.target.value = null;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+  const formatCurrency = (amount) => {
+    if (typeof amount !== 'number') return 'N/A';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  };
+  const renderTableBody = () => {
+    if (isLoadingTable) {
+      return (
+        <tr>
+          <td colSpan="4" style={{ textAlign: 'center' }}>
+            Đang tải dữ liệu...
+          </td>
+        </tr>
+      );
+    }
+    if (appStatus && !businessId) {
+      return (
+        <tr>
+          <td colSpan="4" style={{ textAlign: 'center' }}>
+            {appStatus}
+          </td>
+        </tr>
+      );
+    }
+    if (tableData.length > 0) {
+      return tableData.map((row, index) => (
+        <tr key={row._id || index}>
+          <td>{row.revenue_name}</td>
+          <td>{formatDate(row.revenue_date)}</td>
+          <td>{formatCurrency(row.revenue_amount)}</td>
+          <td>{row.revenue_description}</td>
+        </tr>
+      ));
+    }
+    return (
+      <tr>
+        <td colSpan="4" style={{ textAlign: 'center' }}>
+          Chưa có thông tin
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <>
-      {/* Bảng dữ liệu */}
       <div className="business-card table-section">
-        <h2 className="card-title">Quản lý</h2>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <h2 className="card-title" style={{ margin: 0 }}>
+            Quản lý doanh thu
+          </h2>
+          <input
+            type="file"
+            id="file-upload"
+            style={{ display: 'none' }}
+            onChange={handleFileImport}
+            accept=".xlsx, .xls"
+            disabled={!businessId}
+          />
+          <button
+            className="import-btn"
+            onClick={() => document.getElementById('file-upload').click()}
+            style={{
+              padding: '8px 12px',
+              cursor: 'pointer',
+              background: '#283593',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+            }}
+            disabled={!businessId}
+          >
+            Import Excel
+          </button>
+        </div>
         <table className="data-table">
           <thead>
             <tr>
+              <th>Tên</th>
               <th>Ngày/Tháng</th>
-              <th>Doanh Thu</th>
-              <th>Lãi</th>
-              <th>Chi phí</th>
+              <th>Doanh thu</th>
+              <th>Mô tả</th>
             </tr>
           </thead>
-          <tbody>
-            {tableData.map((row, index) => (
-              <tr key={index}>
-                <td>{row.date}</td>
-                <td>{row.revenue}</td>
-                <td>{row.profit}</td>
-                <td>{row.cost}</td>
-              </tr>
-            ))}
-          </tbody>
+          <tbody>{renderTableBody()}</tbody>
         </table>
       </div>
 
       {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
-          <h3 className="card-title">Lượt truy cập trong tuần </h3>
+          <h3 className="card-title">Lượt truy cập trong tuần</h3>
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">
-                <span className="bar-label">{item.day}</span>
+                <span className="bar-label">{item.view_date}</span>
                 <div className="bar-container">
                   <div
                     className="bar"
-                    style={{ height: `${(item.value / 150) * 100}%` }}
+                    style={{ height: `${(item.view_count / 150) * 100}%` }}
                   >
-                    {item.value}
+                    {item.view_count}
                   </div>
                 </div>
               </div>
