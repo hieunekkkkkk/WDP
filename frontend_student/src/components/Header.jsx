@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaHome, FaUserCog, FaBuilding } from "react-icons/fa";
+import { FaUserCircle, FaHome, FaUserCog } from "react-icons/fa";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import "../css/Header.css";
 import AuthTokenReset from "../auth/AuthTokenReset";
@@ -25,26 +25,31 @@ const Header = () => {
     <nav className="header-nav">
       <Link
         to="/admin/users"
-        className={`header-nav-link ${isActive("/admin/users", true) ? "active" : ""}`}
+        className={`header-nav-link ${
+          isActive("/admin/users", true) ? "active" : ""
+        }`}
       >
         Người dùng
       </Link>
       <Link
         to="/admin/businesses"
-        className={`header-nav-link ${isActive("/admin/businesses", true) ? "active" : ""}`}
+        className={`header-nav-link ${
+          isActive("/admin/businesses", true) ? "active" : ""
+        }`}
       >
         Doanh nghiệp
       </Link>
       <Link
         to="/admin/transactions"
-        className={`header-nav-link ${isActive("/admin/transactions", true) ? "active" : ""}`}
+        className={`header-nav-link ${
+          isActive("/admin/transactions", true) ? "active" : ""
+        }`}
       >
         Giao dịch
       </Link>
     </nav>
   );
 
-  //  Menu cho guest / client / owner
   const renderUserMenu = () => (
     <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
       <Link
@@ -53,7 +58,6 @@ const Header = () => {
       >
         Trang chủ
       </Link>
-
       <Link
         to="/discover"
         className={`header-nav-link ${isActive("/discover") ? "active" : ""}`}
@@ -61,88 +65,45 @@ const Header = () => {
         Kết nối doanh nghiệp
       </Link>
 
-      {/* Client menu */}
       {role === "client" && (
-        <>
-          <Link
-            to="/dashboard"
-            className={`header-nav-link ${isActive("/dashboard") ? "active" : ""}`}
-          >
-            Hỗ trợ học tập
-          </Link>
-        </>
-      )}
-
-      {/* Owner menu */}
-      {role === "owner" && (
-        <>
-          <Link
-            to="/my-business"
-            className={`header-nav-link ${isActive("/my-business", true) ? "active" : ""}`}
-          >
-            Doanh nghiệp của tôi
-          </Link>
-          <Link
-            to="/business-dashboard"
-            className={`header-nav-link ${isActive("/business-dashboard") ? "active" : ""}`}
-          >
-            Hỗ trợ doanh nghiệp
-          </Link>
-        </>
+        <Link
+          to="/dashboard"
+          className={`header-nav-link ${
+            isActive("/dashboard") ? "active" : ""
+          }`}
+        >
+          Hỗ trợ học tập
+        </Link>
       )}
     </nav>
   );
 
-  //  Menu trong UserButton theo role
   const renderUserButtonMenu = () => {
-    switch (role) {
-      case "admin":
-        return (
-          <UserButton.MenuItems>
-            {isAdminPage ? (
-              <UserButton.Action
-                label="Trang chủ"
-                labelIcon={<FaHome />}
-                onClick={() => navigate("/")}
-              />
-            ) : (
-              <UserButton.Action
-                label="Quản trị hệ thống"
-                labelIcon={<FaUserCog />}
-                onClick={() => navigate("/admin/users")}
-              />
-            )}
-          </UserButton.MenuItems>
-        );
-      case "owner":
-        return (
-          <UserButton.MenuItems>
+    if (role === "admin") {
+      return (
+        <UserButton.MenuItems>
+          {isAdminPage ? (
             <UserButton.Action
-              label="Xem doanh nghiệp"
-              labelIcon={<FaBuilding />}
-              onClick={() => navigate("/my-business")}
+              label="Trang chủ"
+              labelIcon={<FaHome />}
+              onClick={() => navigate("/")}
             />
-          </UserButton.MenuItems>
-        );
-      case "client":
-        return (
-          <UserButton.MenuItems>
+          ) : (
             <UserButton.Action
-              label="Trở thành chủ doanh nghiệp"
-              labelIcon={<FaBuilding />}
-              onClick={() => navigate("/business-registration")}
+              label="Quản trị hệ thống"
+              labelIcon={<FaUserCog />}
+              onClick={() => navigate("/admin/users")}
             />
-          </UserButton.MenuItems>
-        );
-      default:
-        return null; 
+          )}
+        </UserButton.MenuItems>
+      );
     }
+    return null;
   };
 
   return (
     <header className="header">
       <div className="header-container">
-        {/* Logo */}
         <div className="header-left">
           <Link to="/">
             <img
@@ -153,10 +114,8 @@ const Header = () => {
           </Link>
         </div>
 
-        {/* Menu điều hướng */}
         {role === "admin" && isAdminPage ? renderAdminMenu() : renderUserMenu()}
 
-        {/* Account menu */}
         <SignedOut>
           <AuthTokenReset />
           <div
