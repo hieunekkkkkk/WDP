@@ -8,7 +8,14 @@ class BusinessRevenueController {
             const revenue = await BusinessRevenueService.createRevenue(id, req.body);
             res.status(201).json(revenue);
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Error in createRevenue:', err);
+            if (err.name === 'ValidationError') {
+                return res.status(400).json({ error: 'Validation error', details: err.message });
+            }
+            if (err.name === 'CastError') {
+                return res.status(400).json({ error: 'Invalid business ID format' });
+            }
+            res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     }
 
@@ -19,7 +26,11 @@ class BusinessRevenueController {
             const revenues = await BusinessRevenueService.getRevenues(id);
             res.status(200).json(revenues);
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Error in getRevenues:', err);
+            if (err.name === 'CastError') {
+                return res.status(400).json({ error: 'Invalid business ID format' });
+            }
+            res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     }
 
@@ -36,7 +47,11 @@ class BusinessRevenueController {
             const revenues = await BusinessRevenueService.getRevenuesInRange(id, start, end);
             res.status(200).json(revenues);
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Error in getRevenuesInRange:', err);
+            if (err.name === 'CastError') {
+                return res.status(400).json({ error: 'Invalid business ID format' });
+            }
+            res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     }
 
@@ -55,7 +70,10 @@ class BusinessRevenueController {
             res.status(200).json({ message: `Imported ${count} revenues successfully` });
         } catch (err) {
             console.error('Error importing revenues:', err);
-            res.status(500).json({ error: 'Internal server error' });
+            if (err.name === 'CastError') {
+                return res.status(400).json({ error: 'Invalid business ID format' });
+            }
+            res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     }
 }

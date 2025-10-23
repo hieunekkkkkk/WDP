@@ -328,6 +328,7 @@ const MyBusinessPage = () => {
     }
   };
 
+
   const handleSaveImages = async () => {
     if (newImages.length > 0 && business) {
       try {

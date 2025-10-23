@@ -57,9 +57,13 @@ const BusinessPage = () => {
           axios.get(
             `${import.meta.env.VITE_BE_URL}/api/product/business/${id}`
           ),
+          axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/feedback/business/${id}`
+          ),
         ]);
 
-        const [businessResult, productsResult] = results;
+        const [businessResult, productsResult, businessFeedbackResult] =
+          results;
 
         if (businessResult.status === "fulfilled") {
           const fetchedBusiness = businessResult.value.data;
@@ -73,6 +77,31 @@ const BusinessPage = () => {
         } else {
           throw new Error("Không thể tải thông tin doanh nghiệp");
         }
+
+        let overallRating = 0;
+        let totalReviews = 0;
+        if (businessFeedbackResult.status === "fulfilled") {
+          const feedbackList = businessFeedbackResult.value.data?.data || [];
+          if (feedbackList.length > 0) {
+            const totalStars = feedbackList.reduce(
+              (sum, fb) => sum + (fb.feedback_rating || 0),
+              0
+            );
+            overallRating = totalStars / feedbackList.length;
+            totalReviews = feedbackList.length;
+          }
+        } else {
+          console.warn(
+            "Không thể tải feedback doanh nghiệp:",
+            businessFeedbackResult.reason
+          );
+        }
+
+        setBusiness((prev) => ({
+          ...prev,
+          business_rating: overallRating,
+          business_total_vote: totalReviews,
+        }));
 
         if (productsResult.status === "fulfilled") {
           const fetchedProducts = productsResult.value.data?.products || [];

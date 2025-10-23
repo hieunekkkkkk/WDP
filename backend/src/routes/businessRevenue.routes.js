@@ -18,3 +18,4 @@ router.get('/:id/business_revenues/range', (req, res) => BusinessRevenueControll
 router.post('/:id/business_revenues/import', upload.single('file'), (req, res) => BusinessRevenueController.importRevenues(req, res));
 
 module.exports = router;
+
