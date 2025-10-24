@@ -105,7 +105,7 @@ function FilterSidebar({ filters, handleFilterChange, fetchLocation }) {
               checked={filters.rating.fourStars}
               onChange={() => handleRatingChange('fourStars')}
             />
-            4 sao (≥ 4 ★)
+            4 sao (4 ★)
           </label>
           <label>
             <input

@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import HeroSection from '../../components/HeroSection';
-import FilterSidebar from '../../components/FilterSidebar';
-import LoadingScreen from '../../components/LoadingScreen';
-import { AnimatePresence, motion } from 'framer-motion';
-import '../../css/DiscoverByCategoryPage.css';
-import useGeolocation from '../../utils/useGeolocation';
-import { PuffLoader } from 'react-spinners';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import HeroSection from "../../components/HeroSection";
+import FilterSidebar from "../../components/FilterSidebar";
+import LoadingScreen from "../../components/LoadingScreen";
+import { AnimatePresence, motion } from "framer-motion";
+import "../../css/DiscoverByCategoryPage.css";
+import useGeolocation from "../../utils/useGeolocation";
+import { PuffLoader } from "react-spinners";
 
 function DiscoverByCategoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { fetchLocation } = useGeolocation();
 
-
-  const [categoryId, setCategoryId] = useState(location.state?.category_id || null);
-  const [categoryName, setCategoryName] = useState(location.state?.category_name || null);
+  const [categoryId, setCategoryId] = useState(
+    location.state?.category_id || null
+  );
+  const [categoryName, setCategoryName] = useState(
+    location.state?.category_name || null
+  );
 
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +46,7 @@ function DiscoverByCategoryPage() {
   // Navigate back if no category
   useEffect(() => {
     if (!categoryId) {
-      navigate('/discover');
+      navigate("/discover");
     }
   }, [categoryId, navigate]);
 
@@ -56,9 +59,11 @@ function DiscoverByCategoryPage() {
       setError(null);
 
       try {
-        const storedLocation = JSON.parse(localStorage.getItem('userLocation'));
+        const storedLocation = JSON.parse(localStorage.getItem("userLocation"));
         if (!storedLocation?.latitude || !storedLocation?.longitude) {
-          throw new Error('Vui lòng bật quyền truy cập vị trí trong trình duyệt hoặc thiết bị để tiếp tục.');
+          throw new Error(
+            "Vui lòng bật quyền truy cập vị trí trong trình duyệt hoặc thiết bị để tiếp tục."
+          );
         }
 
         const { latitude, longitude } = storedLocation;
@@ -78,25 +83,59 @@ function DiscoverByCategoryPage() {
 
         if (Array.isArray(response.data)) {
           const filtered = response.data.filter(
-            (b) =>
-              b.business_active == "active"
+            (b) => b.business_active === "active"
           );
 
-          const enriched = filtered.map((b) => ({
-            ...b,
-            price: b.business_stack_id?.stack_price
-              ? parseFloat(b.business_stack_id.stack_price)
-              : 50000,
-            rating: b.business_rating ?? 0,
-            status: b.business_status ? 'Đang mở cửa' : 'Đã đóng cửa',
-          }));
+          // 🔹 Fetch live ratings for each business
+          const enriched = await Promise.all(
+            filtered.map(async (b) => {
+              let avgRating = 0;
+
+              try {
+                const res = await axios.get(
+                  `${import.meta.env.VITE_BE_URL}/api/feedback/business/${
+                    b._id
+                  }`
+                );
+
+                if (res.data?.success && Array.isArray(res.data.data)) {
+                  const feedbacks = res.data.data;
+                  const total = feedbacks.reduce(
+                    (sum, fb) => sum + (fb.feedback_rating || 0),
+                    0
+                  );
+                  avgRating =
+                    feedbacks.length > 0 ? total / feedbacks.length : 0;
+                }
+              } catch (err) {
+                console.error(
+                  `Error fetching feedback for ${b.business_name}:`,
+                  err
+                );
+              }
+
+              return {
+                ...b,
+                price: b.business_stack_id?.stack_price
+                  ? parseFloat(b.business_stack_id.stack_price)
+                  : 50000,
+                rating: avgRating, // ✅ Use real rating
+                status: b.business_status ? "Đang mở cửa" : "Đã đóng cửa",
+              };
+            })
+          );
 
           setBusinesses(enriched);
         } else {
-          throw new Error(`Unexpected response format: ${JSON.stringify(response.data)}`);
+          throw new Error(
+            `Unexpected response format: ${JSON.stringify(response.data)}`
+          );
         }
       } catch (err) {
-        console.error('Fetch error:', err.response ? err.response.data : err.message);
+        console.error(
+          "Fetch error:",
+          err.response ? err.response.data : err.message
+        );
         setError(err.response?.data?.message || err.message);
       } finally {
         setLoading(false);
@@ -116,14 +155,14 @@ function DiscoverByCategoryPage() {
     let pricePass =
       (!cheapest || price <= 50000) &&
       (!mostExpensive || price >= 50000) &&
-      (!opening || status === 'Đang mở cửa') &&
-      (!closed || status === 'Đã đóng cửa');
+      (!opening || status === "Đang mở cửa") &&
+      (!closed || status === "Đã đóng cửa");
 
     let ratingPass =
       (!lowest || rating <= 2) &&
       (!highest || rating >= 4) &&
-      (!fourStars || rating >= 4) &&
-      (!fiveStars || rating >= 5);
+      (!fourStars || rating == 4) &&
+      (!fiveStars || rating == 5);
 
     return pricePass && ratingPass;
   });
@@ -141,20 +180,29 @@ function DiscoverByCategoryPage() {
         <Header />
         <HeroSection />
         <div className="discover-by-category-page">
-          <FilterSidebar filters={filters} handleFilterChange={handleFilterChange} fetchLocation={fetchLocation} />
+          <FilterSidebar
+            filters={filters}
+            handleFilterChange={handleFilterChange}
+            fetchLocation={fetchLocation}
+          />
           <div className="main-content">
             <h1>
-              Danh sách <span className="place-header">{categoryName || '...'}</span>
+              Danh sách{" "}
+              <span className="place-header">{categoryName || "..."}</span>
             </h1>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '20vh',
-              flexDirection: 'column'
-            }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "20vh",
+                flexDirection: "column",
+              }}
+            >
               <PuffLoader size={90} />
-              <p style={{ marginTop: '16px', fontSize: '18px', color: '#333' }}></p>
+              <p
+                style={{ marginTop: "16px", fontSize: "18px", color: "#333" }}
+              ></p>
             </div>
           </div>
         </div>
@@ -179,11 +227,15 @@ function DiscoverByCategoryPage() {
       <HeroSection />
 
       <div className="discover-by-category-page">
-        <FilterSidebar filters={filters} handleFilterChange={handleFilterChange} />
+        <FilterSidebar
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+        />
 
         <div className="main-content">
           <h1>
-            Danh sách <span className="place-header">{categoryName || '...'}</span>
+            Danh sách{" "}
+            <span className="place-header">{categoryName || "..."}</span>
           </h1>
 
           <div className="place-grid">
@@ -194,7 +246,7 @@ function DiscoverByCategoryPage() {
                     key={b._id}
                     className="place-card"
                     onClick={() => navigate(`/business/${b._id}`)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
@@ -202,19 +254,22 @@ function DiscoverByCategoryPage() {
                     layout
                   >
                     <div className="place-image">
-                      <img
-                        src={b.business_image?.[0]}
-                        alt={b.business_name}
-                      />
+                      <img src={b.business_image?.[0]} alt={b.business_name} />
                     </div>
                     <div className="place-info">
                       <h3>{b.business_name}</h3>
-                      <p>{b.business_address}</p>
+                      <p style={{flex: 1}}>{b.business_address}</p>
                       <div className="place-meta">
-                        <span className={`place-status ${b.status === 'Đang mở cửa' ? 'open' : 'close'}`}>
+                        <span
+                          className={`place-status ${
+                            b.status === "Đang mở cửa" ? "open" : "close"
+                          }`}
+                        >
                           {b.status}
                         </span>
-                        <span className="place-rating">⭐ {b.rating}</span>
+                        <span className="place-rating">
+                          ⭐ {b.rating?.toFixed(1) || "0.0"}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -224,7 +279,6 @@ function DiscoverByCategoryPage() {
               <p>Không có địa điểm nào phù hợp.</p>
             )}
           </div>
-
         </div>
       </div>
 
