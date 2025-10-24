@@ -189,7 +189,6 @@ function ManageBusinessPage() {
             />
           </div>
           <div className="manage-business-sort-select">
-            <label>Sắp xếp:</label>
             <select value={sortStatus} onChange={(e) => setSortStatus(e.target.value)}>
               <option value="Newest">Mới nhất</option>
               <option value="Oldest">Cũ nhất</option>
@@ -222,7 +221,7 @@ function ManageBusinessPage() {
                     transition={{ duration: 0.25 }}
                   >
                     <td>{b.business_name}</td>
-                    <td>{ownerNames[b.owner_id] || b.owner_id}</td>
+                    <td>{ownerNames[b.owner_id] || "Loading..."}</td>
                     <td>{b.business_category_id?.category_name}</td>
                     <td>
                       <span className={`manage-business-status ${b.business_active.toLowerCase()}`}>

@@ -34,6 +34,7 @@ import MyCalendar from "./components/calendar/MyCalendar.jsx";
 import TaskCalendar from "./components/calendar/TaskCalendar.jsx";
 import HistoryCalendar from "./components/calendar/TaskHistory.jsx";
 import AnalyticsDashboard from "./components/analytics/AnalyticsDashboard.jsx";
+import ManageAIBotPage from "./page/admin/ManageAIBotPage.jsx";
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -158,6 +159,14 @@ const AppRoutes = () => {
           element={
             <AdminRoute>
               <ManageTransactionPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/aibots"
+          element={
+            <AdminRoute>
+              <ManageAIBotPage />
             </AdminRoute>
           }
         />

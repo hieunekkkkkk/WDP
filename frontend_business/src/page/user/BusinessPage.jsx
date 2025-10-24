@@ -57,6 +57,9 @@ const BusinessPage = () => {
           axios.get(
             `${import.meta.env.VITE_BE_URL}/api/product/business/${id}`
           ),
+          axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/feedback/business/${id}`
+          ),
         ]);
 
         axios

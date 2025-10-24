@@ -41,6 +41,12 @@ const Header = () => {
       >
         Giao dịch
       </Link>
+      <Link
+        to="/admin/aibots"
+        className={`header-nav-link ${isActive("/admin/aibots", true) ? "active" : ""}`}
+      >
+        AI Bot
+      </Link>
     </nav>
   );
 
