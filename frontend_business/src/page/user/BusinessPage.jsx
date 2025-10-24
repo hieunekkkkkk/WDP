@@ -16,6 +16,7 @@ import ImageZoomModal from "../../components/ImageZoomModal";
 import "../../css/BusinessPage.css";
 import { getCurrentUserId } from "../../utils/useCurrentUserId";
 import ChatBox from "../../components/ChatBox";
+import MyBusinessFeedback from "../../components/MyBusinessFeedback";
 
 const BusinessPage = () => {
   const { id } = useParams();
@@ -462,7 +463,9 @@ const BusinessPage = () => {
       )}
 
       {/* Feedback Section - Use BusinessFeedback component */}
-      <BusinessFeedback businessId={id} />
+      {/* <BusinessFeedback businessId={id} /> */}
+      <MyBusinessFeedback businessId={id} />
+      
 
       <ProductDetailModal
         showModal={showModal}

@@ -16,7 +16,6 @@ import { FaDumbbell } from "react-icons/fa6";
 import { PiStudent } from "react-icons/pi";
 import { FaHouse } from "react-icons/fa6";
 
-
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
   const [businesses, setBusinesses] = useState([]);
@@ -88,11 +87,35 @@ function DiscoverPage() {
         (b) => b.business_active === "active"
       );
 
-      console.log(catRes);
+      const businessesWithRatings = await Promise.all(
+        activeBusinesses.map(async (b) => {
+          try {
+            const res = await axios.get(
+              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
+            );
+
+            if (res.data?.success && Array.isArray(res.data.data)) {
+              const feedbacks = res.data.data;
+              const total = feedbacks.reduce(
+                (sum, fb) => sum + (fb.feedback_rating || 0),
+                0
+              );
+              const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
+              return { ...b, business_rating: avg };
+            }
+          } catch (err) {
+            console.error(
+              `Error fetching feedback for ${b.business_name}:`,
+              err
+            );
+          }
+          return { ...b, business_rating: 0 };
+        })
+      );
 
       setCategories(catRes.data.categories || []);
-      setBusinesses(activeBusinesses || []);
-      setFilteredBusinessesByCategory(activeBusinesses || []);
+      setBusinesses(businessesWithRatings);
+      setFilteredBusinessesByCategory(businessesWithRatings);
     } catch (err) {
       console.error("Fetch failed:", err);
       setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
@@ -145,15 +168,15 @@ function DiscoverPage() {
   };
 
   const handleCategoryClick = useCallback(
-  (categoryId) => {
-    const newCategory = categoryId === selectedCategory ? "all" : categoryId;
+    (categoryId) => {
+      const newCategory = categoryId === selectedCategory ? "all" : categoryId;
 
-    setSelectedCategory(newCategory);
-    setLoadingFilter(true);
-    fetchBusinessesByCategory(newCategory);
-  },
-  [selectedCategory]
-);
+      setSelectedCategory(newCategory);
+      setLoadingFilter(true);
+      fetchBusinessesByCategory(newCategory);
+    },
+    [selectedCategory]
+  );
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -293,7 +316,7 @@ function DiscoverPage() {
               <h3>{businessName}</h3>
               <p>{businessAddress}</p>
               <div className="rating-overlay">
-                ⭐ {businessRating.toFixed(1)}
+                ⭐ {business.business_rating?.toFixed(1) || "0.0"}
               </div>
             </div>
           </div>
@@ -540,7 +563,7 @@ function DiscoverPage() {
         </div>
       </div>
 
-      <DiscoverAISearch/>
+      <DiscoverAISearch />
 
       <Footer />
     </>

@@ -419,6 +419,15 @@
   font-weight: 500;
 }
 
+.delete-feedback-btn{
+  margin-left: 20px;
+  transition: all 0.2s;
+}
+
+.delete-feedback-btn:hover{
+  color: red;
+}
+
 .review-content {
   margin-bottom: 1.5rem;
 }

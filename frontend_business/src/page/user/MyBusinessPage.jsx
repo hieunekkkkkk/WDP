@@ -36,6 +36,9 @@ const MyBusinessPage = () => {
   const [categories, setCategories] = useState([]);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [planExpired, setPlanExpired] = useState(false);
+  const [overallRating, setOverallRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState("0 Đánh giá");
+  const [averageRating, setAverageRating] = useState(0);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -246,6 +249,85 @@ const MyBusinessPage = () => {
     fetchBusinessData();
   }, [user]);
 
+  useEffect(() => {
+    const fetchBusinessFeedback = async () => {
+      if (!business?._id) return;
+
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/feedback/business/${business._id}`
+        );
+
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          const feedbacks = res.data.data;
+
+          const total = feedbacks.reduce(
+            (sum, fb) => sum + (fb.feedback_rating || 0),
+            0
+          );
+          const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
+
+          setOverallRating(avg);
+          setTotalReviews(`${feedbacks.length} Đánh giá`);
+        } else {
+          setOverallRating(0);
+          setTotalReviews("0 Đánh giá");
+        }
+      } catch (err) {
+        console.error("Error fetching business feedback:", err);
+        setOverallRating(0);
+        setTotalReviews("0 Đánh giá");
+      }
+    };
+
+    fetchBusinessFeedback();
+  }, [business?._id]);
+
+  useEffect(() => {
+    const fetchAllProductFeedbacks = async () => {
+      if (!products.length) return;
+
+      try {
+        const updatedProducts = await Promise.all(
+          products.map(async (p) => {
+            try {
+              const res = await axios.get(
+                `${import.meta.env.VITE_BE_URL}/api/feedback/product/${p._id}`
+              );
+
+              if (res.data?.success && Array.isArray(res.data.data)) {
+                const feedbacks = res.data.data;
+                const total = feedbacks.reduce(
+                  (sum, fb) => sum + (fb.feedback_rating || 0),
+                  0
+                );
+                const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
+
+                return {
+                  ...p,
+                  product_rating: avg,
+                  product_total_vote: feedbacks.length,
+                };
+              }
+            } catch (err) {
+              console.error(
+                `Error fetching feedback for product ${p._id}:`,
+                err
+              );
+            }
+            return { ...p, product_rating: 0, product_total_vote: 0 };
+          })
+        );
+
+        setProducts(updatedProducts);
+      } catch (err) {
+        console.error("Error fetching all product feedbacks:", err);
+      }
+    };
+
+    fetchAllProductFeedbacks();
+  }, [products.length]);
+
   const toggleStatus = async () => {
     const newStatus = !isOpen;
     setIsOpen(newStatus);
@@ -327,7 +409,6 @@ const MyBusinessPage = () => {
       }
     }
   };
-
 
   const handleSaveImages = async () => {
     if (newImages.length > 0 && business) {
@@ -448,8 +529,6 @@ const MyBusinessPage = () => {
   }
 
   const allImages = [...(business.business_image || []), ...newImages];
-  const overallRating = business.business_rating || 0;
-  const totalReviews = `${business.business_total_vote || 0} Đánh giá`;
 
   return (
     <>
@@ -857,7 +936,7 @@ const MyBusinessPage = () => {
         </div>
       </section>
 
-      <MyBusinessFeedback businessId={business?._id} />
+      <MyBusinessFeedback businessId={business?._id} canDelete={true} />
       <MapModal
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
