@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import LoadingScreen from "../../components/LoadingScreen";
-import BusinessFeedback from "../../components/BusinessFeedback";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import LoadingScreen from '../../components/LoadingScreen';
+import BusinessFeedback from '../../components/BusinessFeedback';
 import {
   FaFacebookF,
   FaInstagram,
   FaGoogle,
   FaArrowLeft,
-} from "react-icons/fa";
-import ProductDetailModal from "../../components/ProductDetailModal";
-import ImageZoomModal from "../../components/ImageZoomModal";
-import "../../css/BusinessPage.css";
-import { getCurrentUserId } from "../../utils/useCurrentUserId";
-import ChatBox from "../../components/ChatBox";
+} from 'react-icons/fa';
+import ProductDetailModal from '../../components/ProductDetailModal';
+import ImageZoomModal from '../../components/ImageZoomModal';
+import '../../css/BusinessPage.css';
+import { getCurrentUserId } from '../../utils/useCurrentUserId';
+import ChatBox from '../../components/ChatBox';
 
 const BusinessPage = () => {
   const { id } = useParams();
@@ -35,7 +35,7 @@ const BusinessPage = () => {
 
   // Image zoom state
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState("");
+  const [zoomedImageUrl, setZoomedImageUrl] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const itemsPerSlide = 3;
@@ -43,7 +43,7 @@ const BusinessPage = () => {
   useEffect(() => {
     const fetchBusinessData = async () => {
       if (!id) {
-        setError("ID doanh nghiệp không hợp lệ");
+        setError('ID doanh nghiệp không hợp lệ');
         setLoading(false);
         return;
       }
@@ -62,92 +62,40 @@ const BusinessPage = () => {
           ),
         ]);
 
+        axios
+          .post(`${import.meta.env.VITE_BE_URL}/api/business/${id}/view`)
+          .catch((err) => {
+            console.warn('Failed to log business view:', err);
+          });
+
         const [businessResult, productsResult, businessFeedbackResult] =
           results;
 
         if (businessResult.status === "fulfilled") {
+        // Handle business data
+        if (businessResult.status === 'fulfilled') {
           const fetchedBusiness = businessResult.value.data;
           setBusiness(fetchedBusiness);
 
           const currentUserId = getCurrentUserId();
           if (currentUserId && fetchedBusiness.owner_id === currentUserId) {
-            navigate("/my-business");
+            navigate('/my-business');
             return;
           }
         } else {
-          throw new Error("Không thể tải thông tin doanh nghiệp");
+          throw new Error('Không thể tải thông tin doanh nghiệp');
         }
 
-        let overallRating = 0;
-        let totalReviews = 0;
-        if (businessFeedbackResult.status === "fulfilled") {
-          const feedbackList = businessFeedbackResult.value.data?.data || [];
-          if (feedbackList.length > 0) {
-            const totalStars = feedbackList.reduce(
-              (sum, fb) => sum + (fb.feedback_rating || 0),
-              0
-            );
-            overallRating = totalStars / feedbackList.length;
-            totalReviews = feedbackList.length;
-          }
+        // Handle products data
+        if (productsResult.status === 'fulfilled') {
+          setProducts(productsResult.value.data?.products || []);
         } else {
-          console.warn(
-            "Không thể tải feedback doanh nghiệp:",
-            businessFeedbackResult.reason
-          );
-        }
-
-        setBusiness((prev) => ({
-          ...prev,
-          business_rating: overallRating,
-          business_total_vote: totalReviews,
-        }));
-
-        if (productsResult.status === "fulfilled") {
-          const fetchedProducts = productsResult.value.data?.products || [];
-
-          const productWithRatings = await Promise.all(
-            fetchedProducts.map(async (product) => {
-              try {
-                const res = await axios.get(
-                  `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
-                    product._id
-                  }`
-                );
-                const feedbackList = res.data.data || [];
-
-                if (feedbackList.length === 0)
-                  return { ...product, averageRating: 0, totalReviews: 0 };
-
-                const totalStars = feedbackList.reduce(
-                  (sum, fb) => sum + (fb.feedback_rating || 0),
-                  0
-                );
-                const avg = totalStars / feedbackList.length;
-
-                return {
-                  ...product,
-                  averageRating: avg,
-                  totalReviews: feedbackList.length,
-                };
-              } catch (err) {
-                console.warn(
-                  `Could not fetch feedback for ${product._id}`,
-                  err
-                );
-                return { ...product, averageRating: 0, totalReviews: 0 };
-              }
-            })
-          );
-
-          setProducts(productWithRatings);
-        } else {
-          console.warn("Could not load products:", productsResult.reason);
+          console.warn('Could not load products:', productsResult.reason);
           setProducts([]);
         }
       } catch (err) {
-        console.error("Error fetching business data:", err);
-        setError(err.message || "Không thể tải dữ liệu doanh nghiệp");
+        console.error('Error fetching business data:', err);
+        setError(err.message || 'Không thể tải dữ liệu doanh nghiệp');
       } finally {
         setLoading(false);
       }
@@ -165,7 +113,7 @@ const BusinessPage = () => {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Đã sao chép link vào clipboard!");
+      alert('Đã sao chép link vào clipboard!');
     }
   };
 
@@ -206,8 +154,8 @@ const BusinessPage = () => {
         price: product.product_price,
         rating: product.product_rating || 0,
         reviews: `${product.product_total_vote || 0} Đánh giá`,
-        thumbnails: product.product_image || ["/1.png"],
-        description: product.product_description || "Không có mô tả",
+        thumbnails: product.product_image || ['/1.png'],
+        description: product.product_description || 'Không có mô tả',
       };
       setSelectedProduct(transformedProduct);
       setShowModal(true);
@@ -215,7 +163,7 @@ const BusinessPage = () => {
   };
 
   const renderStars = (rating) =>
-    "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
+    '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
 
   // Handle image zoom
   const handleImageZoom = (imageUrl) => {
@@ -225,7 +173,7 @@ const BusinessPage = () => {
 
   const closeImageZoom = () => {
     setIsImageZoomOpen(false);
-    setZoomedImageUrl("");
+    setZoomedImageUrl('');
   };
 
   if (loading) {
@@ -236,17 +184,17 @@ const BusinessPage = () => {
     return (
       <>
         <Header />
-        <div style={{ textAlign: "center", padding: "100px 20px" }}>
+        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
           <h2>Lỗi: {error}</h2>
           <button
             onClick={() => navigate(-1)}
             style={{
-              marginTop: "20px",
-              padding: "10px 20px",
-              backgroundColor: "#ff6b35",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
+              marginTop: '20px',
+              padding: '10px 20px',
+              backgroundColor: '#ff6b35',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
             }}
           >
             Quay lại
@@ -260,7 +208,7 @@ const BusinessPage = () => {
   const images =
     business.business_image && business.business_image.length > 0
       ? business.business_image
-      : ["/1.png"];
+      : ['/1.png'];
 
   const overallRating = business.business_rating || 0;
   const totalReviews = `${business.business_total_vote || 0} Đánh giá`;
@@ -284,10 +232,10 @@ const BusinessPage = () => {
                     src={images[selectedImage]}
                     alt={`${business.business_name} main ${selectedImage + 1}`}
                     className="main-img"
-                    style={{ cursor: "zoom-in" }}
+                    style={{ cursor: 'zoom-in' }}
                     onClick={() => handleImageZoom(images[selectedImage])}
                     onError={(e) => {
-                      e.target.src = "/1.png";
+                      e.target.src = '/1.png';
                     }}
                   />
                 </div>
@@ -296,20 +244,20 @@ const BusinessPage = () => {
                     <div
                       key={idx}
                       className={`thumbnail ${
-                        selectedImage === idx ? "active" : ""
+                        selectedImage === idx ? 'active' : ''
                       }`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setSelectedImage(idx);
                       }}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: 'pointer' }}
                     >
                       <img
                         src={img}
                         alt={`${business.business_name} thumbnail ${idx + 1}`}
                         onError={(e) => {
-                          e.target.src = "/1.png";
+                          e.target.src = '/1.png';
                         }}
                       />
                     </div>
@@ -323,21 +271,21 @@ const BusinessPage = () => {
                 <div className="business-status">
                   <span
                     className={`status-badge ${
-                      business.business_status ? "open" : "closed"
+                      business.business_status ? 'open' : 'closed'
                     }`}
                   >
-                    {business.business_status ? "Đang mở cửa" : "Đã đóng cửa"}
+                    {business.business_status ? 'Đang mở cửa' : 'Đã đóng cửa'}
                   </span>
                 </div>
 
                 <p className="business-description">
-                  {business.business_detail || "Không có mô tả chi tiết"}
+                  {business.business_detail || 'Không có mô tả chi tiết'}
                 </p>
 
                 <p className="business-category">
-                  Loại hình:{" "}
+                  Loại hình:{' '}
                   {business.business_category_id?.category_name ||
-                    "Chưa phân loại"}
+                    'Chưa phân loại'}
                 </p>
 
                 <div className="rating-section">
@@ -346,16 +294,16 @@ const BusinessPage = () => {
                 </div>
 
                 <div className="business-long-description">
-                  <strong>Địa chỉ:</strong>{" "}
-                  {business.business_address || "Chưa cập nhật"}
+                  <strong>Địa chỉ:</strong>{' '}
+                  {business.business_address || 'Chưa cập nhật'}
                   <br />
-                  <strong>Điện thoại:</strong>{" "}
-                  {business.business_phone || "Chưa cập nhật"}
+                  <strong>Điện thoại:</strong>{' '}
+                  {business.business_phone || 'Chưa cập nhật'}
                   <br />
-                  <strong>Giờ hoạt động:</strong>{" "}
+                  <strong>Giờ hoạt động:</strong>{' '}
                   {business.business_time
                     ? `${business.business_time.open} - ${business.business_time.close}`
-                    : "Chưa cập nhật"}
+                    : 'Chưa cập nhật'}
                 </div>
 
                 <div className="action-buttons">
@@ -403,10 +351,10 @@ const BusinessPage = () => {
                       <div className="product-images">
                         <div className="product-main-image">
                           <img
-                            src={product.product_image?.[0] || "/1.png"}
+                            src={product.product_image?.[0] || '/1.png'}
                             alt={product.product_name}
                             onError={(e) => {
-                              e.target.src = "/1.png";
+                              e.target.src = '/1.png';
                             }}
                           />
                         </div>
@@ -450,7 +398,7 @@ const BusinessPage = () => {
                   {Array.from({ length: totalSlides }).map((_, idx) => (
                     <button
                       key={idx}
-                      className={`dot ${currentSlide === idx ? "active" : ""}`}
+                      className={`dot ${currentSlide === idx ? 'active' : ''}`}
                       onClick={() => goToSlide(idx)}
                     />
                   ))}
