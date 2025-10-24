@@ -176,13 +176,10 @@ function ManageAIBotPage() {
             />
           </div>
           <div className="manage-business-sort-select">
-            <label>Sắp xếp:</label>
             <select
               value={sortStatus}
               onChange={(e) => setSortStatus(e.target.value)}
             >
-              <option value="Newest">Mới nhất</option>
-              <option value="Oldest">Cũ nhất</option>
               <option value="Active">Kích hoạt</option>
               <option value="Inactive">Vô hiệu hóa</option>
               <option value="Pending">Tạm chờ</option>

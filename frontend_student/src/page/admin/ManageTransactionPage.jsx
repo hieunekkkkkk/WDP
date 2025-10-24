@@ -532,7 +532,6 @@ function ManageTransactionPage() {
             </div>
           </div>
           <div className="sort-select">
-            <label>Sắp xếp:</label>
             <select value={`${sortConfig.sortBy}:${sortConfig.sortOrder}`} onChange={handleSortChange}>
               <option value="payment_date:desc">Mới nhất</option>
               <option value="payment_date:asc">Cũ nhất</option>
