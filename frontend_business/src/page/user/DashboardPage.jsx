@@ -65,10 +65,64 @@ const DashboardPage = () => {
       });
   };
 
+  const formatDateForAPI = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Lấy dữ liệu dashboard
   useEffect(() => {
     if (!businessId) return;
+
     fetchTableData();
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 6);
+
+    const endDateString = formatDateForAPI(endDate);
+    const startDateString = formatDateForAPI(startDate);
+
+    const last7DaysLabels = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(new Date().getDate() - i);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      last7DaysLabels.push({
+        fullDate: formatDateForAPI(d),
+        label: `${day}/${month}`,
+      });
+    }
+
+    fetch(
+      `${BACKEND_URL}/api/business/${businessId}/views?start=${startDateString}&end=${endDateString}`
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải dữ liệu lượt xem');
+        return res.json();
+      })
+      .then((apiData) => {
+        const processedData = last7DaysLabels.map((dayInfo) => {
+          const matchingDay = apiData.find((d) => d.date === dayInfo.fullDate);
+          return {
+            view_date: dayInfo.label,
+            view_count: matchingDay ? matchingDay.views : 0,
+          };
+        });
+
+        setWeeklyData(processedData);
+      })
+      .catch((err) => {
+        console.error('Fetch weekly data error:', err);
+        const errorData = last7DaysLabels.map((dayInfo) => ({
+          view_date: dayInfo.label,
+          view_count: 0,
+        }));
+        setWeeklyData(errorData);
+      });
   }, [businessId]);
 
   // Xử lý khi người dùng chọn file Excel
@@ -216,6 +270,7 @@ const DashboardPage = () => {
       <div className="business-card charts-section">
         <div className="chart-wrapper">
           <h3 className="card-title">Lượt truy cập trong tuần</h3>
+          <p> </p>
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">
@@ -224,10 +279,9 @@ const DashboardPage = () => {
                   <div
                     className="bar"
                     style={{ height: `${(item.view_count / 150) * 100}%` }}
-                  >
-                    {item.view_count}
-                  </div>
+                  ></div>
                 </div>
+                <span className="bar-count">{item.view_count}</span>
               </div>
             ))}
           </div>
