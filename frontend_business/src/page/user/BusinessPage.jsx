@@ -68,10 +68,8 @@ const BusinessPage = () => {
             console.warn('Failed to log business view:', err);
           });
 
-        const [businessResult, productsResult, businessFeedbackResult] =
-          results;
+        const [businessResult, productsResult] = results;
 
-        if (businessResult.status === "fulfilled") {
         // Handle business data
         if (businessResult.status === 'fulfilled') {
           const fetchedBusiness = businessResult.value.data;
