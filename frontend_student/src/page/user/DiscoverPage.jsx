@@ -369,7 +369,9 @@ function DiscoverPage() {
               {categories.map((category) => (
                 <button
                   key={category._id}
-                  onClick={() => handleCategoryClick(category._id)}
+                  onClick={() =>
+                    handleSeeMore(category.category_name, category._id)
+                  }
                   className={`category-pill ${
                     selectedCategory === category._id ? "active" : ""
                   }`}

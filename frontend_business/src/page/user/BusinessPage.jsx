@@ -464,7 +464,7 @@ const BusinessPage = () => {
 
       {/* Feedback Section - Use BusinessFeedback component */}
       {/* <BusinessFeedback businessId={id} /> */}
-      <MyBusinessFeedback businessId={id} />
+      {/* <MyBusinessFeedback businessId={id} /> */}
       
 
       <ProductDetailModal

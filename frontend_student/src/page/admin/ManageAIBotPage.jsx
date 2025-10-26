@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { IoBanSharp } from "react-icons/io5";
-import { RiLoginCircleLine } from 'react-icons/ri';
+import { RiLoginCircleLine } from "react-icons/ri";
 
 import Header from "../../components/Header";
 import HeroSectionAdmin from "../../components/HeroSectionAdmin";
@@ -200,64 +200,72 @@ function ManageAIBotPage() {
             </thead>
             <tbody>
               <AnimatePresence mode="wait">
-                {filteredBots.map((b, i) => (
-                  <motion.tr
-                    key={b.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <td>{b.name}</td>
-                    <td>{ownerNames[b.ownerId] || "Loading..."}</td>
-                    <td>{b.description || "Không có mô tả"}</td>
-                    <td>
-                      <span
-                        className={`manage-business-status ${b.status.toLowerCase()}`}
-                      >
-                        {b.status === "active" && <p>Hoạt động</p>}
-                        {b.status === "pending" && <p>Chờ kiểm duyệt</p>}
-                        {b.status === "inactive" && <p>Bị khóa</p>}
-                      </span>
-                    </td>
-                    <td className="manage-business-actions-icons">
-                      {b.status === "inactive" && (
-                        <FaRegCircleCheck
-                          className="manage-business-actions action-check"
-                          onClick={() => handleActivate(i, b.name)}
-                          title="Kích hoạt bot"
-                        />
-                      )}
-                      {b.status === "active" && (
-                        <IoBanSharp
-                          className="manage-business-actions action-ban"
-                          onClick={() => handleBan(i, b.name)}
-                          title="Vô hiệu hóa bot"
-                        />
-                      )}
-                      {b.status === "pending" && (
-                        <>
+                {filteredBots.length > 0 ? (
+                  filteredBots.map((b, i) => (
+                    <motion.tr
+                      key={b.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <td>{b.name}</td>
+                      <td>{ownerNames[b.ownerId] || "Loading..."}</td>
+                      <td>{b.description || "Không có mô tả"}</td>
+                      <td>
+                        <span
+                          className={`manage-business-status ${b.status.toLowerCase()}`}
+                        >
+                          {b.status === "active" && <p>Hoạt động</p>}
+                          {b.status === "pending" && <p>Chờ kiểm duyệt</p>}
+                          {b.status === "inactive" && <p>Bị khóa</p>}
+                        </span>
+                      </td>
+                      <td className="manage-business-actions-icons">
+                        {b.status === "inactive" && (
                           <FaRegCircleCheck
                             className="manage-business-actions action-check"
                             onClick={() => handleActivate(i, b.name)}
-                            title="Chấp nhận bot"
+                            title="Kích hoạt bot"
                           />
+                        )}
+                        {b.status === "active" && (
                           <IoBanSharp
                             className="manage-business-actions action-ban"
-                            onClick={() => handleRejectPending(i, b.name)}
-                            title="Từ chối bot"
+                            onClick={() => handleBan(i, b.name)}
+                            title="Vô hiệu hóa bot"
                           />
-                        </>
-                      )}
-                      {/* Open knowledge modal */}
-                      <RiLoginCircleLine
-                        className="manage-business-actions enter"
-                        onClick={() => handleViewKnowledge(b)}
-                        title="Xem kiến thức bot"
-                      />
+                        )}
+                        {b.status === "pending" && (
+                          <>
+                            <FaRegCircleCheck
+                              className="manage-business-actions action-check"
+                              onClick={() => handleActivate(i, b.name)}
+                              title="Chấp nhận bot"
+                            />
+                            <IoBanSharp
+                              className="manage-business-actions action-ban"
+                              onClick={() => handleRejectPending(i, b.name)}
+                              title="Từ chối bot"
+                            />
+                          </>
+                        )}
+                        {/* Open knowledge modal */}
+                        <RiLoginCircleLine
+                          className="manage-business-actions enter"
+                          onClick={() => handleViewKnowledge(b)}
+                          title="Xem kiến thức bot"
+                        />
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="no-data">
+                      Không có AI Bot nào được tìm thấy.
                     </td>
-                  </motion.tr>
-                ))}
+                  </tr>
+                )}
               </AnimatePresence>
             </tbody>
           </table>

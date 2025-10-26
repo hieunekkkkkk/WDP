@@ -47,6 +47,12 @@ const Header = () => {
       >
         AI Bot
       </Link>
+      <Link
+        to="/admin/feedback"
+        className={`header-nav-link ${isActive("/admin/feedback", true) ? "active" : ""}`}
+      >
+        Business Feedback
+      </Link>
     </nav>
   );
 
