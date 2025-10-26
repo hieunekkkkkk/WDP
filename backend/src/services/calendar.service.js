@@ -9,6 +9,27 @@ class CalendarService {
     return await Calendar.findById(id);
   }
 
+  async checkOverlap(data) {
+    const { start_time, end_time, creator_id } = data;
+
+    if (!creator_id) throw new Error("creator_id is required");
+    if (!start_time || !end_time) throw new Error("Thiếu thời gian bắt đầu/kết thúc");
+
+    const startOfDay = new Date(start_time);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(start_time);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const overlappingTasks = await Calendar.find({
+      creator_id,
+      start_time: { $lt: end_time },
+      end_time: { $gt: start_time },
+      start_time: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    return overlappingTasks;
+  }
+
   async createTask(data) {
     if (data.task_mode === "dài hạn" && data.task_day) {
       throw new Error("Task dài hạn không được có task_day");
