@@ -68,3 +68,5 @@ const CalendarSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Calendar", CalendarSchema);
+
+CalendarSchema.index({ creator_id: 1, start_time: 1, end_time: 1 });

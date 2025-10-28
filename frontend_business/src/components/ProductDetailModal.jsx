@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import ProductFeedback from './ProductFeedback';
-import ImageZoomModal from './ImageZoomModal';
-import '../css/ProductDetailModal.css';
+import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import ProductFeedback from "./MyBusinessProductFeedback";
+import ImageZoomModal from "./ImageZoomModal";
+import "../css/ProductDetailModal.css";
+import axios from "axios";
 
 const ProductDetailModal = ({
   showModal,
@@ -14,10 +15,45 @@ const ProductDetailModal = ({
   renderStars,
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
-  
+
   // Image zoom state
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState('');
+  const [zoomedImageUrl, setZoomedImageUrl] = useState("");
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      console.log(selectedProduct.id);
+      
+      if (!selectedProduct?.id) return;
+
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
+            selectedProduct.id
+          }`
+        );
+
+        if (res.data?.success) {
+          const data = res.data.data;
+          setFeedbacks(data);
+
+          const total = data.reduce(
+            (sum, f) => sum + (f.feedback_rating || 0),
+            0
+          );
+          const avg = data.length > 0 ? total / data.length : 0;
+          setAverageRating(avg);
+        }
+      } catch (err) {
+        console.error("Error fetching feedbacks:", err);
+        toast.error("Không thể tải đánh giá sản phẩm");
+      }
+    };
+
+    fetchFeedbacks();
+  }, [selectedProduct]);
 
   const closeModal = () => {
     setShowModal(false);
@@ -32,16 +68,16 @@ const ProductDetailModal = ({
 
   const closeImageZoom = () => {
     setIsImageZoomOpen(false);
-    setZoomedImageUrl('');
+    setZoomedImageUrl("");
   };
 
   useEffect(() => {
-    if (showModal) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => (document.body.style.overflow = '');
+    if (showModal) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => (document.body.style.overflow = "");
   }, [showModal]);
 
-  const modalRoot = document.getElementById('modal-root') || document.body;
+  const modalRoot = document.getElementById("modal-root") || document.body;
 
   return ReactDOM.createPortal(
     <AnimatePresence>
@@ -79,27 +115,35 @@ const ProductDetailModal = ({
                     src={selectedProduct.thumbnails[selectedImage]}
                     alt={`${selectedProduct.name} main ${selectedImage + 1}`}
                     className="main-img"
-                    style={{ cursor: 'zoom-in' }}
-                    onClick={() => handleImageZoom(selectedProduct.thumbnails[selectedImage])}
-                    onError={(e) => { e.target.src = '/1.png'; }}
+                    style={{ cursor: "zoom-in" }}
+                    onClick={() =>
+                      handleImageZoom(selectedProduct.thumbnails[selectedImage])
+                    }
+                    onError={(e) => {
+                      e.target.src = "/1.png";
+                    }}
                   />
                 </div>
                 <div className="thumbnail-images">
                   {selectedProduct.thumbnails.map((thumb, idx) => (
                     <div
                       key={idx}
-                      className={`thumbnail ${selectedImage === idx ? 'active' : ''}`}
+                      className={`thumbnail ${
+                        selectedImage === idx ? "active" : ""
+                      }`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setSelectedImage(idx);
                       }}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                     >
                       <img
                         src={thumb}
                         alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                        onError={(e) => { e.target.src = '/1.png'; }}
+                        onError={(e) => {
+                          e.target.src = "/1.png";
+                        }}
                       />
                     </div>
                   ))}
@@ -109,22 +153,28 @@ const ProductDetailModal = ({
               <div className="business-info">
                 <h1 className="modal-product-title">{selectedProduct.name}</h1>
                 <div className="business-status">
-                  <span className="modal-product-price">{selectedProduct.price} VND</span>
+                  <span className="modal-product-price">
+                    {selectedProduct.price} VND
+                  </span>
                 </div>
                 <p className="business-category">Đánh giá bởi người dùng</p>
                 <div className="rating-section">
-                  <div className="stars">{renderStars(selectedProduct.rating)}</div>
-                  <span className="rating-count">{selectedProduct.reviews}</span>
+                  <div className="stars">{renderStars(averageRating)}</div>
+                  <span className="rating-count">
+                    {feedbacks.length} đánh giá
+                  </span>
                 </div>
-                <p className="business-description">{selectedProduct.description}</p>
+                <p className="business-description">
+                  {selectedProduct.description}
+                </p>
               </div>
             </div>
 
             {/* Product Feedback Section */}
-            <ProductFeedback
+            {/* <ProductFeedback
               productId={selectedProduct.id}
               businessId={businessId}
-            />
+            /> */}
           </motion.div>
         </motion.div>
       )}

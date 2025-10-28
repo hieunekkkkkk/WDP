@@ -24,19 +24,15 @@ const DEFAULT_AVATAR =
 const AI_AVATAR =
   "https://icdn.dantri.com.vn/a3HWDOlTcvMNT73KRccc/Image/2013/05/3-904f5.jpg";
 
-// Helpers
 const currencyVND = (n) =>
   Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
 
 const pickStudentPersonalStack = (stacks = []) => {
-  // Tìm chính xác "Bot hỗ trợ cá nhân"
   const exact = stacks.find(
     (s) => (s.stack_name || "").trim().toLowerCase() === "bot hỗ trợ cá nhân"
   );
 
   if (exact) return exact;
-
-  // Backup: tìm stack có chứa "cá nhân" hoặc "sinh viên"
   return stacks.find((s) => {
     const name = (s.stack_name || "").toLowerCase();
     return name.includes("cá nhân") || name.includes("sinh viên");
