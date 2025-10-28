@@ -41,6 +41,20 @@
   background: #f8fafc; /* hoặc #ffffff nếu muốn trắng hoàn toàn */
   padding: 28px 0 56px;
 }
+.restore-btn {
+  background-color: #2ecc71;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.restore-btn:hover {
+  background-color: #27ae60;
+}
 
 .history-wrapper {
   width: 100%;

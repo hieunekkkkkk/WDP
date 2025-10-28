@@ -91,6 +91,9 @@ export default function TaskModal({
               dateFormat="dd/MM/yyyy HH:mm"
               locale={locale}
               className="form-input"
+              minDate={new Date()}
+              minTime={new Date()}
+              maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
             />
           </div>
 
@@ -104,7 +107,9 @@ export default function TaskModal({
               dateFormat="dd/MM/yyyy HH:mm"
               locale={locale}
               className="form-input"
-              minDate={value.start_time}
+              minDate={value.start_time || new Date()}
+              minTime={value.start_time ? value.start_time : new Date()}
+              maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
             />
           </div>
         </div>
