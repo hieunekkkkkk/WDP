@@ -287,10 +287,98 @@ export default function MyAi() {
     fetchData();
   }, [fetchData]);
 
-  const handleActivateStack = useCallback((selectedStack) => {
-    toast.info("Tính năng kích hoạt AI sẽ được cập nhật sớm!");
-    console.log("Activating stack:", selectedStack);
-  }, []);
+  const handleActivateStack = useCallback(
+    async (selectedStack) => {
+      try {
+        // 1) Log bắt đầu function
+        console.log("[MyAi] handleActivateStack called with:", selectedStack);
+
+        // 2) Kiểm tra VITE_BE_URL
+        const be = import.meta.env.VITE_BE_URL;
+        console.log("[MyAi] Backend URL:", be);
+
+        if (!be) {
+          throw new Error("Thiếu cấu hình máy chủ (VITE_BE_URL)");
+        }
+
+        // 3) Kiểm tra user và stack
+        console.log("[MyAi] User info:", {
+          id: user?.id,
+          firstName: user?.firstName,
+          lastName: user?.lastName,
+        });
+
+        console.log("[MyAi] Stack info:", {
+          id: selectedStack?._id,
+          name: selectedStack?.stack_name,
+          price: selectedStack?.stack_price,
+        });
+
+        if (!user?.id || !selectedStack?._id) {
+          throw new Error(
+            `Thiếu thông tin ${!user?.id ? "người dùng" : "gói đăng ký"}`
+          );
+        }
+
+        // 4) Gọi API tạo payment
+        const paymentUrl = `${be}/api/payment`;
+        const paymentData = {
+          user_id: user.id,
+          stack_id: selectedStack._id,
+        };
+
+        console.log("[MyAi] Calling payment API:", {
+          url: paymentUrl,
+          data: paymentData,
+        });
+
+        const res = await axios.post(paymentUrl, paymentData);
+
+        // 5) Log response đầy đủ
+        console.log("[MyAi] Payment API full response:", {
+          status: res.status,
+          headers: res.headers,
+          data: res.data,
+        });
+
+        // 6) Validate response URL
+        if (!res.data?.url) {
+          console.error("[MyAi] Invalid response format:", res.data);
+          throw new Error(
+            "Không nhận được link thanh toán từ máy chủ. " +
+              "Response data: " +
+              JSON.stringify(res.data)
+          );
+        }
+
+        // 7) Chuyển hướng với window.open
+        console.log("[MyAi] Redirecting to payment URL:", res.data.url);
+        window.location.href = res.data.url;
+      } catch (err) {
+        // 8) Log lỗi chi tiết
+        console.error("[MyAi] Payment initiation failed:", {
+          error: err,
+          response: err.response,
+          stack: err.stack,
+        });
+
+        // 9) Toast với message rõ ràng
+        const message =
+          err.response?.data?.message ||
+          err.message ||
+          "Không thể khởi tạo thanh toán";
+        toast.error(message);
+
+        // 10) Thông báo thêm nếu là lỗi CORS
+        if (err.message.includes("CORS")) {
+          toast.error(
+            "Lỗi kết nối tới máy chủ. Vui lòng kiểm tra CORS settings."
+          );
+        }
+      }
+    },
+    [user?.id, user?.firstName, user?.lastName]
+  );
 
   const handleNavigateToKnowledge = useCallback(() => {
     if (bot?._id) {
