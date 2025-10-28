@@ -51,7 +51,7 @@ router.post('/', PaymentController.createPayment);
  *       200:
  *         description: Callback xử lý thành công
  */
-router.get('/callback', PaymentController.handlePaymentCallback);
+router.get('/callback/:type', PaymentController.handlePaymentCallback);
 /**
  * @swagger
  * /api/payments:
