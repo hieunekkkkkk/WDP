@@ -126,6 +126,7 @@ class BusinessService {
             const businesses = await Business.find({
                 business_category_id: categoryId
             })
+                .sort({ business_priority: -1, updated_at: -1 })
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
