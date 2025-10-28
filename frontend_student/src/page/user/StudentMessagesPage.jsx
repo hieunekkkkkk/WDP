@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaPlus, FaPhoneAlt, FaInfoCircle } from "react-icons/fa";
-import { HiVideoCamera } from "react-icons/hi";
+import { FaPlus } from "react-icons/fa";
 import { IoSend } from "react-icons/io5";
 import "../../css/MessagesPage.css";
 
@@ -144,17 +143,6 @@ const StudentMessagesPage = () => {
               <span>#CU678SH</span>
             </div>
           </div>
-          <div className="business-mess-header-actions">
-            <button>
-              <FaPhoneAlt color="#283593" />
-            </button>
-            <button>
-              <HiVideoCamera color="#283593" />
-            </button>
-            <button>
-              <FaInfoCircle color="#283593" />
-            </button>
-          </div>
         </div>
 
         <div className="business-mess-body">
@@ -184,10 +172,10 @@ const StudentMessagesPage = () => {
             {showMenu && (
               <div className="business-mess-dropdown-menu">
                 <div
-                  className={responseType === "Manager" ? "active" : ""}
-                  onClick={() => handleSelect("Manager")}
+                  className={responseType === "Doanh nghiệp" ? "active" : ""}
+                  onClick={() => handleSelect("Doanh nghiệp")}
                 >
-                  Manager
+                  Doanh nghiệp
                 </div>
                 <div
                   className={responseType === "Bot" ? "active" : ""}
@@ -201,7 +189,7 @@ const StudentMessagesPage = () => {
 
           <input
             type="text"
-            placeholder={`Send as ${responseType}...`}
+            placeholder={`Gửi tin nhắn với ${responseType}...`}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
