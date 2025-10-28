@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import '../css/BusinessFeedback.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "../css/BusinessFeedback.css";
 
 const BusinessFeedback = ({ businessId }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('newest');
-  const [newFeedback, setNewFeedback] = useState('');
+  const [sortBy, setSortBy] = useState("newest");
+  const [newFeedback, setNewFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWriteReview, setShowWriteReview] = useState(false);
   const [selectedRating, setSelectedRating] = useState(5);
@@ -29,11 +29,13 @@ const BusinessFeedback = ({ businessId }) => {
     if (!userId || userInfoMap[userId]) return;
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${userId}`);
+      const response = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/user/${userId}`
+      );
       const username = response.data?.fullName;
       setUserInfoMap((prev) => ({ ...prev, [userId]: username }));
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      console.error("Error fetching user info:", error);
       const fallbackName =
         userId.length > 10
           ? `Người dùng ${userId.slice(-4).toUpperCase()}`
@@ -64,19 +66,18 @@ const BusinessFeedback = ({ businessId }) => {
       setFeedbacks(feedbackData);
 
       // Fetch user info for each feedback
-      feedbackData.forEach(feedback => {
+      feedbackData.forEach((feedback) => {
         if (feedback.user_id) {
           fetchUserInfo(feedback.user_id);
         }
       });
-
     } catch (err) {
-      console.error('Error fetching feedbacks:', err);
+      console.error("Error fetching feedbacks:", err);
       if (err.response?.status === 404) {
         setFeedbacks([]); // No feedbacks found is not an error
       } else {
-        setError('Không thể tải đánh giá');
-        toast.error('Không thể tải đánh giá');
+        setError("Không thể tải đánh giá");
+        toast.error("Không thể tải đánh giá");
       }
     } finally {
       setLoading(false);
@@ -99,16 +100,26 @@ const BusinessFeedback = ({ businessId }) => {
     const sorted = [...feedbacks];
 
     switch (sortBy) {
-      case 'newest':
-        return sorted.sort((a, b) => new Date(b.feedback_date) - new Date(a.feedback_date));
-      case 'oldest':
-        return sorted.sort((a, b) => new Date(a.feedback_date) - new Date(b.feedback_date));
-      case 'most_helpful':
-        return sorted.sort((a, b) => (b.feedback_like || 0) - (a.feedback_like || 0));
-      case 'highest_rating':
-        return sorted.sort((a, b) => (b.feedback_rating || 5) - (a.feedback_rating || 5));
-      case 'lowest_rating':
-        return sorted.sort((a, b) => (a.feedback_rating || 5) - (b.feedback_rating || 5));
+      case "newest":
+        return sorted.sort(
+          (a, b) => new Date(b.feedback_date) - new Date(a.feedback_date)
+        );
+      case "oldest":
+        return sorted.sort(
+          (a, b) => new Date(a.feedback_date) - new Date(b.feedback_date)
+        );
+      case "most_helpful":
+        return sorted.sort(
+          (a, b) => (b.feedback_like || 0) - (a.feedback_like || 0)
+        );
+      case "highest_rating":
+        return sorted.sort(
+          (a, b) => (b.feedback_rating || 5) - (a.feedback_rating || 5)
+        );
+      case "lowest_rating":
+        return sorted.sort(
+          (a, b) => (a.feedback_rating || 5) - (b.feedback_rating || 5)
+        );
       default:
         return sorted;
     }
@@ -124,7 +135,7 @@ const BusinessFeedback = ({ businessId }) => {
   // Handle feedback submission
   const handleSubmitFeedback = async () => {
     if (!newFeedback.trim()) {
-      toast.error('Vui lòng nhập nội dung đánh giá');
+      toast.error("Vui lòng nhập nội dung đánh giá");
       return;
     }
 
@@ -132,14 +143,14 @@ const BusinessFeedback = ({ businessId }) => {
       setIsSubmitting(true);
 
       // Get current user ID from token
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        toast.error('Vui lòng đăng nhập để gửi đánh giá');
+        toast.error("Vui lòng đăng nhập để gửi đánh giá");
         return;
       }
 
       // Decode token to get user ID
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       const userId = payload.sub || payload.id;
 
       const response = await axios.post(
@@ -147,24 +158,24 @@ const BusinessFeedback = ({ businessId }) => {
         {
           user_id: userId,
           business_id: businessId,
-          feedback_type: 'business',
+          feedback_type: "business",
           feedback_comment: newFeedback.trim(),
           feedback_rating: selectedRating, // Include rating
           feedback_like: 0,
-          feedback_dislike: 0
+          feedback_dislike: 0,
         }
       );
 
-      if (response.data.message === 'Feedback created successfully') {
-        setNewFeedback('');
+      if (response.data.message === "Feedback created successfully") {
+        setNewFeedback("");
         setSelectedRating(5);
         setShowWriteReview(false);
         fetchFeedbacks(); // Refresh feedbacks
-        toast.success('Đánh giá đã được gửi thành công!');
+        toast.success("Đánh giá đã được gửi thành công!");
       }
     } catch (err) {
-      console.error('Error submitting feedback:', err);
-      toast.error('Không thể gửi đánh giá. Vui lòng thử lại.');
+      console.error("Error submitting feedback:", err);
+      toast.error("Không thể gửi đánh giá. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -177,10 +188,10 @@ const BusinessFeedback = ({ businessId }) => {
         `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/like`
       );
       fetchFeedbacks(); // Refresh to get updated counts
-      toast.success('Đã thích đánh giá này');
+      toast.success("Đã thích đánh giá này");
     } catch (err) {
-      console.error('Error liking feedback:', err);
-      toast.error('Không thể thích đánh giá này');
+      console.error("Error liking feedback:", err);
+      toast.error("Không thể thích đánh giá này");
     }
   };
 
@@ -190,27 +201,36 @@ const BusinessFeedback = ({ businessId }) => {
         `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/dislike`
       );
       fetchFeedbacks(); // Refresh to get updated counts
-      toast.success('Đã không thích đánh giá này');
+      toast.success("Đã không thích đánh giá này");
     } catch (err) {
-      console.error('Error disliking feedback:', err);
-      toast.error('Không thể bỏ thích đánh giá này');
+      console.error("Error disliking feedback:", err);
+      toast.error("Không thể bỏ thích đánh giá này");
     }
   };
 
   // Render star rating
-  const renderStars = (rating, interactive = false, onStarClick = null, onStarHover = null) => {
+  const renderStars = (
+    rating,
+    interactive = false,
+    onStarClick = null,
+    onStarHover = null
+  ) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
-      const isActive = interactive ? (hoveredRating >= i || (!hoveredRating && selectedRating >= i)) : rating >= i;
+      const isActive = interactive
+        ? hoveredRating >= i || (!hoveredRating && selectedRating >= i)
+        : rating >= i;
       stars.push(
         <span
           key={i}
-          className={`star ${isActive ? 'active' : ''} ${interactive ? 'interactive' : ''}`}
+          className={`star ${isActive ? "active" : ""} ${
+            interactive ? "interactive" : ""
+          }`}
           onClick={() => interactive && onStarClick && onStarClick(i)}
           onMouseEnter={() => interactive && onStarHover && onStarHover(i)}
           onMouseLeave={() => interactive && onStarHover && onStarHover(0)}
         >
-          {isActive ? '★' : '☆'}
+          {isActive ? "★" : "☆"}
         </span>
       );
     }
@@ -224,7 +244,7 @@ const BusinessFeedback = ({ businessId }) => {
     }
 
     // Fallback nếu chưa có thông tin user
-    if (feedback.user_id && typeof feedback.user_id === 'string') {
+    if (feedback.user_id && typeof feedback.user_id === "string") {
       const userId = feedback.user_id;
       if (userId.length > 10) {
         const lastFour = userId.slice(-4);
@@ -234,7 +254,7 @@ const BusinessFeedback = ({ businessId }) => {
       }
     }
 
-    return 'Người dùng ẩn danh';
+    return "Người dùng ẩn danh";
   };
 
   // Get user avatar initial
@@ -244,7 +264,6 @@ const BusinessFeedback = ({ businessId }) => {
   };
 
   // Handle pagination
-  const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -281,9 +300,9 @@ const BusinessFeedback = ({ businessId }) => {
         pages.push(
           <button
             key={i}
-            className={`page-btn ${currentPage === i ? 'active' : ''}`}
+            className={`page-btn ${currentPage === i ? "active" : ""}`}
             onClick={() => handlePageChange(i)}
-            aria-current={currentPage === i ? 'page' : undefined}
+            aria-current={currentPage === i ? "page" : undefined}
           >
             {i}
           </button>
@@ -314,8 +333,55 @@ const BusinessFeedback = ({ businessId }) => {
     return pages;
   };
 
-  const overallRating = calculateOverallRating();
-  const paginatedFeedbacks = getPaginatedFeedbacks();
+  // Only include active feedbacks
+  const activeFeedbacks = feedbacks.filter(
+    (fb) => fb.feedback_status === "active" || !fb.feedback_status
+  );
+
+  // Recalculate rating based on active feedbacks only
+  const overallRating =
+    activeFeedbacks.length > 0
+      ? activeFeedbacks.reduce(
+          (sum, fb) => sum + (fb.feedback_rating || 5),
+          0
+        ) / activeFeedbacks.length
+      : 0;
+
+  // Paginate active feedbacks
+  const sortedActiveFeedbacks = (() => {
+    const sorted = [...activeFeedbacks];
+    switch (sortBy) {
+      case "newest":
+        return sorted.sort(
+          (a, b) => new Date(b.feedback_date) - new Date(a.feedback_date)
+        );
+      case "oldest":
+        return sorted.sort(
+          (a, b) => new Date(a.feedback_date) - new Date(b.feedback_date)
+        );
+      case "most_helpful":
+        return sorted.sort(
+          (a, b) => (b.feedback_like || 0) - (a.feedback_like || 0)
+        );
+      case "highest_rating":
+        return sorted.sort(
+          (a, b) => (b.feedback_rating || 5) - (a.feedback_rating || 5)
+        );
+      case "lowest_rating":
+        return sorted.sort(
+          (a, b) => (a.feedback_rating || 5) - (b.feedback_rating || 5)
+        );
+      default:
+        return sorted;
+    }
+  })();
+
+  const paginatedFeedbacks = sortedActiveFeedbacks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(activeFeedbacks.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -341,7 +407,9 @@ const BusinessFeedback = ({ businessId }) => {
               <span className="score">{overallRating.toFixed(1)}</span>
               <div className="stars">{renderStars(overallRating)}</div>
             </div>
-            <span className="time-period">từ {feedbacks.length} đánh giá</span>
+            <span className="time-period">
+              từ {activeFeedbacks.length} đánh giá
+            </span>
 
             <div className="review-actions">
               {!showWriteReview ? (
@@ -365,11 +433,11 @@ const BusinessFeedback = ({ businessId }) => {
                       )}
                     </div>
                     <span className="rating-text">
-                      {selectedRating === 1 && 'Rất không hài lòng'}
-                      {selectedRating === 2 && 'Không hài lòng'}
-                      {selectedRating === 3 && 'Bình thường'}
-                      {selectedRating === 4 && 'Hài lòng'}
-                      {selectedRating === 5 && 'Rất hài lòng'}
+                      {selectedRating === 1 && "Rất không hài lòng"}
+                      {selectedRating === 2 && "Không hài lòng"}
+                      {selectedRating === 3 && "Bình thường"}
+                      {selectedRating === 4 && "Hài lòng"}
+                      {selectedRating === 5 && "Rất hài lòng"}
                     </span>
                   </div>
 
@@ -386,13 +454,13 @@ const BusinessFeedback = ({ businessId }) => {
                       onClick={handleSubmitFeedback}
                       disabled={isSubmitting || !newFeedback.trim()}
                     >
-                      {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+                      {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
                     </button>
                     <button
                       className="cancel-review-btn"
                       onClick={() => {
                         setShowWriteReview(false);
-                        setNewFeedback('');
+                        setNewFeedback("");
                         setSelectedRating(5);
                       }}
                     >
@@ -404,18 +472,16 @@ const BusinessFeedback = ({ businessId }) => {
             </div>
           </div>
 
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
           {/* Customer Reviews Section */}
           <div className="customer-reviews-section">
             <div className="reviews-header">
               <h3 className="reviews-title">Đánh giá của khách hàng</h3>
               <div className="reviews-summary">
-                <span className="total-reviews">{feedbacks.length} đánh giá</span>
+                <span className="total-reviews">
+                  {feedbacks.length} đánh giá
+                </span>
                 <select
                   className="sort-dropdown"
                   value={sortBy}
@@ -445,16 +511,21 @@ const BusinessFeedback = ({ businessId }) => {
                             {getUserDisplayName(feedback)}
                           </span>
                           <div className="review-rating">
-                            <span className="stars">{renderStars(feedback.feedback_rating || 5)}</span>
+                            <span className="stars">
+                              {renderStars(feedback.feedback_rating || 5)}
+                            </span>
                           </div>
                         </div>
                       </div>
                       <span className="review-date">
-                        {new Date(feedback.feedback_date).toLocaleDateString('vi-VN', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                        {new Date(feedback.feedback_date).toLocaleDateString(
+                          "vi-VN",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
                       </span>
                     </div>
 
@@ -466,7 +537,9 @@ const BusinessFeedback = ({ businessId }) => {
                           <div className="response-header">
                             <strong>Phản hồi từ doanh nghiệp:</strong>
                           </div>
-                          <p className="response-text">{feedback.feedback_response}</p>
+                          <p className="response-text">
+                            {feedback.feedback_response}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -478,11 +551,11 @@ const BusinessFeedback = ({ businessId }) => {
                           if (navigator.share) {
                             navigator.share({
                               text: feedback.feedback_comment,
-                              url: window.location.href
+                              url: window.location.href,
                             });
                           } else {
                             navigator.clipboard.writeText(window.location.href);
-                            toast.success('Đã sao chép link');
+                            toast.success("Đã sao chép link");
                           }
                         }}
                       >
@@ -521,7 +594,11 @@ const BusinessFeedback = ({ businessId }) => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="pagination" role="navigation" aria-label="Phân trang đánh giá">
+              <div
+                className="pagination"
+                role="navigation"
+                aria-label="Phân trang đánh giá"
+              >
                 {renderPagination()}
               </div>
             )}

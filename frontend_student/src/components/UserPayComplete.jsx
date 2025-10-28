@@ -59,31 +59,62 @@ const UserPayComplete = () => {
         tags: ["onboarding", "student", "guide"],
       });
     } catch (err) {
-      // Không chặn luồng nếu lỗi
       console.error("create default knowledge error:", err);
     }
   };
 
   useEffect(() => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const fetchPaymentWithRetry = async (userId, attempts = 3) => {
+      const be = import.meta.env.VITE_BE_URL;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          console.log(` Checking payment (attempt ${i + 1}/${attempts})...`);
+          const resp = await axios.get(`${be}/api/payment/userid/${userId}`);
+          const payments = resp.data?.data || [];
+          const completedPayment = payments.find(
+            (p) => p.payment_status === "completed"
+          );
+
+          if (completedPayment) {
+            console.log(" Payment completed!");
+            return true;
+          }
+
+          console.log(" Not completed yet, retrying...");
+          await wait(1500);
+        } catch (err) {
+          console.error(" Lỗi khi kiểm tra thanh toán:", err);
+          await wait(1500);
+        }
+      }
+      return false;
+    };
+
     const verifyAndProvision = async () => {
       try {
         if (!user?.id) return;
-        const be = import.meta.env.VITE_BE_URL;
-        const resp = await axios.get(`${be}/api/payment/userid/${user.id}`);
-        const payments = resp.data?.data || [];
-        const completedPayment = payments.find(
-          (p) => p.payment_status === "completed"
-        );
 
-        if (!completedPayment) {
+        console.log(" Bắt đầu xác minh thanh toán...");
+        const isPaid = await fetchPaymentWithRetry(user.id, 3);
+
+        if (!isPaid) {
+          console.log(" Thanh toán chưa thành công sau retry");
           navigate("/my-ai?payment=failed", { replace: true });
           return;
         }
+
+        await wait(1500);
+
+        console.log(" Tạo bot & knowledge nếu chưa có...");
         const bot = await ensureStudentBot(user.id);
         await ensureDefaultKnowledge(bot._id || bot.id);
+
+        console.log(" DONE — chuyển trang");
         navigate("/my-ai?payment=success", { replace: true });
       } catch (err) {
-        console.error("Lỗi xác minh thanh toán:", err);
+        console.error(" Lỗi xác minh thanh toán sau retry:", err);
         navigate("/my-ai?payment=error", { replace: true });
       }
     };

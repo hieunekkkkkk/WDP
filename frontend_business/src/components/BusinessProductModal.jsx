@@ -29,6 +29,7 @@ const BusinessProductModal = ({
   const fileInputRef = useRef(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   // Field mapping to align frontend and backend field names
   const fieldMapping = {
@@ -82,6 +83,20 @@ const BusinessProductModal = ({
 
     fetchFeedbacks();
   }, [selectedProduct]);
+
+  useEffect(() => {
+    const relevantFeedbacks = showActiveOnly
+      ? feedbacks.filter((f) => f.feedback_status === "active")
+      : feedbacks;
+
+    const total = relevantFeedbacks.reduce(
+      (sum, f) => sum + (f.feedback_rating || 0),
+      0
+    );
+    const avg =
+      relevantFeedbacks.length > 0 ? total / relevantFeedbacks.length : 0;
+    setAverageRating(avg);
+  }, [showActiveOnly, feedbacks]);
 
   const handleEdit = (field) => {
     setEditFields((prev) => ({ ...prev, [field]: true }));
@@ -495,9 +510,31 @@ const BusinessProductModal = ({
                 <p className="business-category">Đánh giá bởi người dùng</p>
                 <div className="rating-section">
                   <div className="stars">{renderStars(averageRating)}</div>
-                  <span className="rating-count">
-                    {feedbacks.length} đánh giá
-                  </span>
+                  <div className="rating-count-toggle">
+                    <span className="rating-count">
+                      {showActiveOnly
+                        ? feedbacks.filter(
+                            (f) => f.feedback_status === "active"
+                          ).length
+                        : feedbacks.length}{" "}
+                      đánh giá
+                    </span>
+                    <label
+                      className="toggle-container"
+                      style={{ marginLeft: "0.5rem" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={showActiveOnly}
+                        onChange={() => setShowActiveOnly((prev) => !prev)}
+                        className="toggle-input"
+                      />
+                      <span className="toggle-slider"></span>
+                      <span className="status-text">
+                        {showActiveOnly ? "Chỉ active" : "Tất cả"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
                 <div
                   className="editable-field"

@@ -39,6 +39,7 @@ const MyBusinessPage = () => {
   const [overallRating, setOverallRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState("0 Đánh giá");
   const [averageRating, setAverageRating] = useState(0);
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -259,7 +260,13 @@ const MyBusinessPage = () => {
         );
 
         if (res.data?.success && Array.isArray(res.data.data)) {
-          const feedbacks = res.data.data;
+          let feedbacks = res.data.data;
+
+          if (showActiveOnly) {
+            feedbacks = feedbacks.filter(
+              (fb) => fb.feedback_status === "active"
+            );
+          }
 
           const total = feedbacks.reduce(
             (sum, fb) => sum + (fb.feedback_rating || 0),
@@ -281,7 +288,7 @@ const MyBusinessPage = () => {
     };
 
     fetchBusinessFeedback();
-  }, [business?._id]);
+  }, [business?._id, showActiveOnly]);
 
   useEffect(() => {
     const fetchAllProductFeedbacks = async () => {
@@ -296,7 +303,11 @@ const MyBusinessPage = () => {
               );
 
               if (res.data?.success && Array.isArray(res.data.data)) {
-                const feedbacks = res.data.data;
+                // Chỉ lấy feedback active
+                const feedbacks = res.data.data.filter(
+                  (fb) => fb.feedback_status === "active"
+                );
+
                 const total = feedbacks.reduce(
                   (sum, fb) => sum + (fb.feedback_rating || 0),
                   0
@@ -315,6 +326,7 @@ const MyBusinessPage = () => {
                 err
               );
             }
+
             return { ...p, product_rating: 0, product_total_vote: 0 };
           })
         );
@@ -779,6 +791,28 @@ const MyBusinessPage = () => {
                 <div className="rating-section">
                   <div className="stars">{renderStars(overallRating)}</div>
                   <span className="rating-count">{totalReviews}</span>
+
+                  <div
+                    className="toggle-container"
+                    style={{ marginLeft: "1rem" }}
+                  >
+                    <label
+                      className="toggle-container"
+                      style={{ marginLeft: "1rem" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={showActiveOnly}
+                        onChange={() => setShowActiveOnly((prev) => !prev)}
+                        className="toggle-input"
+                        id="activeFilterSwitch"
+                      />
+                      <span className="toggle-slider"></span>
+                      <span className="status-text">
+                        {showActiveOnly ? "Chỉ đánh giá hoạt động" : "Tất cả đánh giá"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
                 <div className="contact-info">
                   <h3 className="contact-title">Thông tin liên hệ</h3>

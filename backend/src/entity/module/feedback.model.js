@@ -18,6 +18,7 @@ const feedbackschema = new mongoose.Schema({
     feedback_response: String,
     feedback_like: Number,
     feedback_dislike: Number,
+    feedback_status: { type: String, default: 'active' },
     feedback_date: { type: Date, default: Date.now },
 });
 

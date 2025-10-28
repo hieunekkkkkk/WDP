@@ -30,6 +30,27 @@ class CalendarController {
     }
   }
 
+  async checkConflict(req, res) {
+    try {
+      const overlaps = await CalendarService.checkOverlap(req.body);
+      if (overlaps.length > 0) {
+        return res.status(200).json({
+          isConflict: true,
+          message: "Có công việc trùng thời gian",
+          conflicts: overlaps,
+        });
+      }
+
+      return res.status(200).json({
+        isConflict: false,
+        message: "Không có trùng lịch",
+      });
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  };
+
+
   async create(req, res) {
     try {
       const newTask = await CalendarService.createTask(req.body);

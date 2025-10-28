@@ -16,5 +16,6 @@ router.get("/:id", CalendarController.getById);
 router.put("/:id", CalendarController.update);
 router.delete("/:id", CalendarController.delete);
 router.post("/", CalendarController.create);
+router.post("/check", CalendarController.checkConflict);
 
 module.exports = router;
