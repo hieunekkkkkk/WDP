@@ -77,7 +77,6 @@ const BusinessProductModal = ({
         }
       } catch (err) {
         console.error("Error fetching feedbacks:", err);
-        toast.error("Không thể tải đánh giá sản phẩm");
       }
     };
 
@@ -311,7 +310,7 @@ const BusinessProductModal = ({
           onClick={closeModal}
         >
           <motion.div
-            className="modal-content"
+            className="product-modal-content"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

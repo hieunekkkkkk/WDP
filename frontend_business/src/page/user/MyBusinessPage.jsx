@@ -368,14 +368,20 @@ const MyBusinessPage = () => {
     }
 
     try {
+      const payload =
+        field === "business_category_id"
+          ? { business_category_id: newValue?._id || newValue }
+          : { [field]: newValue };
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`,
-        { [field]: newValue },
+        payload,
         { headers: { "Content-Type": "application/json" } }
       );
 
       if (field === "business_category_id") {
-        const updatedCategory = categories.find((c) => c._id === newValue);
+        const updatedCategory = categories.find(
+          (c) => c._id === (newValue?._id || newValue)
+        );
         setBusiness((prev) => ({
           ...prev,
           business_category_id: updatedCategory || { _id: newValue },
@@ -855,6 +861,9 @@ const MyBusinessPage = () => {
                             handleBlur("business_category_id", business._id)
                           }
                         >
+                          <option value="">
+                            -- Hãy chọn mô hình kinh doanh --
+                          </option>
                           {categories.map((cat) => (
                             <option key={cat._id} value={cat._id}>
                               {cat.category_name}
@@ -906,7 +915,7 @@ const MyBusinessPage = () => {
                         {renderStars(product.product_rating || 0)}
                       </div>
                       <span className="reviews-count">
-                        {product.product_total_vote || "000"} Đánh giá
+                        {product.product_total_vote || "0"} Đánh giá
                       </span>
                     </div>
                     <p
