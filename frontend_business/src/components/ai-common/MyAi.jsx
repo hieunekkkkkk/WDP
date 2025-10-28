@@ -254,7 +254,6 @@ export default function MyAi() {
     try {
       setLoading(true);
 
-      // Check if user has AI bot
       const botRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
       );
@@ -262,13 +261,19 @@ export default function MyAi() {
       if (botRes.data?.length > 0) {
         setBot(botRes.data[0]);
       } else {
-        // Fetch all stack services
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
         const data = stackRes.data;
         const stackList = Array.isArray(data) ? data : data.stacks || [];
-        setStacks(stackList);
+
+        const filteredStacks = stackList.filter(
+          (stack) =>
+            stack.stack_name.toLowerCase() === "tăng view cho doanh nghiệp" ||
+            stack.stack_name.toLowerCase() === "bot tư vấn viên"
+        );
+
+        setStacks(filteredStacks);
       }
     } catch (err) {
       console.error("❌ Lỗi khi tải My AI:", err);

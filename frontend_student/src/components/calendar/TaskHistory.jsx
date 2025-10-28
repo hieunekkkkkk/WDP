@@ -105,6 +105,32 @@ const TaskHistory = () => {
     setFilteredTasks(result);
   }, [searchTerm, filterStatus, startDate, endDate, allTasks]);
 
+  //  Hàm khôi phục task bị huỷ
+  const restoreTask = async (taskId) => {
+    try {
+      // Gọi API cập nhật trạng thái task về "chưa làm"
+      await axios.put(`${CALENDAR_URL}/${taskId}`, {
+        task_status: "chưa làm",
+      });
+
+      toast.success(" Khôi phục công việc thành công!");
+
+      // Cập nhật lại danh sách task sau khi khôi phục
+      const res = await axios.get(CALENDAR_BY_CREATOR_URL);
+      const allData = res.data?.data || res.data || [];
+      const historyData = allData.filter(
+        (task) =>
+          task.task_status === "đã hoàn thành" || task.task_status === "đã huỷ"
+      );
+
+      setAllTasks(historyData);
+      setFilteredTasks(historyData);
+    } catch (error) {
+      console.error("Lỗi khi khôi phục công việc:", error);
+      toast.error(" Không thể khôi phục công việc!");
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -147,6 +173,26 @@ const TaskHistory = () => {
               {task.task_status}
             </span>
           </div>
+
+          {/*  Thêm nút khôi phục nếu task bị huỷ */}
+          {task.task_status === "đã huỷ" && (
+            <button
+              className="restore-btn"
+              onClick={() => restoreTask(task._id)}
+              style={{
+                marginTop: "8px",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                backgroundColor: "#4caf50",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "500",
+              }}
+            >
+              🔄 Khôi phục công việc
+            </button>
+          )}
         </div>
         <div className="history-item-details">
           <div className="history-item-date-group">
