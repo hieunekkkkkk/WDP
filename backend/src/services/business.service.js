@@ -30,7 +30,7 @@ class BusinessService {
             else if (sort === 'Oldest') sortOption = { _id: 1 };
 
             const businesses = await Business.find()
-                .sort(sortOption)
+                .sort({ business_priority: -1, updated_at: -1 }, sortOption)
                 .skip(skip)
                 .limit(limit)
                 .populate('business_category_id')
