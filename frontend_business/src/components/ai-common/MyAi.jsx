@@ -4,35 +4,35 @@ import React, {
   useCallback,
   useMemo,
   useRef,
-} from "react";
-import axios from "axios";
-import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import "./style/MyAi.css";
+} from 'react';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import './style/MyAi.css';
 
 // Constants
 const SUGGESTIONS = [
-  "How about an inspirational quote graphic for social me...",
+  'How about an inspirational quote graphic for social me...',
   "I need a poster for our online store's seasonal sale",
-  "Highlight my favorite hiking trail in a Facebook post",
-  "Create an infographic showcasing the benefits of meditation...",
+  'Highlight my favorite hiking trail in a Facebook post',
+  'Create an infographic showcasing the benefits of meditation...',
 ];
 
 const CHAT_HISTORY = {
-  Today: ["Brooklyn Sunrise Time", "Manhattan Bus Comparisons"],
+  Today: ['Brooklyn Sunrise Time', 'Manhattan Bus Comparisons'],
   Yesterday: [
-    "Tax Assistance Request",
-    "Quadratic Function Plot",
-    "Toyota Names Poetry",
-    "Urban Green Spaces",
+    'Tax Assistance Request',
+    'Quadratic Function Plot',
+    'Toyota Names Poetry',
+    'Urban Green Spaces',
   ],
 };
 
 const DEFAULT_AVATAR =
-  "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
+  'https://cdn-icons-png.flaticon.com/512/4712/4712035.png';
 const AI_AVATAR =
-  "https://icdn.dantri.com.vn/a3HWDOlTcvMNT73KRccc/Image/2013/05/3-904f5.jpg";
+  'https://icdn.dantri.com.vn/a3HWDOlTcvMNT73KRccc/Image/2013/05/3-904f5.jpg';
 
 // Loading Component
 const Loading = () => <div className="loading">Đang tải My AI...</div>;
@@ -44,17 +44,17 @@ const SuggestionButton = React.memo(({ text, onClick }) => (
   </button>
 ));
 
-SuggestionButton.displayName = "SuggestionButton";
+SuggestionButton.displayName = 'SuggestionButton';
 
 // Chat Item Component
 const ChatItem = React.memo(({ chat, isActive }) => (
-  <div className={`ai-chat-item ${isActive ? "active" : ""}`}>
+  <div className={`ai-chat-item ${isActive ? 'active' : ''}`}>
     {chat}
     {isActive && <span className="ai-chat-arrow">↗</span>}
   </div>
 ));
 
-ChatItem.displayName = "ChatItem";
+ChatItem.displayName = 'ChatItem';
 
 // Chat Section Component
 const ChatSection = React.memo(({ section, items, activeChat }) => (
@@ -66,10 +66,10 @@ const ChatSection = React.memo(({ section, items, activeChat }) => (
   </div>
 ));
 
-ChatSection.displayName = "ChatSection";
+ChatSection.displayName = 'ChatSection';
 
 const PriorityTimer = ({ updatedAt }) => {
-  const [remainingTime, setRemainingTime] = useState("");
+  const [remainingTime, setRemainingTime] = useState('');
 
   useEffect(() => {
     if (!updatedAt) return;
@@ -81,7 +81,7 @@ const PriorityTimer = ({ updatedAt }) => {
       const diff = expirationTime - now;
 
       if (diff <= 0) {
-        setRemainingTime("Đã hết hạn");
+        setRemainingTime('Đã hết hạn');
         clearInterval(interval);
         return;
       }
@@ -91,9 +91,9 @@ const PriorityTimer = ({ updatedAt }) => {
       const seconds = Math.floor((diff / 1000) % 60);
 
       setRemainingTime(
-        `Còn lại: ${String(minutes).padStart(2, "0")} phút ${String(
+        `Còn lại: ${String(minutes).padStart(2, '0')} phút ${String(
           seconds
-        ).padStart(2, "0")} giây`
+        ).padStart(2, '0')} giây`
       );
     }, 1000); // Cập nhật mỗi giây
 
@@ -106,10 +106,10 @@ const PriorityTimer = ({ updatedAt }) => {
     <div
       className="stack-expiration-info"
       style={{
-        marginBottom: "10px",
-        fontSize: "14px",
-        color: remainingTime === "Đã hết hạn" ? "#dc3545" : "#28a745", // Đỏ nếu hết hạn, xanh nếu còn
-        fontWeight: "500",
+        marginBottom: '10px',
+        fontSize: '14px',
+        color: remainingTime === 'Đã hết hạn' ? '#dc3545' : '#28a745', // Đỏ nếu hết hạn, xanh nếu còn
+        fontWeight: '500',
       }}
     >
       {remainingTime}
@@ -118,7 +118,7 @@ const PriorityTimer = ({ updatedAt }) => {
 };
 
 // No Bot View Component - Stack Cards Display
-const NoBotView = ({ stacks = [], onActivate, isActivating, businessInfo}) => (
+const NoBotView = ({ stacks = [], onActivate, isActivating, businessInfo }) => (
   <div className="myai-container">
     {/* Blurred background content */}
     <div className="myai-blur-content">
@@ -143,15 +143,15 @@ const NoBotView = ({ stacks = [], onActivate, isActivating, businessInfo}) => (
           {stacks.map((stack, index) => {
             // --- 2. LOGIC ĐIỀU KIỆN MỚI ---
             const isPriorityStack =
-              stack.stack_name.toLowerCase() === "tăng view cho doanh nghiệp";
+              stack.stack_name.toLowerCase() === 'tăng view cho doanh nghiệp';
             const hasPriority =
               businessInfo && businessInfo.business_priority > 0;
             const showPriorityInfo = isPriorityStack && hasPriority;
 
             // Xác định văn bản nút
             let buttonText = isActivating
-              ? "Đang xử lý..."
-              : "🔓 Kích hoạt gói này";
+              ? 'Đang xử lý...'
+              : '🔓 Kích hoạt gói này';
             if (showPriorityInfo && !isActivating) {
               buttonText = `Đã mua ${businessInfo.business_priority} lần, mua thêm?`;
             }
@@ -204,20 +204,20 @@ const AISidebar = ({ bot, onNavigate }) => {
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      document.body.style.cursor = "default";
-      document.body.style.userSelect = "auto";
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
     };
 
     if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "ew-resize";
-      document.body.style.userSelect = "none";
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
     }
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizing]);
 
@@ -255,7 +255,7 @@ const AISidebar = ({ bot, onNavigate }) => {
       {/* Only show Knowledge button when user has AI */}
       <button
         className="button save-button"
-        style={{ marginTop: "auto" }}
+        style={{ marginTop: 'auto' }}
         onClick={onNavigate}
       >
         📚 My AI Knowledge
@@ -267,7 +267,7 @@ const AISidebar = ({ bot, onNavigate }) => {
 // AI Main Content Component
 const AIMainContent = ({ bot, user }) => {
   const displayName = useMemo(
-    () => user?.fullName || user?.username || "User",
+    () => user?.fullName || user?.username || 'User',
     [user]
   );
 
@@ -280,13 +280,13 @@ const AIMainContent = ({ bot, user }) => {
       <div className="ai-avatar">
         <img src={bot.avatar || AI_AVATAR} alt="AI avatar" />
       </div>
-      <h2 className="ai-title">{bot.name || "My AI"}</h2>
+      <h2 className="ai-title">{bot.name || 'My AI'}</h2>
       <p className="ai-subtitle">
         {displayName} <span title="Thông tin người dùng">ⓘ</span>
       </p>
       <p className="ai-desc">
         {bot.description ||
-          "Effortlessly design anything: presentations, logos, social media posts and more."}
+          'Effortlessly design anything: presentations, logos, social media posts and more.'}
       </p>
 
       <div className="ai-suggestions">
@@ -340,8 +340,9 @@ export default function MyAi() {
 
         const filteredStacks = stackList.filter(
           (stack) =>
-            stack.stack_name.toLowerCase() === "tăng view cho doanh nghiệp" ||
-            stack.stack_name.toLowerCase() === "bot tư vấn viên"
+            stack.stack_name.toLowerCase() ===
+              'dịch vụ tăng kéo view  hiếu béo pro' ||
+            stack.stack_name.toLowerCase() === 'bot tư vấn viên'
         );
 
         setStacks(filteredStacks);
@@ -355,14 +356,14 @@ export default function MyAi() {
           }
         } catch (bizErr) {
           // Không phải lỗi nghiêm trọng, user có thể chưa có business
-          console.warn("Không tìm thấy thông tin business:", bizErr.message);
+          console.warn('Không tìm thấy thông tin business:', bizErr.message);
           setBusinessInfo(null); // Đảm bảo businessInfo là null nếu lỗi
         }
         // --- KẾT THÚC CẬP NHẬT FETCHDATA ---
       }
     } catch (err) {
-      console.error("❌ Lỗi khi tải My AI:", err);
-      toast.error("Không thể tải dữ liệu My AI");
+      console.error('❌ Lỗi khi tải My AI:', err);
+      toast.error('Không thể tải dữ liệu My AI');
     } finally {
       setLoading(false);
     }
@@ -377,22 +378,22 @@ export default function MyAi() {
       if (isActivating) return;
       try {
         setIsActivating(true);
-        console.log("[MyAi] handleActivateStack called with:", selectedStack);
+        console.log('[MyAi] handleActivateStack called with:', selectedStack);
 
         const be = import.meta.env.VITE_BE_URL;
-        console.log("[MyAi] Backend URL:", be);
+        console.log('[MyAi] Backend URL:', be);
 
         if (!be) {
-          throw new Error("Thiếu cấu hình máy chủ (VITE_BE_URL)");
+          throw new Error('Thiếu cấu hình máy chủ (VITE_BE_URL)');
         }
 
-        console.log("[MyAi] User info:", {
+        console.log('[MyAi] User info:', {
           id: user?.id,
           firstName: user?.firstName,
           lastName: user?.lastName,
         });
 
-        console.log("[MyAi] Stack info:", {
+        console.log('[MyAi] Stack info:', {
           id: selectedStack?._id,
           name: selectedStack?.stack_name,
           price: selectedStack?.stack_price,
@@ -400,7 +401,7 @@ export default function MyAi() {
 
         if (!user?.id || !selectedStack?._id) {
           throw new Error(
-            `Thiếu thông tin ${!user?.id ? "người dùng" : "gói đăng ký"}`
+            `Thiếu thông tin ${!user?.id ? 'người dùng' : 'gói đăng ký'}`
           );
         }
 
@@ -410,32 +411,32 @@ export default function MyAi() {
           stack_id: selectedStack._id,
         };
 
-        console.log("[MyAi] Calling payment API:", {
+        console.log('[MyAi] Calling payment API:', {
           url: paymentUrl,
           data: paymentData,
         });
 
         const res = await axios.post(paymentUrl, paymentData);
 
-        console.log("[MyAi] Payment API full response:", {
+        console.log('[MyAi] Payment API full response:', {
           status: res.status,
           headers: res.headers,
           data: res.data,
         });
 
         if (!res.data?.url) {
-          console.error("[MyAi] Invalid response format:", res.data);
+          console.error('[MyAi] Invalid response format:', res.data);
           throw new Error(
-            "Không nhận được link thanh toán từ máy chủ. " +
-              "Response data: " +
+            'Không nhận được link thanh toán từ máy chủ. ' +
+              'Response data: ' +
               JSON.stringify(res.data)
           );
         }
 
-        console.log("[MyAi] Redirecting to payment URL:", res.data.url);
+        console.log('[MyAi] Redirecting to payment URL:', res.data.url);
         window.location.href = res.data.url;
       } catch (err) {
-        console.error("[MyAi] Payment initiation failed:", {
+        console.error('[MyAi] Payment initiation failed:', {
           error: err,
           response: err.response,
           stack: err.stack,
@@ -444,12 +445,12 @@ export default function MyAi() {
         const message =
           err.response?.data?.message ||
           err.message ||
-          "Không thể khởi tạo thanh toán";
+          'Không thể khởi tạo thanh toán';
         toast.error(message);
 
-        if (err.message.includes("CORS")) {
+        if (err.message.includes('CORS')) {
           toast.error(
-            "Lỗi kết nối tới máy chủ. Vui lòng kiểm tra CORS settings."
+            'Lỗi kết nối tới máy chủ. Vui lòng kiểm tra CORS settings.'
           );
         }
       } finally {
