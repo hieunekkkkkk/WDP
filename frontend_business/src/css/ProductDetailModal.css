@@ -323,3 +323,7 @@
   background: #cccccc;
   cursor: not-allowed;
 }
+
+.rating-count-toggle{
+  display: flex;
+}

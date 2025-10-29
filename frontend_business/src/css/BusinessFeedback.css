@@ -417,15 +417,20 @@
   color: #666;
   font-size: 0.9rem;
   font-weight: 500;
+  display: flex;
 }
 
-.delete-feedback-btn{
+.status-feedback-btn {
   margin-left: 20px;
   transition: all 0.2s;
 }
 
-.delete-feedback-btn:hover{
+.delete-feedback-btn:hover {
   color: red;
+}
+
+.active-feedback-btn:hover {
+  color: green;
 }
 
 .review-content {
@@ -450,12 +455,6 @@
 
 .response-header {
   margin-bottom: 0.5rem;
-}
-
-.response-header strong {
-  color: #4caf50;
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .response-text {
@@ -613,6 +612,98 @@
   padding: 0 0.5rem;
   font-weight: bold;
   font-size: 18px;
+}
+
+.review-item.inactive {
+  opacity: 0.5;
+  font-style: italic;
+  position: relative;
+}
+
+.review-item.inactive::before {
+  content: "Đánh giá này đã bị ẩn";
+  display: block;
+  color: #b00;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.reply-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #ff5722;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.reply-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.reply-section {
+  margin-top: 8px;
+  margin-left: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reply-textarea {
+  width: 90%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.submit-reply-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit-reply-btn:disabled {
+  background-color: #a0cfff;
+  cursor: not-allowed;
+}
+
+.cancel-reply-btn {
+  background-color: #ccc;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.business-response {
+  background-color: #f9f9f9;
+  border-left: 3px solid #007bff;
+  padding: 8px 12px;
+  margin-top: 10px;
+  margin-left: 50px;
+  border-radius: 4px;
+}
+
+.business-response .response-header {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.response-text {
+  font-size: 0.95rem;
+  color: #555;
 }
 
 /* Responsive Design */

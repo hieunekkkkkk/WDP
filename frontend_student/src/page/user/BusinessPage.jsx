@@ -82,13 +82,19 @@ const BusinessPage = () => {
         let totalReviews = 0;
         if (businessFeedbackResult.status === "fulfilled") {
           const feedbackList = businessFeedbackResult.value.data?.data || [];
-          if (feedbackList.length > 0) {
-            const totalStars = feedbackList.reduce(
+
+          // Lọc chỉ feedback active
+          const activeFeedbacks = feedbackList.filter(
+            (f) => f.feedback_status !== "inactive"
+          );
+
+          if (activeFeedbacks.length > 0) {
+            const totalStars = activeFeedbacks.reduce(
               (sum, fb) => sum + (fb.feedback_rating || 0),
               0
             );
-            overallRating = totalStars / feedbackList.length;
-            totalReviews = feedbackList.length;
+            overallRating = totalStars / activeFeedbacks.length;
+            totalReviews = activeFeedbacks.length;
           }
         } else {
           console.warn(
@@ -116,19 +122,23 @@ const BusinessPage = () => {
                 );
                 const feedbackList = res.data.data || [];
 
-                if (feedbackList.length === 0)
+                const activeFeedbacks = feedbackList.filter(
+                  (f) => f.feedback_status !== "inactive"
+                );
+
+                if (activeFeedbacks.length === 0)
                   return { ...product, averageRating: 0, totalReviews: 0 };
 
-                const totalStars = feedbackList.reduce(
+                const totalStars = activeFeedbacks.reduce(
                   (sum, fb) => sum + (fb.feedback_rating || 0),
                   0
                 );
-                const avg = totalStars / feedbackList.length;
+                const avg = totalStars / activeFeedbacks.length;
 
                 return {
                   ...product,
                   averageRating: avg,
-                  totalReviews: feedbackList.length,
+                  totalReviews: activeFeedbacks.length,
                 };
               } catch (err) {
                 console.warn(
