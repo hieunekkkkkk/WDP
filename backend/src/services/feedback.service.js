@@ -147,7 +147,7 @@ class FeedbackService {
             const feedback = await Feedback.findByIdAndUpdate(
                 id,
                 { feedback_response: response },
-                { new: true, runValidators: true }
+                { new: true }
             );
             if (!feedback) {
                 throw new Error('Feedback not found');
