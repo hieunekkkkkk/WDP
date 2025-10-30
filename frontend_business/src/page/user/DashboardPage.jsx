@@ -356,19 +356,15 @@ const DashboardPage = () => {
     }
 
     try {
-      // !! GIẢ ĐỊNH: Bạn cần TẠO API NÀY ở backend
-      // !! DELETE /api/business/:businessId/business_revenue/:revenueId
-      await axios.delete(
-        `${BACKEND_URL}/api/business/${businessId}/business_revenue/${revenueId}`
+      const res = await axios.delete(
+        `${BACKEND_URL}/api/business/${revenueId}/business_revenues`
       );
-      toast.success('Xóa doanh thu thành công!');
+
+      toast.success(res.data.message || 'Xóa doanh thu thành công!');
       fetchTableData();
     } catch (err) {
       console.error('Failed to delete revenue:', err);
-      toast.error(
-        err.response?.data?.error ||
-          'Lỗi khi xóa. API backend có thể chưa được tạo.'
-      );
+      toast.error(err.response?.data?.message || 'Lỗi khi xóa.');
     }
   };
 
@@ -572,7 +568,6 @@ const DashboardPage = () => {
                 Doanh thu {getSortIndicator('revenue_amount')}
               </th>
               <th>Mô tả</th>
-              <th>Hành động</th>
             </tr>
           </thead>
           <tbody>{renderTableBody()}</tbody>
