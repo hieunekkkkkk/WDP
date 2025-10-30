@@ -29,7 +29,6 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
 
   const menus = [
     { icon: <FaHome />, label: "Dashboard", path: "/business-dashboard" },
-    { icon: <FaCog />, label: "Quản lý", path: "/business-dashboard/manage" },
     {
       icon: <FaRegComments />,
       label: "Messages",

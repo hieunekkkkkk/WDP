@@ -39,6 +39,7 @@ const MyBusinessPage = () => {
   const [overallRating, setOverallRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState("0 Đánh giá");
   const [averageRating, setAverageRating] = useState(0);
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -259,7 +260,13 @@ const MyBusinessPage = () => {
         );
 
         if (res.data?.success && Array.isArray(res.data.data)) {
-          const feedbacks = res.data.data;
+          let feedbacks = res.data.data;
+
+          if (showActiveOnly) {
+            feedbacks = feedbacks.filter(
+              (fb) => fb.feedback_status === "active"
+            );
+          }
 
           const total = feedbacks.reduce(
             (sum, fb) => sum + (fb.feedback_rating || 0),
@@ -281,7 +288,7 @@ const MyBusinessPage = () => {
     };
 
     fetchBusinessFeedback();
-  }, [business?._id]);
+  }, [business?._id, showActiveOnly]);
 
   useEffect(() => {
     const fetchAllProductFeedbacks = async () => {
@@ -296,7 +303,11 @@ const MyBusinessPage = () => {
               );
 
               if (res.data?.success && Array.isArray(res.data.data)) {
-                const feedbacks = res.data.data;
+                // Chỉ lấy feedback active
+                const feedbacks = res.data.data.filter(
+                  (fb) => fb.feedback_status === "active"
+                );
+
                 const total = feedbacks.reduce(
                   (sum, fb) => sum + (fb.feedback_rating || 0),
                   0
@@ -315,6 +326,7 @@ const MyBusinessPage = () => {
                 err
               );
             }
+
             return { ...p, product_rating: 0, product_total_vote: 0 };
           })
         );
@@ -368,14 +380,20 @@ const MyBusinessPage = () => {
     }
 
     try {
+      const payload =
+        field === "business_category_id"
+          ? { business_category_id: newValue?._id || newValue }
+          : { [field]: newValue };
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`,
-        { [field]: newValue },
+        payload,
         { headers: { "Content-Type": "application/json" } }
       );
 
       if (field === "business_category_id") {
-        const updatedCategory = categories.find((c) => c._id === newValue);
+        const updatedCategory = categories.find(
+          (c) => c._id === (newValue?._id || newValue)
+        );
         setBusiness((prev) => ({
           ...prev,
           business_category_id: updatedCategory || { _id: newValue },
@@ -773,6 +791,28 @@ const MyBusinessPage = () => {
                 <div className="rating-section">
                   <div className="stars">{renderStars(overallRating)}</div>
                   <span className="rating-count">{totalReviews}</span>
+
+                  <div
+                    className="toggle-container"
+                    style={{ marginLeft: "1rem" }}
+                  >
+                    <label
+                      className="toggle-container"
+                      style={{ marginLeft: "1rem" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={showActiveOnly}
+                        onChange={() => setShowActiveOnly((prev) => !prev)}
+                        className="toggle-input"
+                        id="activeFilterSwitch"
+                      />
+                      <span className="toggle-slider"></span>
+                      <span className="status-text">
+                        {showActiveOnly ? "Chỉ đánh giá hoạt động" : "Tất cả đánh giá"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
                 <div className="contact-info">
                   <h3 className="contact-title">Thông tin liên hệ</h3>
@@ -855,6 +895,9 @@ const MyBusinessPage = () => {
                             handleBlur("business_category_id", business._id)
                           }
                         >
+                          <option value="">
+                            -- Hãy chọn mô hình kinh doanh --
+                          </option>
                           {categories.map((cat) => (
                             <option key={cat._id} value={cat._id}>
                               {cat.category_name}
@@ -906,7 +949,7 @@ const MyBusinessPage = () => {
                         {renderStars(product.product_rating || 0)}
                       </div>
                       <span className="reviews-count">
-                        {product.product_total_vote || "000"} Đánh giá
+                        {product.product_total_vote || "0"} Đánh giá
                       </span>
                     </div>
                     <p

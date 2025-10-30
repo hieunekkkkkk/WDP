@@ -12,7 +12,13 @@ const DAY_LABELS = [
   { vi: "T7", en: "SAT" },
 ];
 
-export default function WorkModal({ value, onChange, onClose, onSave, locale }) {
+export default function WorkModal({
+  value,
+  onChange,
+  onClose,
+  onSave,
+  locale,
+}) {
   const toggleDay = (enCode) => {
     const set = new Set(value.selectedDays);
     if (set.has(enCode)) set.delete(enCode);
@@ -25,7 +31,9 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Thêm công việc cố định</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button className="modal-close" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <div className="modal-body">
@@ -34,7 +42,9 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
             <input
               className="form-input"
               value={value.task_name}
-              onChange={(e) => onChange({ ...value, task_name: e.target.value })}
+              onChange={(e) =>
+                onChange({ ...value, task_name: e.target.value })
+              }
               placeholder="Nhập tên công việc..."
             />
           </div>
@@ -65,8 +75,12 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
                 dateFormat="HH:mm"
                 className="form-input"
                 locale={locale}
+                //  Không cho chọn giờ nhỏ hơn hiện tại (nếu chọn hôm nay)
+                minTime={new Date()}
+                maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
               />
             </div>
+
             <div className="form-group">
               <label>Đến</label>
               <DatePicker
@@ -79,6 +93,9 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
                 dateFormat="HH:mm"
                 className="form-input"
                 locale={locale}
+                //  Giờ kết thúc không được nhỏ hơn giờ bắt đầu
+                minTime={value.start_time || new Date()}
+                maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
               />
             </div>
           </div>
@@ -90,7 +107,9 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
                 <button
                   key={d.en}
                   type="button"
-                  className={`chip ${value.selectedDays.includes(d.en) ? "active" : ""}`}
+                  className={`chip ${
+                    value.selectedDays.includes(d.en) ? "active" : ""
+                  }`}
                   onClick={() => toggleDay(d.en)}
                 >
                   {d.vi}
@@ -101,8 +120,12 @@ export default function WorkModal({ value, onChange, onClose, onSave, locale }) 
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Hủy bỏ</button>
-          <button className="btn btn-primary" onClick={onSave}>Lưu</button>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Hủy bỏ
+          </button>
+          <button className="btn btn-primary" onClick={onSave}>
+            Lưu
+          </button>
         </div>
       </div>
     </div>

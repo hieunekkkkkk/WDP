@@ -123,6 +123,7 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .personalized-filter-button {
@@ -153,6 +154,7 @@
 
 .personalized-chat-filter-detail {
   padding-right: 20px;
+  max-width: 500px;
 }
 
 .personalized-input-field {
@@ -252,7 +254,7 @@
   padding: 20px 20px 0 20px;
 }
 
-.personalized-best-places-section{
+.personalized-best-places-section {
   margin-bottom: 3rem;
 }
 
@@ -365,12 +367,12 @@
   font-weight: 500;
 }
 
-.discover-place-none{
+.discover-place-none {
   text-align: center;
   margin-bottom: 14rem;
 }
 
-.personalized-rating-label{
+.personalized-rating-label {
   font-size: 18px;
 }
 

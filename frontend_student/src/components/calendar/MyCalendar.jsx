@@ -215,9 +215,48 @@ export default function MyCalendar() {
     setOpenTaskModal(true);
   };
 
+  //  Hàm kiểm tra trùng lịch bằng API /calendar/check
+  const checkCalendarConflict = async (creator_id, start_time, end_time) => {
+    try {
+      const res = await axios.post(`${CALENDAR_URL}/check`, {
+        creator_id,
+        start_time,
+        end_time,
+      });
+
+      if (res.data?.isConflict) {
+        toast.error(" Thời gian này đã có công việc khác!");
+        return true; // Có trùng
+      }
+
+      return false; // Không trùng
+    } catch (err) {
+      console.error("Lỗi khi kiểm tra trùng lịch:", err?.response || err);
+      const msg = err.response?.data?.message || "Không thể kiểm tra lịch!";
+      toast.error(msg);
+      return true; // Báo trùng giả định nếu lỗi
+    }
+  };
+
   // ====== POST TASK ======
   const postTask = async (payload) => {
     if (!userId) return toast.error("Không tìm thấy ID người dùng.");
+
+    const start = new Date(payload.start_time);
+    const end = new Date(payload.end_time);
+    const now = new Date();
+
+    // Validate cơ bản
+    if (isNaN(start) || isNaN(end))
+      return toast.error("Thời gian không hợp lệ!");
+    if (start < now)
+      return toast.error("Thời gian bắt đầu không được nhỏ hơn hiện tại!");
+    if (end <= start)
+      return toast.error("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+
+    //  Kiểm tra trùng lịch
+    const hasConflict = await checkCalendarConflict(userId, start, end);
+    if (hasConflict) return; // Ngừng nếu trùng
 
     try {
       const body = {
@@ -228,18 +267,19 @@ export default function MyCalendar() {
         task_status: payload.task_status || "chưa làm",
         task_level: payload.task_level || "bình thường",
         task_day: null,
-        start_time: new Date(payload.start_time).toISOString(),
-        end_time: new Date(payload.end_time).toISOString(),
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
         creator_id: payload.creator_id,
       };
 
       await axios.post(CALENDAR_URL, body, {
         headers: { "Content-Type": "application/json" },
       });
+
       toast.success("Tạo Task thành công!");
       setOpenTaskModal(false);
 
-      // Refresh tasks
+      // Refresh task list
       const res = await axios.get(CALENDAR_BY_CREATOR_URL);
       const list = Array.isArray(res.data?.data)
         ? res.data.data
@@ -258,8 +298,24 @@ export default function MyCalendar() {
     if (!payload.selectedDays?.length)
       return toast.error("Chọn ít nhất một ngày lặp.");
 
-    const startISO = new Date(payload.start_time).toISOString();
-    const endISO = new Date(payload.end_time).toISOString();
+    const start = new Date(payload.start_time);
+    const end = new Date(payload.end_time);
+    const now = new Date();
+
+    // Validate thời gian
+    if (isNaN(start) || isNaN(end))
+      return toast.error("Thời gian không hợp lệ!");
+    if (start < now)
+      return toast.error("Giờ bắt đầu không được nhỏ hơn hiện tại!");
+    if (end <= start)
+      return toast.error("Giờ kết thúc phải lớn hơn giờ bắt đầu!");
+
+    //  Kiểm tra trùng lịch (nếu có task khác trong cùng ngày)
+    const hasConflict = await checkCalendarConflict(userId, start, end);
+    if (hasConflict) return; // Dừng nếu trùng
+
+    const startISO = start.toISOString();
+    const endISO = end.toISOString();
 
     const base = {
       task_name: payload.task_name,
@@ -287,9 +343,12 @@ export default function MyCalendar() {
       toast.success("Tạo Work thành công!");
       setOpenWorkModal(false);
 
-      // Fetch lại dữ liệu sau khi tạo thành công
+      // Refresh lại danh sách
       const res = await axios.get(CALENDAR_BY_CREATOR_URL);
-      setTasks(Array.isArray(res?.data) ? res.data.map(normalizeItem) : []);
+      const list = Array.isArray(res.data?.data)
+        ? res.data.data
+        : res.data || [];
+      setTasks(list.map(normalizeItem));
     } catch (err) {
       console.error("POST work failed", err?.response || err);
       const errorMsg = err.response?.data?.message || "Không thể tạo Work!";
@@ -312,7 +371,7 @@ export default function MyCalendar() {
     const items = getTasksForDate(dayObj.fullDate, tasks);
     if (!items.length) return null;
 
-    const MAX_VISIBLE = 3; // ✨ Giới hạn hiển thị tối đa 3 task
+    const MAX_VISIBLE = 3; //  Giới hạn hiển thị tối đa 3 task
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = items.length - MAX_VISIBLE;
     const dayKey = dayObj.fullDate.toISOString();

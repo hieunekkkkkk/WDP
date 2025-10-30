@@ -68,7 +68,7 @@
 /* Knowledge content */
 .knowledge-content {
   white-space: pre-wrap;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   background: #f5f5f5;
   padding: 10px;
   border-radius: 8px;
@@ -114,4 +114,88 @@
 .knowledge-close-btn:hover {
   background: #5f4cf0;
   scale: 1.05;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px 0;
+  color: #888;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.feedback-rating-filter {
+  margin: 0 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 5px;
+}
+
+.manage-feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.manage-feedback-table th {
+  background: #f8f9fa;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #9aa3b4;
+  font-size: 14px;
+  border-bottom: 1px solid #e9ecef;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.manage-feedback-table tr {
+  transition: background-color 0.2s ease;
+}
+
+.manage-feedback-table td {
+  padding: 5px 15px;
+  border-bottom: 1px solid #f1f3f4;
+  color: #495057;
+  vertical-align: middle;
+}
+
+.manage-feedback-table th,
+.manage-feedback-table td {
+  padding: 20px 12px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.manage-feedback-table th:nth-child(1),
+.manage-feedback-table td:nth-child(1) {
+  width: 200px;
+}
+.manage-feedback-table th:nth-child(2),
+.manage-feedback-table td:nth-child(2) {
+  width: 150px;
+}
+.manage-feedback-table th:nth-child(4),
+.manage-feedback-table td:nth-child(4) {
+  width: 200px;
+}
+.manage-feedback-table th:last-child,
+.manage-feedback-table td:last-child {
+  text-align: center;
+}
+
+.modal-close-button {
+  margin-top: 50px;
+  padding: 8px 16px;
+  background-color: #ff6b35;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #ff5e23;
 }

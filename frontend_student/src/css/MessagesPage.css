@@ -161,26 +161,6 @@
   color: #6b7280;
 }
 
-.business-mess-header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.business-mess-header-actions button {
-  border: none;
-  background: #f3f4f6;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: all 0.2s ease;
-}
-
-.business-mess-header-actions button:hover {
-  background: #e5e7eb;
-  transform: scale(1.05);
-}
-
 /* ======================
    Messages
 ====================== */
@@ -312,7 +292,7 @@
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  min-width: 120px;
+  min-width: 140px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   animation: fadeIn 0.2s ease-in-out;
@@ -393,15 +373,6 @@
 
 .layout.dark .business-mess-header-left span {
   color: #94a3b8;
-}
-
-.layout.dark .business-mess-header-actions button {
-  background: #374151;
-  color: #e2e8f0;
-}
-
-.layout.dark .business-mess-header-actions button:hover {
-  background: #4b5563;
 }
 
 .layout.dark .business-mess-body {

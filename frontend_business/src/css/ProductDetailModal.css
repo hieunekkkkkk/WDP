@@ -145,7 +145,6 @@
 .rating-count {
   color: #666;
   font-size: 0.9rem;
-  text-decoration: underline;
   cursor: pointer;
 }
 
@@ -323,4 +322,8 @@
 .thumbnail-images .thumbnail-images:disabled {
   background: #cccccc;
   cursor: not-allowed;
+}
+
+.rating-count-toggle{
+  display: flex;
 }

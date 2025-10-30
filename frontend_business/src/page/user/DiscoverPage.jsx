@@ -194,11 +194,6 @@ function DiscoverPage() {
       FaDumbbell: <FaDumbbell />,
       PiStudent: <PiStudent />,
       FaHouse: <FaHouse />,
-      // Coffee: <FaCoffee />,
-      // "Hàng ăn": <MdFoodBank />,
-      // "Nhà trọ": <RiHotelLine />,
-      // "Khu vui chơi": <PiPark />,
-      // "Nguyên vật liệu": <GiMaterialsScience />,
     };
 
     return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
@@ -369,7 +364,7 @@ function DiscoverPage() {
               {categories.map((category) => (
                 <button
                   key={category._id}
-                  onClick={() => handleCategoryClick(category._id)}
+                  onClick={() => handleSeeMore(category.category_name, category._id)}
                   className={`category-pill ${
                     selectedCategory === category._id ? "active" : ""
                   }`}

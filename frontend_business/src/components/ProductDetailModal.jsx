@@ -171,10 +171,10 @@ const ProductDetailModal = ({
             </div>
 
             {/* Product Feedback Section */}
-            <ProductFeedback
+            {/* <ProductFeedback
               productId={selectedProduct.id}
               businessId={businessId}
-            />
+            /> */}
           </motion.div>
         </motion.div>
       )}
