@@ -287,10 +287,10 @@ const BusinessPage = () => {
                     'Chưa phân loại'}
                 </p>
 
-                <div className="rating-section">
+                {/* <div className="rating-section">
                   <div className="stars">{renderStars(overallRating)}</div>
                   <span className="rating-count">{totalReviews}</span>
-                </div>
+                </div> */}
 
                 <div className="business-long-description">
                   <strong>Địa chỉ:</strong>{' '}
