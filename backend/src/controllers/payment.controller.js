@@ -17,9 +17,13 @@ class PaymentController {
     async handlePaymentCallback(req, res) {
         try {
             const { orderCode, status } = req.query;
+            const type = req.params.type;
             const result = await paymentService.handlePaymentCallback(orderCode, status);
             if (result) {
-                res.redirect(`${process.env.FRONTEND_URL}/payment-complete`);
+                if (type === 'business') {
+                    return res.redirect(`${process.env.FRONTEND_BUSINESS_URL}/payment-complete`);
+                }
+                res.redirect(`${process.env.FRONTEND_STUDENT_URL}/payment-complete`);
             }
         } catch (err) {
             res.status(500).json({ error: 1, message: err.message });

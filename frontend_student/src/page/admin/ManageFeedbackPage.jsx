@@ -6,8 +6,11 @@ import { toast } from "react-toastify";
 import Header from "../../components/Header";
 import HeroSectionAdmin from "../../components/HeroSectionAdmin";
 import "../../css/ManageAIBotsPage.css";
+import { RiLoginCircleLine } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
 
 function ManageFeedbackPage() {
+  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [typeFilter, setTypeFilter] = useState("business");
@@ -149,6 +152,8 @@ function ManageFeedbackPage() {
     setModalComment("");
   };
 
+  const handleEnterBusiness = (id) => navigate(`/business/${id}`);
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentFeedbacks = filtered.slice(indexOfFirstItem, indexOfLastItem);
@@ -171,7 +176,7 @@ function ManageFeedbackPage() {
           <div className="manage-business-search-bar">
             <input
               type="text"
-              placeholder="Tìm theo nội dung, doanh nghiệp, sản phẩm..."
+              placeholder="Tìm nội dung phản hồi, doanh nghiệp..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="manage-business-search-bar"
@@ -240,6 +245,7 @@ function ManageFeedbackPage() {
                 <th>👍</th>
                 <th>👎</th>
                 <th>Ngày</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -297,6 +303,13 @@ function ManageFeedbackPage() {
                           dateStyle: "short",
                           timeStyle: "short",
                         })}
+                      </td>
+                      <td>
+                        <RiLoginCircleLine
+                          className="manage-business-actions enter"
+                          onClick={() => handleEnterBusiness(fb?.business_id?._id)}
+                          title="Truy cập doanh nghiệp"
+                        />
                       </td>
                     </motion.tr>
                   ))

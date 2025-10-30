@@ -3,6 +3,7 @@ import AiChatModal from "../ai-modal/AiChatModal";
 import "./style/AiSupportDocument.css";
 
 const ALL_INDUSTRIES = ["SE", "MKT", "MC", "GD"];
+const ITEMS_PER_PAGE = 4; // Số lượng tài liệu hiển thị mỗi trang (4 cards mỗi row)
 
 const MOCK_DOCS = [
   {
@@ -13,6 +14,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "SE",
     used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_1",
   },
   {
     id: 2,
@@ -22,6 +24,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "SE",
     used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_2",
   },
   {
     id: 3,
@@ -31,6 +34,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "MKT",
     used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_3",
   },
   {
     id: 4,
@@ -40,6 +44,58 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "MC",
     used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_4",
+  },
+  // Thêm nhiều docs để có pagination (cần ít nhất 8 docs để có 2 trang với ITEMS_PER_PAGE=4)
+  {
+    id: 9,
+    title: "MLN112",
+    desc: "Tài liệu bổ sung cho môn học",
+    author: "Tran",
+    date: "12/11/2025",
+    industry: "SE",
+    used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_9",
+  },
+  {
+    id: 10,
+    title: "MLN113",
+    desc: "Bài tập và lời giải chi tiết",
+    author: "Le",
+    date: "13/11/2025",
+    industry: "SE",
+    used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_10",
+  },
+  {
+    id: 13,
+    title: "MLN116",
+    desc: "Đề cương ôn tập chi tiết",
+    author: "Pham",
+    date: "16/11/2025",
+    industry: "MKT",
+    used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_13",
+  },
+  {
+    id: 14,
+    title: "MLN117",
+    desc: "Case study thực tế",
+    author: "Hoang",
+    date: "17/11/2025",
+    industry: "MC",
+    used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_14",
+  },
+  {
+    id: 15,
+    title: "MLN118",
+    desc: "Tài liệu tham khảo nâng cao",
+    author: "Vu",
+    date: "18/11/2025",
+    industry: "SE",
+    used: true,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_15",
   },
   {
     id: 5,
@@ -49,6 +105,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "GD",
     used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_5",
   },
   {
     id: 6,
@@ -58,6 +115,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "SE",
     used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_6",
   },
   {
     id: 7,
@@ -67,6 +125,7 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "MKT",
     used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_7",
   },
   {
     id: 8,
@@ -76,6 +135,68 @@ const MOCK_DOCS = [
     date: "11/11/2025",
     industry: "SE",
     used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_8",
+  },
+  // Thêm docs mới nhất (cần ít nhất 8 docs)
+  {
+    id: 11,
+    title: "MLN114",
+    desc: "Đề thi mẫu và hướng dẫn",
+    author: "Pham",
+    date: "14/11/2025",
+    industry: "MKT",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_11",
+  },
+  {
+    id: 12,
+    title: "MLN115",
+    desc: "Video bài giảng chi tiết",
+    author: "Hoang",
+    date: "15/11/2025",
+    industry: "GD",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_12",
+  },
+  {
+    id: 16,
+    title: "MLN119",
+    desc: "Slides bài giảng mới nhất",
+    author: "Dao",
+    date: "19/11/2025",
+    industry: "SE",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_16",
+  },
+  {
+    id: 17,
+    title: "MLN120",
+    desc: "Bài tập thực hành tuần này",
+    author: "Bui",
+    date: "20/11/2025",
+    industry: "MC",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_17",
+  },
+  {
+    id: 18,
+    title: "MLN121",
+    desc: "Tài liệu workshop mới",
+    author: "Ngo",
+    date: "21/11/2025",
+    industry: "MKT",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_18",
+  },
+  {
+    id: 19,
+    title: "MLN122",
+    desc: "Project sample code",
+    author: "Dang",
+    date: "22/11/2025",
+    industry: "SE",
+    used: false,
+    driveUrl: "https://drive.google.com/drive/folders/YOUR_FOLDER_ID_19",
   },
 ];
 
@@ -122,6 +243,19 @@ const ChatIcon = () => (
   </svg>
 );
 
+const FolderIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 const ArrowIcon = ({ direction }) => (
   <svg width="20" height="20" viewBox="0 0 24 24">
     <path
@@ -134,10 +268,15 @@ const ArrowIcon = ({ direction }) => (
   </svg>
 );
 
-// DocCard Component
-const DocCard = React.memo(({ doc, onChat }) => (
+// DocCard Component - Updated with Drive link
+const DocCard = React.memo(({ doc, onChat, onOpenDrive }) => (
   <div className={`ai-card ${doc.used ? "ai-card-popular" : ""}`}>
-    <div className="ai-card-head">
+    <div
+      className="ai-card-head"
+      onClick={() => onOpenDrive(doc.driveUrl)}
+      style={{ cursor: "pointer" }}
+      title="Click để mở thư mục tài liệu trên Google Drive"
+    >
       <div className="ai-card-badge">{doc.industry}</div>
       <h4 className="ai-card-title">{doc.title}</h4>
       <div className="ai-card-desc">{doc.desc}</div>
@@ -176,14 +315,35 @@ const DocCard = React.memo(({ doc, onChat }) => (
           <span>{doc.date}</span>
         </div>
       </div>
-      <button
-        className="ai-chat-btn"
-        onClick={() => onChat(doc)}
-        title="Bắt đầu trò chuyện với AI về tài liệu này"
-      >
-        <ChatIcon />
-        <span>Trò chuyện với AI</span>
-      </button>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button
+          className="ai-chat-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenDrive(doc.driveUrl);
+          }}
+          title="Mở thư mục Google Drive"
+          style={{
+            backgroundColor: "#4285f4",
+            minWidth: "auto",
+            padding: "8px 12px",
+          }}
+        >
+          <FolderIcon />
+          <span>Drive</span>
+        </button>
+        <button
+          className="ai-chat-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChat(doc);
+          }}
+          title="Bắt đầu trò chuyện với AI về tài liệu này"
+        >
+          <ChatIcon />
+          <span>Chat AI</span>
+        </button>
+      </div>
     </div>
   </div>
 ));
@@ -244,6 +404,40 @@ const FilterDropdown = ({
   </div>
 );
 
+// Pagination Component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  // Luôn hiện pagination nếu có ít nhất 1 trang
+  if (totalPages === 0) return null;
+
+  return (
+    <div className="ai-pagination">
+      <button
+        className="ai-pagination-btn"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        aria-label="Trang trước"
+      >
+        <ArrowIcon direction="left" />
+        <span>Trước</span>
+      </button>
+
+      <span className="ai-pagination-info">
+        Trang {currentPage} / {totalPages}
+      </span>
+
+      <button
+        className="ai-pagination-btn"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        aria-label="Trang sau"
+      >
+        <span>Sau</span>
+        <ArrowIcon direction="right" />
+      </button>
+    </div>
+  );
+};
+
 // Main Component
 export default function AiSupportDocument() {
   const [search, setSearch] = useState("");
@@ -251,16 +445,26 @@ export default function AiSupportDocument() {
   const [selectedIndustries, setSelectedIndustries] = useState(["SE"]);
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [currentPageMostUsed, setCurrentPageMostUsed] = useState(1);
+  const [currentPageLatest, setCurrentPageLatest] = useState(1);
 
   const toggleIndustry = (code) => {
     setSelectedIndustries((prev) =>
       prev.includes(code) ? prev.filter((x) => x !== code) : [...prev, code]
     );
+    // Reset về trang 1 khi thay đổi filter
+    setCurrentPageMostUsed(1);
+    setCurrentPageLatest(1);
   };
 
   const openChat = (doc) => {
     setSelectedDoc(doc);
     setChatOpen(true);
+  };
+
+  // Hàm mở Google Drive
+  const openDrive = (driveUrl) => {
+    window.open(driveUrl, "_blank", "noopener,noreferrer");
   };
 
   const filtered = useMemo(() => {
@@ -278,8 +482,36 @@ export default function AiSupportDocument() {
     });
   }, [search, selectedIndustries]);
 
-  const mostUsed = useMemo(() => filtered.filter((d) => d.used), [filtered]);
-  const latest = useMemo(() => filtered.filter((d) => !d.used), [filtered]);
+  const allMostUsed = useMemo(() => filtered.filter((d) => d.used), [filtered]);
+  const allLatest = useMemo(() => filtered.filter((d) => !d.used), [filtered]);
+
+  // Pagination logic
+  const totalPagesMostUsed = Math.max(
+    1,
+    Math.ceil(allMostUsed.length / ITEMS_PER_PAGE)
+  );
+  const totalPagesLatest = Math.max(
+    1,
+    Math.ceil(allLatest.length / ITEMS_PER_PAGE)
+  );
+
+  const mostUsed = useMemo(() => {
+    const start = (currentPageMostUsed - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return allMostUsed.slice(start, end);
+  }, [allMostUsed, currentPageMostUsed]);
+
+  const latest = useMemo(() => {
+    const start = (currentPageLatest - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return allLatest.slice(start, end);
+  }, [allLatest, currentPageLatest]);
+
+  // Reset về trang 1 khi search thay đổi
+  React.useEffect(() => {
+    setCurrentPageMostUsed(1);
+    setCurrentPageLatest(1);
+  }, [search]);
 
   return (
     <>
@@ -289,6 +521,13 @@ export default function AiSupportDocument() {
           <h1 className="ai-main-title">Tài Liệu Học Tập Thông Minh</h1>
           <p className="ai-subtitle">
             Trò chuyện với AI để tìm hiểu sâu hơn về các tài liệu học tập
+          </p>
+          <p
+            className="ai-subtitle"
+            style={{ fontSize: "0.9em", opacity: 0.8 }}
+          >
+            💡 Click vào card để mở thư mục Google Drive với tài liệu cộng đồng
+            đóng góp
           </p>
         </div>
 
@@ -315,41 +554,72 @@ export default function AiSupportDocument() {
         </div>
 
         {/* Section 1: Most Used */}
-        <h3 className="ai-section-title">Được sử dụng nhiều nhất</h3>
-        <div className="ai-grid">
-          {mostUsed.map((d) => (
-            <DocCard key={d.id} doc={d} onChat={openChat} />
-          ))}
-          {mostUsed.length === 0 && (
-            <EmptyHint text="Không có tài liệu phù hợp với bộ lọc." />
+        <div className="ai-section">
+          <h3 className="ai-section-title">
+            Được sử dụng nhiều nhất
+            {allMostUsed.length > 0 && (
+              <span
+                style={{ fontSize: "0.8em", opacity: 0.7, marginLeft: "8px" }}
+              >
+                ({allMostUsed.length} tài liệu)
+              </span>
+            )}
+          </h3>
+          <div className="ai-grid">
+            {mostUsed.map((d) => (
+              <DocCard
+                key={d.id}
+                doc={d}
+                onChat={openChat}
+                onOpenDrive={openDrive}
+              />
+            ))}
+            {mostUsed.length === 0 && allMostUsed.length === 0 && (
+              <EmptyHint text="Không có tài liệu phù hợp với bộ lọc." />
+            )}
+          </div>
+          {allMostUsed.length > 0 && (
+            <Pagination
+              currentPage={currentPageMostUsed}
+              totalPages={totalPagesMostUsed}
+              onPageChange={setCurrentPageMostUsed}
+            />
           )}
         </div>
 
         {/* Section 2: Latest */}
-        <h3 className="ai-section-title">Mới nhất</h3>
-        <div className="ai-grid">
-          {latest.map((d) => (
-            <DocCard key={d.id} doc={d} onChat={openChat} />
-          ))}
-          {latest.length === 0 && <EmptyHint text="Chưa có tài liệu mới." />}
+        <div className="ai-section">
+          <h3 className="ai-section-title">
+            Mới nhất
+            {allLatest.length > 0 && (
+              <span
+                style={{ fontSize: "0.8em", opacity: 0.7, marginLeft: "8px" }}
+              >
+                ({allLatest.length} tài liệu)
+              </span>
+            )}
+          </h3>
+          <div className="ai-grid">
+            {latest.map((d) => (
+              <DocCard
+                key={d.id}
+                doc={d}
+                onChat={openChat}
+                onOpenDrive={openDrive}
+              />
+            ))}
+            {latest.length === 0 && allLatest.length === 0 && (
+              <EmptyHint text="Chưa có tài liệu mới." />
+            )}
+          </div>
+          {allLatest.length > 0 && (
+            <Pagination
+              currentPage={currentPageLatest}
+              totalPages={totalPagesLatest}
+              onPageChange={setCurrentPageLatest}
+            />
+          )}
         </div>
-
-        {/* Navigation buttons */}
-        <button
-          className="ai-nav-btn left"
-          onClick={() => alert("Prev")}
-          aria-label="Previous"
-        >
-          <ArrowIcon direction="left" />
-        </button>
-
-        <button
-          className="ai-nav-btn right"
-          onClick={() => alert("Next")}
-          aria-label="Next"
-        >
-          <ArrowIcon direction="right" />
-        </button>
       </div>
 
       <AiChatModal
