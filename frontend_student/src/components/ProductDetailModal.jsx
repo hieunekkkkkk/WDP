@@ -179,6 +179,7 @@ const ProductDetailModal = ({
             <ProductFeedback
               productId={selectedProduct.id}
               businessId={businessId}
+              canDelete={true}
             />
           </motion.div>
         </motion.div>
