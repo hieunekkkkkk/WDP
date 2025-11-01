@@ -1,5 +1,7 @@
+// services/conversationService.js
 const conversationController = require("../controllers/conversation.controller");
-const { redisClient, redisSubscriber } = require("../utils/redis");
+// SỬA Ở ĐÂY: Import toàn bộ đối tượng và đặt tên là 'redis'
+const redis = require("../utils/redis"); 
 
 let io;
 
@@ -12,14 +14,22 @@ const chatGateway = {
       },
     });
 
-    // Sub Redis để sync message khi scale nhiều instance
-    redisSubscriber.subscribe("chat_messages");
-    redisSubscriber.on("message", (channel, message) => {
-      if (channel === "chat_messages") {
-        const parsed = JSON.parse(message);
-        io.to(parsed.receiver_id).emit("receive_message", parsed);
-      }
+    // SỬA Ở ĐÂY: Dùng hàm .subscribe() từ đối tượng 'redis'
+    // Hàm này sẽ tạo ra một subscriber và nhận một callback
+    const redisSubscriber = redis.subscribe("chat_messages", (parsed) => {
+      // Hàm helper 'subscribe' của bạn đã tự động parse JSON
+      io.to(parsed.receiver_id).emit("receive_message", parsed);
     });
+
+    // Code bên dưới không cần thay đổi, nhưng 'on.message'
+    // đã được chuyển vào hàm callback ở trên.
+    
+    // redisSubscriber.on("message", (channel, message) => {
+    //   if (channel === "chat_messages") {
+    //     const parsed = JSON.parse(message);
+    //     io.to(parsed.receiver_id).emit("receive_message", parsed);
+    //   }
+    // });
 
     io.on("connection", (socket) => {
       console.log(`🔌 User connected: ${socket.id}`);
@@ -35,7 +45,8 @@ const chatGateway = {
         try {
           const saved = await conversationController.socketSendMessage(data);
 
-          await redisClient.publish(
+          // SỬA Ở ĐÂY: Dùng hàm .publish() từ đối tượng 'redis'
+          await redis.publish(
             "chat_messages",
             JSON.stringify(saved.senderMessage)
           );

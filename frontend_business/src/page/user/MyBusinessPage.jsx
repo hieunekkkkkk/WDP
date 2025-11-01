@@ -15,6 +15,7 @@ import { LuTextCursorInput } from "react-icons/lu";
 import LoadingScreen from "../../components/LoadingScreen";
 import MapModal from "../../components/MapModal";
 import MyBusinessFeedback from "../../components/MyBusinessFeedback";
+import { FaEye, FaTrash } from "react-icons/fa6";
 
 const MyBusinessPage = () => {
   const navigate = useNavigate();
@@ -516,6 +517,109 @@ const MyBusinessPage = () => {
     }
   };
 
+  const ConfirmDeleteToast = ({ closeToast, productId, deleteLogic }) => (
+    <div>
+      <p style={{ margin: "0.5rem 0", fontWeight: "500" }}>
+        Bạn có chắc muốn xóa sản phẩm này? <br />
+        Hành động này không thể hoàn tác.
+      </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "10px",
+          marginTop: "1rem",
+        }}
+      >
+        <button
+          onClick={closeToast}
+          style={{
+            background: "#718096", 
+            color: "white",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Hủy
+        </button>
+        <button
+          onClick={() => {
+            deleteLogic(productId); // Gọi logic xóa
+            closeToast(); // Và đóng toast
+          }}
+          style={{
+            background: "#E53E3E", // Màu đỏ
+            color: "white",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Xác nhận Xóa
+        </button>
+      </div>
+    </div>
+  );
+
+  // 2. Logic xóa sản phẩm (tách ra từ hàm gốc)
+  const executeDeleteProduct = async (productId) => {
+    const toastId = toast.loading("Đang xóa sản phẩm...");
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/product/${productId}`
+      );
+
+      setProducts((prevProducts) =>
+        prevProducts.filter((p) => p._id !== productId)
+      );
+
+      toast.update(toastId, {
+        render: "Xóa sản phẩm thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } catch (err) {
+      console.error("Error deleting product:", err);
+      toast.update(toastId, {
+        render: `Không thể xóa sản phẩm. Lỗi: ${
+          err.response?.data?.message || err.message
+        }`,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
+  };
+
+  const handleDeleteProduct = (productId) => {
+    toast(
+      // Truyền component ConfirmDeleteToast vào toast
+      // 'closeToast' là một prop tự động được 'react-toastify' cung cấp
+      ({ closeToast }) => (
+        <ConfirmDeleteToast
+          closeToast={closeToast}
+          productId={productId}
+          deleteLogic={executeDeleteProduct}
+        />
+      ),
+      {
+        position: "top-center", // Hiển thị ở giữa trên cùng
+        autoClose: false, // Ngăn toast tự động đóng
+        closeOnClick: false, // Ngăn đóng khi nhấp vào toast
+        draggable: false, // Ngăn kéo thả
+        closeButton: false, // Ẩn nút đóng 'x' mặc định
+        style: { border: "2px solid #E53E3E", borderRadius: "8px" }, // Thêm viền đỏ
+      }
+    );
+  };
+
   const renderStars = (rating) =>
     "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
 
@@ -809,7 +913,9 @@ const MyBusinessPage = () => {
                       />
                       <span className="toggle-slider"></span>
                       <span className="status-text">
-                        {showActiveOnly ? "Chỉ đánh giá hoạt động" : "Tất cả đánh giá"}
+                        {showActiveOnly
+                          ? "Chỉ đánh giá hoạt động"
+                          : "Tất cả đánh giá"}
                       </span>
                     </label>
                   </div>
@@ -955,8 +1061,27 @@ const MyBusinessPage = () => {
                     <p
                       className="view-details-btn"
                       onClick={() => handleViewDetails(product._id)}
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "10px", 
+                      }}
                     >
-                      Xem sản phẩm
+                      <FaEye /> Xem sản phẩm
+                    </p>
+                    <p
+                      className="delete-product-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProduct(product._id);
+                      }}
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <FaTrash /> Xóa sản phẩm
                     </p>
                   </div>
                 </div>

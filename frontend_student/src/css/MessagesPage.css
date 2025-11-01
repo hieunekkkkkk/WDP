@@ -486,3 +486,131 @@
 .layout.dark .business-mess-body::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+.business-mess-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.business-mess-sidebar-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.business-mess-new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background-color: #f0f2f5;
+  color: #333;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.business-mess-new-chat-btn:hover {
+  background-color: #e4e6eb;
+}
+
+/* ===============================
+   Phần Modal (Mới)
+   =============================== */
+
+/* Lớp phủ toàn màn hình */
+.business-mess-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Màu đen mờ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Nội dung của modal */
+.business-mess-modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px; /* Chiều rộng tối đa của modal */
+  max-height: 80vh; /* Chiều cao tối đa */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden; /* Tránh tràn nội dung */
+}
+
+/* Header của modal */
+.business-mess-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.business-mess-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.business-mess-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+/* Thanh tìm kiếm bên trong modal */
+.business-mess-search-wrapper {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.business-mess-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  background-color: #f7f7f7;
+}
+
+/* Danh sách business trong modal */
+.business-mess-modal-list {
+  overflow-y: auto; /* Cho phép cuộn nếu danh sách dài */
+  padding: 8px;
+}
+
+.business-mess-placeholder {
+  /* Chiếm toàn bộ không gian cửa sổ chat */
+  height: 100%;
+
+  /* Căn chỉnh bằng Flexbox */
+  display: flex;
+  justify-content: center; /* Căn giữa theo chiều ngang */
+  align-items: center; /* Căn giữa theo chiều dọc */
+
+  /* Thêm một chút style cho đẹp */
+  color: #888;
+  font-size: 1rem;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
