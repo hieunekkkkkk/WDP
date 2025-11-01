@@ -1,207 +1,199 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaPlus } from "react-icons/fa";
+import axios from "axios";
+import { io } from "socket.io-client";
 import { IoSend } from "react-icons/io5";
+import { useUser } from "@clerk/clerk-react";
 import "../../css/MessagesPage.css";
 
 const StudentMessagesPage = () => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [responseType, setResponseType] = useState("Bot");
+  const { user } = useUser();
+  const [businessList, setBusinessList] = useState([]);
+  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: "received",
-      content:
-        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:00 PM",
-    },
-    {
-      id: 2,
-      type: "sent",
-      content:
-        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.",
-      time: "8:05 PM",
-    },
-  ]);
 
-  const dropdownRef = useRef(null);
+  const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const handleSelect = (type) => {
-    setResponseType(type);
-    setShowMenu(false);
-  };
+  const studentId = user?.id;
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        type: "sent",
-        content: message,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
+  // ===============================
+  //  Kết nối socket + join room
+  // ===============================
+  useEffect(() => {
+    if (!studentId) return; // đợi Clerk load user xong
 
-      setMessages((prev) => [...prev, newMessage]);
-      setMessage("");
+    socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
+      transports: ["websocket"],
+    });
 
-      if (responseType === "Bot") {
-        setTimeout(() => {
-          const botResponse = {
-            id: messages.length + 2,
-            type: "received",
-            content:
-              "Cảm ơn bạn đã gửi tin nhắn! Tôi đã nhận được và sẽ phản hồi sớm nhất có thể.",
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          };
-          setMessages((prev) => [...prev, botResponse]);
-        }, 1000);
+    socketRef.current.emit("join", studentId);
+
+    socketRef.current.on("receive_message", (msg) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          type: "received",
+          content: msg.message,
+          time: new Date(msg.ts).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+    });
+
+    return () => socketRef.current.disconnect();
+  }, [studentId]); // chạy lại khi user đã load
+
+  // ===============================
+  //  Load danh sách doanh nghiệp
+  // ===============================
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/business`
+        );
+        setBusinessList(res.data.businesses || []);
+      } catch (err) {
+        console.error("Error fetching business list:", err);
       }
-    }
+    };
+    fetchBusinesses();
+  }, []);
+
+  // ===============================
+  //  Gửi tin nhắn
+  // ===============================
+  const handleSendMessage = () => {
+    if (!message.trim() || !selectedBusiness || !studentId) return;
+
+    const chatId = `${studentId}_${selectedBusiness._id}`;
+    const newMsg = {
+      id: Date.now(),
+      type: "sent",
+      content: message,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+    setMessages((prev) => [...prev, newMsg]);
+    setMessage("");
+
+    socketRef.current.emit("send_message_socket", {
+      chatId,
+      sender_id: studentId,
+      receiver_id: selectedBusiness._id,
+      message,
+    });
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
+  // ===============================
+  // 4 Scroll xuống khi có tin nhắn
+  // ===============================
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  // ===============================
+  //  Render
+  // ===============================
   return (
     <div className="business-card business-mess-container">
-      {/* Sidebar */}
       <div className="business-mess-sidebar">
-        <h2 className="business-mess-sidebar-title">Tin nhắn</h2>
-        <div className="business-mess-sidebar-subtitle">
-          <button className="business-mess-add-btn">
-            <FaPlus />
-          </button>
-        </div>
-
+        <h2 className="business-mess-sidebar-title">Danh sách doanh nghiệp</h2>
         <div className="business-mess-chat-list">
-          {Array(6)
-            .fill(0)
-            .map((_, index) => (
-              <div
-                key={index}
-                className={`business-mess-chat-item ${
-                  index === 0 ? "active" : ""
-                }`}
-              >
-                <div className="business-mess-avatar-wrapper">
-                  <img
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSclv9wC3RpMsd1MEU3pSgPky1Ns0YpuS1mEA&s"
-                    alt="avatar"
-                    className="business-mess-avatar"
-                  />
-                  <span className="business-mess-status-dot"></span>
-                </div>
-                <div className="business-mess-chat-info">
-                  <p className="business-mess-chat-name">Suporte ADMIN</p>
-                  <p className="business-mess-chat-status">
-                    {index % 2 === 0 ? "Đang chờ" : "Đang chat"}
-                  </p>
-                </div>
-                <div className="business-mess-chat-meta">
-                  <span>00:31:00</span>
-                </div>
+          {businessList.map((biz) => (
+            <div
+              key={biz._id}
+              className={`business-mess-chat-item ${
+                selectedBusiness?._id === biz._id ? "active" : ""
+              }`}
+              onClick={() => {
+                setSelectedBusiness(biz);
+                setMessages([]);
+              }}
+            >
+              <div className="business-mess-avatar-wrapper">
+                <img
+                  src={biz.business_image?.[0] || "/default-avatar.png"}
+                  alt="avatar"
+                  className="business-mess-avatar"
+                />
               </div>
-            ))}
+              <div className="business-mess-chat-info">
+                <p className="business-mess-chat-name">{biz.business_name}</p>
+                <p className="business-mess-chat-status">
+                  {biz.business_active === "active"
+                    ? "Đang hoạt động"
+                    : "Chưa kích hoạt"}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Chat window */}
       <div className="business-mess-window">
-        <div className="business-mess-header">
-          <div className="business-mess-header-left">
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRM-7hjMfAnA9oW2MSTts0_DeYxMlWS1Uv5ZA&s"
-              alt="avatar"
-              className="business-mess-avatar"
-            />
-            <div>
-              <h4>Suporte ADMIN</h4>
-              <span>#CU678SH</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="business-mess-body">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`business-mess-row ${
-                msg.type === "sent" ? "right" : "left"
-              }`}
-            >
-              <div className="business-mess-message">{msg.content}</div>
-              <span className="business-mess-time">{msg.time}</span>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="business-mess-input">
-          <div className="business-mess-dropdown" ref={dropdownRef}>
-            <button
-              className="business-mess-more-btn"
-              onClick={() => setShowMenu((prev) => !prev)}
-            >
-              {responseType}
-            </button>
-            {showMenu && (
-              <div className="business-mess-dropdown-menu">
-                <div
-                  className={responseType === "Doanh nghiệp" ? "active" : ""}
-                  onClick={() => handleSelect("Doanh nghiệp")}
-                >
-                  Doanh nghiệp
-                </div>
-                <div
-                  className={responseType === "Bot" ? "active" : ""}
-                  onClick={() => handleSelect("Bot")}
-                >
-                  Bot
+        {selectedBusiness ? (
+          <>
+            <div className="business-mess-header">
+              <div className="business-mess-header-left">
+                <img
+                  src={
+                    selectedBusiness.business_image?.[0] ||
+                    "/default-avatar.png"
+                  }
+                  alt="avatar"
+                  className="business-mess-avatar"
+                />
+                <div>
+                  <h4>{selectedBusiness.business_name}</h4>
+                  <span>{selectedBusiness.business_address}</span>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          <input
-            type="text"
-            placeholder={`Gửi tin nhắn với ${responseType}...`}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <button
-            className="business-mess-send-btn"
-            onClick={handleSendMessage}
-            disabled={!message.trim()}
-          >
-            <IoSend />
-          </button>
-        </div>
+            <div className="business-mess-body">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`business-mess-row ${
+                    msg.type === "sent" ? "right" : "left"
+                  }`}
+                >
+                  <div className="business-mess-message">{msg.content}</div>
+                  <span className="business-mess-time">{msg.time}</span>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="business-mess-input">
+              <input
+                type="text"
+                placeholder={`Gửi tin nhắn tới ${selectedBusiness.business_name}...`}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button
+                className="business-mess-send-btn"
+                onClick={handleSendMessage}
+                disabled={!message.trim()}
+              >
+                <IoSend />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="business-mess-placeholder">
+            <p>💬 Chọn một doanh nghiệp để bắt đầu trò chuyện</p>
+          </div>
+        )}
       </div>
     </div>
   );
