@@ -48,16 +48,20 @@ const Header = () => {
         Giao dịch
       </Link>
       <Link
-        to="/admin/aibots"
-        className={`header-nav-link ${isActive("/admin/aibots", true) ? "active" : ""}`}
+        to="/admin/feedback"
+        className={`header-nav-link ${
+          isActive("/admin/feedback", true) ? "active" : ""
+        }`}
       >
-        AI Bot
+        Doanh nghiệp phản hồi
       </Link>
       <Link
-        to="/admin/feedback"
-        className={`header-nav-link ${isActive("/admin/feedback", true) ? "active" : ""}`}
+        to="/admin/aibots"
+        className={`header-nav-link ${
+          isActive("/admin/aibots", true) ? "active" : ""
+        }`}
       >
-        Business Feedback
+        AI Bot
       </Link>
     </nav>
   );

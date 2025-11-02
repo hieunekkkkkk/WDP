@@ -1,10 +1,13 @@
 // components/ProductFeedback.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react"; // Added useMemo
 import axios from "axios";
 import { toast } from "react-toastify";
+import { FaTrash, FaPencilAlt } from "react-icons/fa"; // Added icons
 import "../css/ProductFeedback.css";
+// Make sure styles from BusinessFeedback.css (like .edit-review-btn) are also available
 
-const ProductFeedback = ({ productId, isModal = false }) => {
+// 1. Added canDelete prop
+const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +20,26 @@ const ProductFeedback = ({ productId, isModal = false }) => {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [userInfoMap, setUserInfoMap] = useState({});
 
+  // 2. Added new state for editing
+  const [editingFeedbackId, setEditingFeedbackId] = useState(null);
+  const [editedComment, setEditedComment] = useState("");
+  const [editedRating, setEditedRating] = useState(5);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const itemsPerPage = isModal ? 3 : 5;
+
+  // 3. Added memo to get current user ID
+  const currentUserId = useMemo(() => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.sub || payload.id; // Get user ID from token
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (productId) {
@@ -140,27 +162,28 @@ const ProductFeedback = ({ productId, isModal = false }) => {
     try {
       setIsSubmitting(true);
 
-      // Get current user ID from token
       const token = localStorage.getItem("accessToken");
-      if (!token) {
+      if (!token || !currentUserId) {
         toast.error("Vui lòng đăng nhập để gửi đánh giá");
+        setIsSubmitting(false);
         return;
       }
-
-      // Decode token to get user ID
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const userId = payload.sub || payload.id;
 
       const response = await axios.post(
         `${import.meta.env.VITE_BE_URL}/api/feedback`,
         {
-          user_id: userId,
+          user_id: currentUserId,
           product_id: productId,
           feedback_type: "product",
           feedback_comment: newFeedback.trim(),
           feedback_rating: selectedRating,
           feedback_like: 0,
           feedback_dislike: 0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -175,6 +198,127 @@ const ProductFeedback = ({ productId, isModal = false }) => {
       toast.error("Không thể gửi đánh giá. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const executeDelete = async (feedbackId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để thực hiện hành động này.");
+        return;
+      }
+
+      await axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Đã xóa đánh giá thành công!");
+      fetchFeedbacks(); // Refresh the list
+    } catch (err) {
+      console.error("Error deleting feedback:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        toast.error("Bạn không có quyền xóa đánh giá này.");
+      } else {
+        toast.error("Không thể xóa đánh giá. Vui lòng thử lại.");
+      }
+    }
+  };
+
+  const ConfirmToast = ({ closeToast, onConfirm, message }) => (
+    <div>
+      <p>{message}</p>
+      <div className="confirm-toast-buttons">
+        <button
+          className="confirm-btn ok"
+          onClick={() => {
+            onConfirm();
+            closeToast();
+          }}
+        >
+          OK
+        </button>
+        <button className="confirm-btn cancel" onClick={closeToast}>
+          Hủy
+        </button>
+      </div>
+    </div>
+  );
+
+  const handleDeleteFeedback = (feedbackId) => {
+    toast.warn(
+      <ConfirmToast
+        message="Bạn có chắc chắn muốn xóa đánh giá này không?"
+        onConfirm={() => executeDelete(feedbackId)}
+      />,
+      {
+        position: "top-center",
+        autoClose: false, // Don't auto-close
+        closeOnClick: false, // Don't close on click
+        pauseOnHover: true,
+        draggable: false,
+        closeButton: false, // Hide the default 'x' button
+        theme: "colored", // Use the warning color theme
+      }
+    );
+  };
+
+  const handleEditClick = (feedback) => {
+    setEditingFeedbackId(feedback._id);
+    setEditedComment(feedback.feedback_comment);
+    setEditedRating(feedback.feedback_rating || 5);
+    setHoveredRating(0); // Reset hover state for stars
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFeedbackId(null);
+    setEditedComment("");
+    setEditedRating(5);
+    setIsUpdating(false);
+  };
+
+  const handleUpdateFeedback = async () => {
+    if (!editedComment.trim()) {
+      toast.error("Vui lòng nhập nội dung đánh giá");
+      return;
+    }
+    if (!editingFeedbackId) return;
+
+    setIsUpdating(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại.");
+        setIsUpdating(false);
+        return;
+      }
+
+      // Using PUT as requested
+      await axios.put(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${editingFeedbackId}`,
+        {
+          feedback_comment: editedComment.trim(),
+          feedback_rating: editedRating,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Đã cập nhật đánh giá!");
+      handleCancelEdit(); // Exit edit mode
+      fetchFeedbacks(); // Refresh the list
+    } catch (err) {
+      console.error("Error updating feedback:", err);
+      toast.error("Không thể cập nhật đánh giá.");
+      setIsUpdating(false);
     }
   };
 
@@ -209,8 +353,10 @@ const ProductFeedback = ({ productId, isModal = false }) => {
   ) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
+      // Determine which rating to use for interactive mode
+      const currentRating = interactive ? editedRating : selectedRating;
       const isActive = interactive
-        ? hoveredRating >= i || (!hoveredRating && selectedRating >= i)
+        ? hoveredRating >= i || (!hoveredRating && currentRating >= i)
         : rating >= i;
       stars.push(
         <span
@@ -458,23 +604,90 @@ const ProductFeedback = ({ productId, isModal = false }) => {
                             day: "numeric",
                           }
                         )}
+                        {canDelete &&
+                          currentUserId &&
+                          currentUserId === feedback.user_id && (
+                            <div className="review-owner-controls">
+                              <button
+                                className="edit-review-btn"
+                                onClick={() => handleEditClick(feedback)}
+                                aria-label="Sửa đánh giá"
+                                title="Sửa đánh giá này"
+                                disabled={editingFeedbackId === feedback._id}
+                              >
+                                <FaPencilAlt />
+                              </button>
+                              <button
+                                className="delete-review-btn"
+                                onClick={() =>
+                                  handleDeleteFeedback(feedback._id)
+                                }
+                                aria-label="Xóa đánh giá"
+                                title="Xóa đánh giá này"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          )}
                       </span>
                     </div>
 
-                    <div className="review-content">
-                      <p className="review-text">{feedback.feedback_comment}</p>
-
-                      {feedback.feedback_response && (
-                        <div className="business-response">
-                          <div className="response-header">
-                            <strong>Phản hồi từ doanh nghiệp:</strong>
+                    {/* 6. ADDED CONDITIONAL EDIT FORM */}
+                    {editingFeedbackId === feedback._id ? (
+                      <div className="edit-feedback-form">
+                        <div className="rating-input-section">
+                          <label className="rating-label">Sửa đánh giá:</label>
+                          <div className="interactive-stars">
+                            {renderStars(
+                              editedRating,
+                              true,
+                              setEditedRating, // Use the setter for the edited rating
+                              setHoveredRating
+                            )}
                           </div>
-                          <p className="response-text">
-                            {feedback.feedback_response}
-                          </p>
                         </div>
-                      )}
-                    </div>
+                        <textarea
+                          className="feedback-textarea-edit" // Reuses CSS
+                          value={editedComment}
+                          onChange={(e) => setEditedComment(e.target.value)}
+                          rows="3"
+                        />
+                        <div className="review-form-actions">
+                          <button
+                            className="submit-review-btn"
+                            onClick={handleUpdateFeedback}
+                            disabled={isUpdating || !editedComment.trim()}
+                          >
+                            {isUpdating ? "Đang lưu..." : "Lưu"}
+                          </button>
+                          <button
+                            className="cancel-review-btn"
+                            onClick={handleCancelEdit}
+                            disabled={isUpdating}
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // Original review content
+                      <div className="review-content">
+                        <p className="review-text">
+                          {feedback.feedback_comment}
+                        </p>
+
+                        {feedback.feedback_response && (
+                          <div className="business-response">
+                            <div className="response-header">
+                              <strong>Phản hồi từ doanh nghiệp:</strong>
+                            </div>
+                            <p className="response-text">
+                              {feedback.feedback_response}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="review-footer">
                       <div className="helpful-section">

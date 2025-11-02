@@ -35,6 +35,7 @@
     "react-spinners": "^0.17.0",
     "react-toastify": "^11.0.5",
     "recharts": "^3.2.1",
+    "socket.io-client": "^4.8.1",
     "vietnam-provinces": "^0.0.4"
   },
   "devDependencies": {

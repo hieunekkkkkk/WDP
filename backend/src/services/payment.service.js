@@ -7,7 +7,7 @@ require("dotenv").config({
 });
 
 class PaymentService {
-  async createPayment(stack_id, user_id) {
+  async createPayment(stack_id, user_id, type = "student") {
     if (!stack_id) throw new Error("Stack ID is required");
 
     const stack = await Stack.findById(stack_id);
@@ -37,8 +37,8 @@ class PaymentService {
       orderCode: transactionId,
       amount: parseInt(stack.stack_price),
       description: description,
-      returnUrl: `${process.env.BACKEND_URL}/api/payment/callback`,
-      cancelUrl: `${process.env.BACKEND_URL}/api/payment/callback`,
+      returnUrl: `${process.env.BACKEND_URL}/api/payment/callback/${type}`,
+      cancelUrl: `${process.env.BACKEND_URL}/api/payment/callback/${type}`,
     };
 
     const response = await payOS.createPaymentLink(body);

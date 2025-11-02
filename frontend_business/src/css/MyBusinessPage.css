@@ -471,6 +471,19 @@ input {
   transition: all 0.3s ease;
 }
 
+.delete-product-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
 .view-details-btn:hover {
   background: #45a049;
   transform: translateY(-1px);

@@ -1,9 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "../css/ProductFeedback.css";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { IoBanSharp } from "react-icons/io5";
+import { FaTrash, FaPencilAlt } from "react-icons/fa"; // Thêm icons
+
+// Thêm component ConfirmToast
+const ConfirmToast = ({ closeToast, onConfirm, message }) => (
+  <div>
+    <p>{message}</p>
+    <div className="confirm-toast-buttons">
+      <button
+        className="confirm-btn ok"
+        onClick={() => {
+          onConfirm();
+          closeToast();
+        }}
+      >
+        OK
+      </button>
+      <button className="confirm-btn cancel" onClick={closeToast}>
+        Hủy
+      </button>
+    </div>
+  </div>
+);
 
 const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -18,6 +40,11 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [userInfoMap, setUserInfoMap] = useState({});
   const [showActiveOnly, setShowActiveOnly] = useState(true);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editedReplyText, setEditedReplyText] = useState("");
 
   const itemsPerPage = isModal ? 3 : 5;
 
@@ -221,6 +248,107 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
       console.error("Error disliking feedback:", err);
     }
   };
+
+  // --- Thêm các hàm xử lý cho Phản hồi ---
+
+  // Gửi phản hồi MỚI
+  const handleSubmitReply = async (feedbackId) => {
+    if (!replyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+
+    try {
+      setIsReplying(true);
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: replyText.trim() }
+      );
+      toast.success("Phản hồi đã được gửi thành công!");
+      setReplyText("");
+      setReplyingTo(null);
+      fetchFeedbacks(); // refresh list
+    } catch (err) {
+      console.error("Error submitting feedback response:", err);
+      toast.error("Không thể gửi phản hồi. Vui lòng thử lại.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  // Bắt đầu SỬA phản hồi
+  const handleStartEditReply = (feedback) => {
+    setEditingReplyId(feedback._id);
+    setEditedReplyText(feedback.feedback_response);
+    setReplyingTo(null); // Đóng box "phản hồi mới"
+    setReplyText("");
+  };
+
+  // Hủy SỬA phản hồi
+  const handleCancelEditReply = () => {
+    setEditingReplyId(null);
+    setEditedReplyText("");
+  };
+
+  // Gửi SỬA phản hồi
+  const handleSubmitEditReply = async (feedbackId) => {
+    if (!editedReplyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+    setIsReplying(true); // Tái sử dụng state loading
+    try {
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: editedReplyText.trim() }
+      );
+      toast.success("Đã cập nhật phản hồi!");
+      handleCancelEditReply();
+      fetchFeedbacks();
+    } catch (err) {
+      console.error("Error updating reply:", err);
+      toast.error("Không thể cập nhật phản hồi.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  // Logic XÓA phản hồi (gửi patch với null)
+  const executeDeleteReply = async (feedbackId) => {
+    try {
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: null } // Gửi null để xóa
+      );
+      toast.success("Đã xóa phản hồi!");
+      fetchFeedbacks();
+      handleCancelEditReply();
+    } catch (err) {
+      console.error("Error deleting reply:", err);
+      toast.error("Không thể xóa phản hồi.");
+    }
+  };
+
+  // Hiển thị toast XÁC NHẬN XÓA phản hồi
+  const handleDeleteReply = (feedbackId) => {
+    toast.warn(
+      <ConfirmToast
+        message="Bạn có chắc chắn muốn xóa phản hồi này?"
+        onConfirm={() => executeDeleteReply(feedbackId)}
+      />,
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: false,
+        closeButton: false,
+        theme: "colored",
+      }
+    );
+  };
+
+  // --- Kết thúc các hàm xử lý phản hồi ---
 
   const renderStars = (
     rating,
@@ -500,20 +628,138 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
                       </span>
                     </div>
 
+                    {/* === CẬP NHẬT LOGIC PHẢN HỒI / SỬA / XÓA === */}
                     <div className="review-content">
                       <p className="review-text">{feedback.feedback_comment}</p>
 
-                      {feedback.feedback_response && (
-                        <div className="business-response">
-                          <div className="response-header">
-                            <strong>Phản hồi từ doanh nghiệp:</strong>
-                          </div>
-                          <p className="response-text">
-                            {feedback.feedback_response}
-                          </p>
-                        </div>
+                      {feedback.feedback_response ? (
+                        <>
+                          {editingReplyId === feedback._id ? (
+                            // --- Chế độ SỬA PHẢN HỒI ---
+                            <div
+                              className="reply-section"
+                              style={{ marginTop: "10px" }}
+                            >
+                              <textarea
+                                className="reply-textarea"
+                                value={editedReplyText}
+                                onChange={(e) =>
+                                  setEditedReplyText(e.target.value)
+                                }
+                                rows="3"
+                              />
+                              <div className="reply-actions">
+                                <button
+                                  className="submit-reply-btn"
+                                  onClick={() =>
+                                    handleSubmitEditReply(feedback._id)
+                                  }
+                                  disabled={
+                                    isReplying || !editedReplyText.trim()
+                                  }
+                                >
+                                  {isReplying ? "Đang lưu..." : "Lưu"}
+                                </button>
+                                <button
+                                  className="cancel-reply-btn"
+                                  onClick={handleCancelEditReply}
+                                  disabled={isReplying}
+                                >
+                                  Hủy
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // --- Chế độ HIỂN THỊ PHẢN HỒI ---
+                            <div className="business-response">
+                              <div className="response-header">
+                                <strong>Phản hồi từ doanh nghiệp:</strong>
+                                {canDelete && (
+                                  <div
+                                    className="review-owner-controls"
+                                    style={{ marginLeft: "auto" }}
+                                  >
+                                    <button
+                                      className="edit-review-btn"
+                                      onClick={() =>
+                                        handleStartEditReply(feedback)
+                                      }
+                                      aria-label="Sửa phản hồi"
+                                      title="Sửa phản hồi này"
+                                    >
+                                      <FaPencilAlt />
+                                    </button>
+                                    <button
+                                      className="delete-review-btn"
+                                      onClick={() =>
+                                        handleDeleteReply(feedback._id)
+                                      }
+                                      aria-label="Xóa phản hồi"
+                                      title="Xóa phản hồi này"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="response-text">
+                                {feedback.feedback_response}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        // --- Chế độ TẠO PHẢN HỒI MỚI ---
+                        canDelete && (
+                          <>
+                            {replyingTo === feedback._id ? (
+                              <div className="reply-section">
+                                <textarea
+                                  className="reply-textarea"
+                                  placeholder="Nhập phản hồi của bạn..."
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  rows="3"
+                                />
+                                <div className="reply-actions">
+                                  <button
+                                    className="submit-reply-btn"
+                                    onClick={() =>
+                                      handleSubmitReply(feedback._id)
+                                    }
+                                    disabled={isReplying || !replyText.trim()}
+                                  >
+                                    {isReplying
+                                      ? "Đang gửi..."
+                                      : "Gửi phản hồi"}
+                                  </button>
+                                  <button
+                                    className="cancel-reply-btn"
+                                    onClick={() => {
+                                      setReplyingTo(null);
+                                      setReplyText("");
+                                    }}
+                                  >
+                                    Hủy
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                className="reply-toggle-btn"
+                                onClick={() => {
+                                  setReplyingTo(feedback._id);
+                                  handleCancelEditReply(); // Đóng box edit nếu đang mở
+                                }}
+                              >
+                                💬 Phản hồi
+                              </button>
+                            )}
+                          </>
+                        )
                       )}
                     </div>
+                    {/* === KẾT THÚC LOGIC PHẢN HỒI === */}
 
                     {feedback.feedback_status !== "inactive" && (
                       <div className="review-footer">

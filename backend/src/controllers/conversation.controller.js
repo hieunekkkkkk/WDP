@@ -6,10 +6,10 @@ class ConversationController {
     async checkConversation(req, res) {
         try {
             const { sender_id, receiver_id } = req.body;
+            console.log(req.body);
             if (!sender_id || !receiver_id) {
                 return res.status(400).json({ error: 'sender_id và receiver_id là bắt buộc' });
             }
-
             const result = await conversationService.checkOrCreateConversation(sender_id, receiver_id);
             // result: { chatId, sender_messages, receiver_messages }
             return res.json(result);

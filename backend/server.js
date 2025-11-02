@@ -1,10 +1,24 @@
-
 require('dotenv').config({ path: '.env.dev' });
+
+// --- CÁC THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ---
+
+const http = require('http'); // 1. Import 'http'
 const app = require('./app');
+const chatGateway = require('./src/gateway/chatGateway'); // 2. Import chat gateway
+
 const logger = require('./src/log/logger');
 const PORT = process.env.PORT || 8080;
 
-const server = app.listen(PORT, () => {
+const httpServer = http.createServer(app); // 3. Tạo một server HTTP từ Express app
+
+// 4. KHỞI TẠO CHAT GATEWAY VÀ GẮN NÓ VÀO SERVER
+chatGateway.init(httpServer);
+
+// --- KẾT THÚC CÁC THAY ĐỔI ---
+
+
+// 5. Thay đổi 'app.listen' thành 'httpServer.listen'
+const server = httpServer.listen(PORT, () => {
   logger.info('Server started successfully', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
@@ -14,29 +28,8 @@ const server = app.listen(PORT, () => {
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Graceful shutdown
+// Graceful shutdown (Phần này vẫn giữ nguyên, nó đã đúng vì 'server'
+// bây giờ tham chiếu đến httpServer)
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
   server.close(() => {

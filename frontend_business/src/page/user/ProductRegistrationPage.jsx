@@ -261,7 +261,7 @@ const ProductRegistrationPage = () => {
               </div>
             </div>
           </div>
-          <div className="form-group checkbox-group">
+          <div className="product-reg form-group checkbox-group">
             <input
               type="checkbox"
               id="policy-confirmation"
