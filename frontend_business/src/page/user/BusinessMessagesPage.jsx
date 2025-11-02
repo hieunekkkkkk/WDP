@@ -125,10 +125,14 @@ const BusinessMessagesPage = () => {
     return () => socketRef.current.disconnect();
   }, [businessId, selectedStudent]);
 
-  // ... (useEffect cho việc tải DS chat & sinh viên vẫn giữ nguyên) ...
+  // ====================================================================
+  //  ĐÂY LÀ PHẦN ĐƯỢC THAY ĐỔI
+  //  useEffect để tải danh sách chat VÀ danh sách sinh viên
+  // ====================================================================
   useEffect(() => {
-    const fetchConversations = async () => { /* ... */ };
+    if (!businessId) return;
 
+    // 1. Hàm tải TẤT CẢ sinh viên (để lấy info: tên, avatar)
     const fetchAllStudents = async () => {
       try {
         const res = await axios.get(
@@ -137,14 +141,93 @@ const BusinessMessagesPage = () => {
         const allUsers = res.data.users || [];
         const studentsOnly = allUsers.filter(user => user.role === 'client');
         setAllStudents(studentsOnly);
+        return studentsOnly; // Trả về để xử lý
       } catch (err) {
         console.error("Error fetching all students:", err);
+        return []; // Trả về mảng rỗng nếu lỗi
       }
     };
 
-    fetchConversations();
-    fetchAllStudents();
-  }, [businessId]);
+    // 2. Hàm tải LỊCH SỬ các cuộc trò chuyện
+    const fetchHistories = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/user/${businessId}/histories`
+        );
+        return res.data || []; // Mong đợi trả về 1 mảng
+      } catch (err) {
+        console.error("Error fetching conversation histories:", err);
+        return []; // Trả về mảng rỗng nếu lỗi
+      }
+    };
+
+    // 3. Hàm kết hợp cả hai nguồn dữ liệu
+    const loadAndProcessData = async () => {
+      // Chạy song song 2 API cho nhanh
+      const [students, histories] = await Promise.all([
+        fetchAllStudents(),
+        fetchHistories(),
+      ]);
+
+      if (students.length === 0 || histories.length === 0) {
+        // Nếu 1 trong 2 không có dữ liệu thì không cần xử lý
+        setConversations([]);
+        return;
+      }
+
+      // Tạo một Map để tra cứu thông tin sinh viên nhanh (O(1))
+      // thay vì lồng 2 vòng lặp (O(n*m))
+      const studentMap = new Map();
+      students.forEach(student => {
+        studentMap.set(student.id, student);
+      });
+
+      console.log(histories);
+      // 4. Xử lý mảng histories để tạo mảng conversations
+      const processedConversations = histories.map(history => {
+          // Định dạng chatId là "user_ID1_user_ID2"
+          const ids = history.chatId.split('_');
+          
+          if (ids.length < 4) return null; // Bỏ qua nếu chatId lỗi
+
+          const userId1 = ids[1];
+          const userId2 = ids[3];
+          
+          // Tìm ID của sinh viên (là ID KHÔNG PHẢI businessId)
+          const studentId = userId1 === businessId ? userId2 : userId1;
+
+          // Lấy thông tin sinh viên từ Map
+          const studentInfo = studentMap.get(studentId);
+
+          // Lấy tin nhắn cuối cùng
+          let lastMessage = "Chưa có tin nhắn";
+          if (history.conversation && history.conversation.length > 0) {
+            lastMessage = history.conversation[history.conversation.length - 1].message;
+          }
+
+          // Chỉ thêm vào nếu tìm thấy thông tin sinh viên
+          if (studentInfo) {
+            return {
+              student: studentInfo, // Chứa { id, fullName, imageUrl, ... }
+              lastMessage: lastMessage,
+            };
+          }
+          
+          return null; // Bỏ qua nếu không tìm thấy sinh viên
+        })
+        .filter(Boolean); // Lọc bỏ các giá trị null
+
+      // 5. Cập nhật state
+      setConversations(processedConversations);
+    };
+
+    loadAndProcessData();
+
+  }, [businessId]); // Chỉ chạy lại khi businessId thay đổi
+
+  // ====================================================================
+  //  HẾT PHẦN THAY ĐỔI
+  // ====================================================================
 
   // 3. useEffect MỚI để kiểm tra quyền truy cập Bot
   useEffect(() => {
@@ -160,9 +243,6 @@ const BusinessMessagesPage = () => {
         // Giả sử API trả về { payments: [...] }
         const payments = res.data.data || []; 
 
-        console.log(payments);
-        
-        
         // Kiểm tra điều kiện
         const hasValidPayment = payments.some(payment => 
           payment.payment_stack?.stack_name.toLowerCase() === "bot tư vấn viên" &&
@@ -315,6 +395,11 @@ const BusinessMessagesPage = () => {
               <FaPlus />
             </button>
           </div>
+          {/* PHẦN NÀY GIỮ NGUYÊN.
+            Logic trong useEffect đã tạo mảng `conversations`
+            với cấu trúc { student: {...}, lastMessage: "..." }
+            mà JSX này cần.
+          */}
           <div className="business-mess-chat-list">
             {conversations.map((convo) => (
               <div
