@@ -1,27 +1,22 @@
 // services/UserService.js
 const { getClerkClient } = require('../middleware/clerkClient');
+const User = require('../entity/module/user.model');
 
 class UserService {
+  // --- Dùng Mongoose thay cho Clerk ---
   async getAllUsers(page = 1, limit = 50) {
-    const clerk = await getClerkClient();
-
     try {
       const offset = (page - 1) * limit;
-      const { data: allUsers } = await clerk.users.getUserList({ limit: 100 });
-      const totalItems = allUsers.length;
 
-      const { data: userList } = await clerk.users.getUserList({ limit, offset });
+      // Lấy tổng số user trong MongoDB
+      const totalItems = await User.countDocuments();
 
-      const users = userList.map((user) => ({
-        id: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        role: user.publicMetadata?.role || '',
-        imageUrl: user.imageUrl,
-        locked: user.publicMetadata?.locked || false,
-        publicMetadata: user.publicMetadata || {},
-        privateMetadata: user.privateMetadata || {},
-      }));
+      // Lấy danh sách user theo phân trang
+      const users = await User.find()
+        .skip(offset)
+        .limit(limit)
+        .sort({ createdAt: -1 }) // sort để user mới lên đầu
+        .lean();
 
       return {
         users,
@@ -30,53 +25,38 @@ class UserService {
         totalItems,
       };
     } catch (error) {
-      throw new Error(`Error fetching users: ${error.message}`);
+      throw new Error(`Error fetching users from MongoDB: ${error.message}`);
     }
   }
 
+  // --- Dùng Mongoose thay cho Clerk ---
   async getUserById(userId) {
-    const clerk = await getClerkClient();
-
     try {
-      const user = await clerk.users.getUser(userId);
+      // userId ở đây có thể là _id của Mongo hoặc clerkId tuỳ bạn dùng
+      const user = await User.findOne({ clerkId: userId }).lean();
+
       if (!user) return null;
 
-      return {
-        id: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        role: user.publicMetadata?.role || '',
-        imageUrl: user.imageUrl,
-        locked: user.publicMetadata?.locked || false,
-      };
+      return user;
     } catch (error) {
-      throw new Error(`Error fetching user by ID: ${error.message}`);
+      throw new Error(`Error fetching user by ID from MongoDB: ${error.message}`);
     }
   }
 
-  async updateUser(userId, updateData) {
-    const clerk = await getClerkClient();
-
-    try {
-      const updatedUser = await clerk.users.updateUser(userId, updateData);
-      return {
-        id: updatedUser.id,
-        email: updatedUser.emailAddresses[0]?.emailAddress,
-        fullName: `${updatedUser.firstName || ''} ${updatedUser.lastName || ''}`.trim(),
-        role: updatedUser.publicMetadata?.role || '',
-        imageUrl: updatedUser.imageUrl,
-      };
-    } catch (error) {
-      throw new Error(`Error updating user: ${error.message}`);
-    }
-  }
-
+  // --- Giữ nguyên logic Clerk để khoá/mở khoá ---
   async lockUser(userId) {
     const clerk = await getClerkClient();
     try {
       const user = await clerk.users.updateUser(userId, {
         publicMetadata: { locked: true },
       });
+
+      // Cập nhật đồng bộ trong Mongo luôn
+      await User.findOneAndUpdate(
+        { clerkId: user.id },
+        { locked: true, publicMetadata: { ...user.publicMetadata } }
+      );
+
       return { success: true, userId: user.id, locked: true };
     } catch (error) {
       throw new Error(`Error locking user: ${error.message}`);
@@ -89,6 +69,13 @@ class UserService {
       const user = await clerk.users.updateUser(userId, {
         publicMetadata: { locked: false },
       });
+
+      // Cập nhật đồng bộ trong Mongo luôn
+      await User.findOneAndUpdate(
+        { clerkId: user.id },
+        { locked: false, publicMetadata: { ...user.publicMetadata } }
+      );
+
       return { success: true, userId: user.id, locked: false };
     } catch (error) {
       throw new Error(`Error unlocking user: ${error.message}`);
