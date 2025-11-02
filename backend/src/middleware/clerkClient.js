@@ -1,35 +1,48 @@
-// src/clerkClient.js
-const { Clerk } = require('@clerk/clerk-sdk-node');
+// config/clerkClient.js
+const { createClerkClient } = require('@clerk/backend');
 
-let clerkInstance;
+let clerkClient;
+let lastInit = 0;
 
-function getClerkInstance() {
-    if (!clerkInstance) {
-        console.log('[Clerk] Initializing new Clerk instance...');
-        clerkInstance = new Clerk({
-            secretKey: process.env.CLERK_SECRET_KEY,
-            // apiUrl: process.env.CLERK_API_URL || 'https://api.clerk.com',
-            retryAttempts: 3, // thử lại nếu request thất bại
-            retryInitialDelay: 500, // 0.5s delay
-        });
-    }
-    return clerkInstance;
-}
-
-// Auto reconnect nếu Clerk gặp lỗi fetch
-async function ensureClerkConnection() {
+function initClerkClient() {
     try {
-        const clerk = getClerkInstance();
-        await clerk.users.getUserList({ limit: 1 }); // test 1 request đơn giản
-        return clerk;
-    } catch (error) {
-        console.warn('[Clerk] Connection lost. Retrying...');
-        clerkInstance = null; // reset instance
-        return getClerkInstance(); // tái khởi tạo
+        clerkClient = createClerkClient({
+            secretKey: process.env.CLERK_SECRET_KEY,
+            apiUrl: process.env.CLERK_API_URL || 'https://api.clerk.dev',
+            apiVersion: 'v1',
+        });
+
+        lastInit = Date.now();
+        console.log(`[Clerk] ✅ Client initialized (${new Date().toISOString()})`);
+        return clerkClient;
+    } catch (err) {
+        console.error('[Clerk] ❌ Failed to initialize:', err.message);
+        clerkClient = null;
+        return null;
     }
 }
 
-module.exports = {
-    getClerkInstance,
-    ensureClerkConnection,
-};
+async function getClerkClient(retry = 0) {
+    // Re-init nếu client null hoặc lâu hơn 5 phút
+    if (!clerkClient || Date.now() - lastInit > 5 * 60 * 1000) {
+        console.warn('[Clerk] ⚠️ Reinitializing client...');
+        clerkClient = initClerkClient();
+    }
+
+    try {
+        // Test gọi nhẹ để chắc client hoạt động (không block chính)
+        await clerkClient.users.getUserList({ limit: 1 });
+        return clerkClient;
+    } catch (err) {
+        if (retry < 2) {
+            console.warn(`[Clerk] ⚠️ API check failed (${err.message}). Retrying...`);
+            await new Promise((r) => setTimeout(r, 500 * (retry + 1)));
+            clerkClient = initClerkClient();
+            return getClerkClient(retry + 1);
+        }
+        console.error('[Clerk] ❌ Clerk API unreachable:', err.message);
+        throw new Error('Clerk API unavailable');
+    }
+}
+
+module.exports = { getClerkClient };

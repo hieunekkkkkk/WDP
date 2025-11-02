@@ -8,7 +8,8 @@ const productSchema = new mongoose.Schema({
   product_number: Number,
   product_price: String,
   product_total_vote: Number,
-  product_rating: Number
+  product_rating: Number,
+  product_amount: Number,
 });
 
 module.exports = mongoose.model('product', productSchema);
