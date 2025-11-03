@@ -417,15 +417,20 @@
   color: #666;
   font-size: 0.9rem;
   font-weight: 500;
+  display: flex;
 }
 
-.delete-feedback-btn{
+.status-feedback-btn {
   margin-left: 20px;
   transition: all 0.2s;
 }
 
-.delete-feedback-btn:hover{
+.delete-feedback-btn:hover {
   color: red;
+}
+
+.active-feedback-btn:hover {
+  color: green;
 }
 
 .review-content {
@@ -450,12 +455,6 @@
 
 .response-header {
   margin-bottom: 0.5rem;
-}
-
-.response-header strong {
-  color: #4caf50;
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .response-text {
@@ -613,6 +612,210 @@
   padding: 0 0.5rem;
   font-weight: bold;
   font-size: 18px;
+}
+
+.review-item.inactive {
+  opacity: 0.5;
+  font-style: italic;
+  position: relative;
+}
+
+.review-item.inactive::before {
+  content: "Đánh giá này đã bị ẩn";
+  display: block;
+  color: #b00;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.reply-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #ff5722;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.reply-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.reply-section {
+  margin-top: 8px;
+  margin-left: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reply-textarea {
+  width: 90%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.submit-reply-btn {
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit-reply-btn:disabled {
+  background-color: #ffbeaa;
+  cursor: not-allowed;
+}
+
+.cancel-reply-btn {
+  background-color: #ccc;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.business-response {
+  background-color: #f9f9f9;
+  border-left: 3px solid #ff5722;
+  padding: 8px 12px;
+  margin-top: 10px;
+  margin-left: 50px;
+  border-radius: 4px;
+}
+
+.business-response .response-header {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.response-text {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.review-owner-controls {
+  margin-left: auto; /* Pushes buttons to the right */
+  display: flex;
+  gap: 8px;
+  justify-content: right;
+}
+
+/* Base style for both icons */
+.edit-review-btn,
+.delete-review-btn {
+  background-color: transparent;
+  color: #555;
+  border: none;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 14px; /* Adjust icon size */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Edit Button */
+.edit-review-btn {
+  color: #007bff; /* Blue for edit */
+}
+.edit-review-btn:hover {
+  background-color: #f0f8ff; /* Light blue hover */
+  color: #0056b3;
+}
+.edit-review-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Delete Button (adjusting previous styles) */
+.delete-review-btn {
+  color: #dc3545; /* Red for delete */
+  margin-left: 0; /* Remove margin-left: auto from here */
+}
+.delete-review-btn:hover {
+  background-color: #fdf0f1; /* Light red hover */
+  color: #c82333;
+}
+
+/* Style for the edit form container */
+.edit-feedback-form {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 10px;
+  background-color: #fafafa;
+}
+
+/* Smaller textarea for editing */
+.feedback-textarea-edit {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 14px;
+  margin-top: 10px;
+  box-sizing: border-box; /* Important */
+}
+
+/* Make sure the star rating section in the edit form looks right */
+.edit-feedback-form .rating-input-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-feedback-form .rating-label {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.confirm-toast-buttons {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-toast-buttons .confirm-btn {
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+/* Style for the "OK" (confirm delete) button */
+.confirm-toast-buttons .confirm-btn.ok {
+  background-color: #dc3545;
+  color: white;
+}
+.confirm-toast-buttons .confirm-btn.ok:hover {
+  background-color: #c82333;
+}
+
+/* Style for the "Cancel" button */
+.confirm-toast-buttons .confirm-btn.cancel {
+  background-color: #e9ecef;
+  color: #333;
+}
+.confirm-toast-buttons .confirm-btn.cancel:hover {
+  background-color: #d6d8db;
 }
 
 /* Responsive Design */

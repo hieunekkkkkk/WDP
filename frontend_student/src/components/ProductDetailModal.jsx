@@ -24,8 +24,6 @@ const ProductDetailModal = ({
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
-      console.log(selectedProduct.id);
-      
       if (!selectedProduct?.id) return;
 
       try {
@@ -37,13 +35,20 @@ const ProductDetailModal = ({
 
         if (res.data?.success) {
           const data = res.data.data;
-          setFeedbacks(data);
 
-          const total = data.reduce(
+          // Only active feedbacks
+          const activeFeedbacks = data.filter(
+            (f) => f.feedback_status !== "inactive"
+          );
+
+          setFeedbacks(activeFeedbacks);
+
+          const total = activeFeedbacks.reduce(
             (sum, f) => sum + (f.feedback_rating || 0),
             0
           );
-          const avg = data.length > 0 ? total / data.length : 0;
+          const avg =
+            activeFeedbacks.length > 0 ? total / activeFeedbacks.length : 0;
           setAverageRating(avg);
         }
       } catch (err) {
@@ -174,6 +179,7 @@ const ProductDetailModal = ({
             <ProductFeedback
               productId={selectedProduct.id}
               businessId={businessId}
+              canDelete={true}
             />
           </motion.div>
         </motion.div>

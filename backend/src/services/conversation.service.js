@@ -1,6 +1,7 @@
 // services/conversationService.js
 const redis = require('../utils/redis');
 const aibotService = require('../services/aibot.service');
+const Chat = require('../entity/module/chat.model');
 
 const EXPIRE_SEC = 60 * 60 * 24; // 1 ngày
 
@@ -11,6 +12,11 @@ class ConversationService {
 
     async checkOrCreateConversation(sender_id, receiver_id) {
         const chatId = this.buildChatId(sender_id, receiver_id);
+
+        const existingChat = await Chat.findOne({ chatId });
+        if (!existingChat) {
+            await Chat.create({ chatId, senderId: sender_id, receiverId: receiver_id });
+        }
 
         const senderKey = `chat:${chatId}:sender:${sender_id}:messages`;
         const receiverKey = `chat:${chatId}:receiver:${receiver_id}:messages`;
@@ -105,6 +111,39 @@ class ConversationService {
             throw new Error('Unsupported message type. Expected "bot" or "human"');
         }
     }
+
+    async getAllHistoriesByUserId(userId) {
+
+        const chats = await Chat.find({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+        }).lean();
+
+        if (!chats.length) return [];
+
+        // Lặp qua từng chat để lấy history từ Redis
+        const results = await Promise.all(
+            chats.map(async (chat) => {
+                const historyKey = `chat:${chat.chatId}:messages`;
+                const messages = await redis.lrange(historyKey, 0, -1);
+
+                const parsedMessages = messages.map((msg) => {
+                    try {
+                        return typeof msg === "string" ? JSON.parse(msg) : msg;
+                    } catch {
+                        return msg;
+                    }
+                });
+
+                return {
+                    chatId: chat.chatId,
+                    conversation: parsedMessages,
+                };
+            })
+        );
+
+        return results;
+    }
+
 }
 
 module.exports = new ConversationService();

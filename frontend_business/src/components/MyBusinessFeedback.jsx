@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "../css/BusinessFeedback.css";
-import { FaTrash } from "react-icons/fa6";
+import { IoBanSharp } from "react-icons/io5";
+import { FaRegCircleCheck, FaTrash } from "react-icons/fa6";
+import { FaPencilAlt } from "react-icons/fa";
 
 const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -16,6 +18,12 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
   const [selectedRating, setSelectedRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [userInfoMap, setUserInfoMap] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
+  const [showActiveOnly, setShowActiveOnly] = useState(true);
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editedReplyText, setEditedReplyText] = useState("");
 
   const itemsPerPage = 5;
 
@@ -84,15 +92,18 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  // Calculate overall rating from feedbacks
   const calculateOverallRating = () => {
-    if (feedbacks.length === 0) return 0;
+    const relevantFeedbacks = showActiveOnly
+      ? feedbacks.filter((f) => f.feedback_status === "active")
+      : feedbacks;
 
-    const totalRating = feedbacks.reduce((sum, feedback) => {
-      return sum + (feedback.feedback_rating || 5); // Use actual rating or default to 5
+    if (relevantFeedbacks.length === 0) return 0;
+
+    const totalRating = relevantFeedbacks.reduce((sum, feedback) => {
+      return sum + (feedback.feedback_rating || 5);
     }, 0);
 
-    return totalRating / feedbacks.length;
+    return totalRating / relevantFeedbacks.length;
   };
 
   // Sort feedbacks based on selected option
@@ -125,13 +136,23 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  // Get paginated feedbacks
-  const getPaginatedFeedbacks = () => {
-    const sorted = getSortedFeedbacks();
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return sorted.slice(startIndex, startIndex + itemsPerPage);
+  const getFilteredFeedbacks = () => {
+    let filtered = [...feedbacks];
+    if (showActiveOnly) {
+      filtered = filtered.filter((f) => f.feedback_status === "active");
+    }
+    return filtered;
   };
 
+  const getPaginatedFeedbacks = () => {
+    const sorted = getSortedFeedbacks();
+    const filtered = showActiveOnly
+      ? sorted.filter((f) => f.feedback_status === "active")
+      : sorted;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  };
   // Handle feedback submission
   const handleSubmitFeedback = async () => {
     if (!newFeedback.trim()) {
@@ -208,23 +229,152 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  const handleDeleteFeedback = (feedbackId) => {
+  const handleToggleFeedbackStatus = (feedbackId, currentStatus) => {
+    const isInactive = currentStatus === "inactive";
+    const actionText = isInactive ? "hiện lại" : "ẩn";
+    const newStatus = isInactive ? "active" : "inactive";
+
     const confirmToast = toast.info(
       <div>
-        <p>Bạn có chắc chắn muốn xóa đánh giá này?</p>
+        <p>Bạn có chắc chắn muốn {actionText} đánh giá này?</p>
         <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
           <button
             onClick={async () => {
-              toast.dismiss(confirmToast); 
+              toast.dismiss(confirmToast);
               try {
-                await axios.delete(
-                  `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`
+                await axios.put(
+                  `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`,
+                  { feedback_status: newStatus }
                 );
-                toast.success("Đã xóa đánh giá thành công!");
+
+                toast.success(
+                  `Đánh giá đã được ${isInactive ? "hiện" : "ẩn"} thành công!`
+                );
                 fetchFeedbacks();
               } catch (err) {
-                console.error("Error deleting feedback:", err);
-                toast.error("Không thể xóa đánh giá. Vui lòng thử lại.");
+                console.error("Error updating feedback status:", err);
+                toast.error("Không thể cập nhật trạng thái. Vui lòng thử lại.");
+              }
+            }}
+            style={{
+              background: isInactive ? "green" : "red",
+              color: "white",
+              border: "none",
+              padding: "5px 10px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            {isInactive ? "Hiện" : "Ẩn"}
+          </button>
+          <button
+            onClick={() => toast.dismiss(confirmToast)}
+            style={{
+              background: "#ccc",
+              border: "none",
+              padding: "5px 10px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            Hủy
+          </button>
+        </div>
+      </div>,
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
+  };
+
+  const handleSubmitReply = async (feedbackId) => {
+    if (!replyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+
+    try {
+      setIsReplying(true);
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: replyText.trim() }
+      );
+      toast.success("Phản hồi đã được gửi thành công!");
+      setReplyText("");
+      setReplyingTo(null);
+      fetchFeedbacks(); // refresh list
+    } catch (err) {
+      console.error("Error submitting feedback response:", err);
+      toast.error("Không thể gửi phản hồi. Vui lòng thử lại.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  const handleStartEditReply = (feedback) => {
+    setEditingReplyId(feedback._id);
+    setEditedReplyText(feedback.feedback_response);
+    setReplyingTo(null); // Close the 'new reply' box if it's open
+    setReplyText("");
+  };
+
+  // Handler to cancel editing
+  const handleCancelEditReply = () => {
+    setEditingReplyId(null);
+    setEditedReplyText("");
+  };
+
+  // Handler to submit the edited reply
+  const handleSubmitEditReply = async (feedbackId) => {
+    if (!editedReplyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+    setIsReplying(true); // Reuse isReplying state for loading
+    try {
+      // Use PATCH with the new text, as requested
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: editedReplyText.trim() }
+      );
+      toast.success("Đã cập nhật phản hồi!");
+      handleCancelEditReply();
+      fetchFeedbacks();
+    } catch (err) {
+      console.error("Error updating reply:", err);
+      toast.error("Không thể cập nhật phản hồi.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  // Handler to delete an existing reply
+  const handleDeleteReply = (feedbackId) => {
+    // Reuse the toast confirmation style from your toggle function
+    const confirmToast = toast.warn(
+      <div>
+        <p>Bạn có chắc chắn muốn xóa phản hồi này?</p>
+        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+          <button
+            onClick={async () => {
+              toast.dismiss(confirmToast);
+              try {
+                await axios.patch(
+                  `${
+                    import.meta.env.VITE_BE_URL
+                  }/api/feedback/${feedbackId}/response`,
+                  { response: null }
+                );
+                toast.success("Đã xóa phản hồi!");
+                fetchFeedbacks();
+                handleCancelEditReply();
+              } catch (err) {
+                console.error("Error deleting reply:", err);
+                toast.error("Không thể xóa phản hồi.");
               }
             }}
             style={{
@@ -254,11 +404,7 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
           </button>
         </div>
       </div>,
-      {
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-      }
+      { autoClose: false, closeOnClick: false, draggable: false }
     );
   };
 
@@ -318,7 +464,11 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
   };
 
   // Handle pagination
-  const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
+  const totalPages = Math.ceil(
+    (showActiveOnly
+      ? feedbacks.filter((f) => f.feedback_status === "active").length
+      : feedbacks.length) / itemsPerPage
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -411,12 +561,34 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
 
           {/* Overall Rating */}
           <div className="overall-rating">
-            <div className="rating-score">
-              <span className="score">{overallRating.toFixed(1)}</span>
-              <div className="stars">{renderStars(overallRating)}</div>
+            <div className="rating-section">
+              <div className="rating-score">
+                <span className="score">{overallRating.toFixed(1)}</span>
+                <div className="stars">{renderStars(overallRating)}</div>
+              </div>
+              <span className="time-period">
+                {showActiveOnly
+                  ? feedbacks.filter((f) => f.feedback_status === "active")
+                      .length
+                  : feedbacks.length}{" "}
+                đánh giá
+              </span>
+              <label
+                className="toggle-container"
+                style={{ marginLeft: "1rem" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showActiveOnly}
+                  onChange={() => setShowActiveOnly((prev) => !prev)}
+                  className="toggle-input"
+                />
+                <span className="toggle-slider"></span>
+                <span className="status-text">
+                  {showActiveOnly ? "Chỉ active" : "Tất cả"}
+                </span>
+              </label>
             </div>
-            <span className="time-period">từ {feedbacks.length} đánh giá</span>
-
             <div className="review-actions">
               {!showWriteReview ? null : (
                 <div className="write-review-section">
@@ -479,7 +651,11 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
               <h3 className="reviews-title">Đánh giá của khách hàng</h3>
               <div className="reviews-summary">
                 <span className="total-reviews">
-                  {feedbacks.length} đánh giá
+                  {showActiveOnly
+                    ? feedbacks.filter((f) => f.feedback_status === "active")
+                        .length
+                    : feedbacks.length}{" "}
+                  đánh giá
                 </span>
                 <select
                   className="sort-dropdown"
@@ -499,7 +675,12 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
             {paginatedFeedbacks.length > 0 ? (
               <div className="reviews-list">
                 {paginatedFeedbacks.map((feedback) => (
-                  <div key={feedback._id} className="review-item">
+                  <div
+                    key={feedback._id}
+                    className={`review-item ${
+                      feedback.feedback_status === "inactive" ? "inactive" : ""
+                    }`}
+                  >
                     <div className="review-header">
                       <div className="reviewer-info">
                         <div className="reviewer-avatar">
@@ -526,11 +707,36 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                           }
                         )}
                         {canDelete && (
-                          <span className="delete-feedback-btn">
-                            <FaTrash
-                              onClick={() => handleDeleteFeedback(feedback._id)}
-                              size={20}
-                            />
+                          <span className="status-feedback-btn">
+                            {feedback.feedback_status === "inactive" ? (
+                              <span className="active-feedback-btn">
+                                <FaRegCircleCheck
+                                  onClick={() =>
+                                    handleToggleFeedbackStatus(
+                                      feedback._id,
+                                      feedback.feedback_status
+                                    )
+                                  }
+                                  size={20}
+                                  title="Hiện đánh giá này"
+                                  style={{ cursor: "pointer" }}
+                                />
+                              </span>
+                            ) : (
+                              <span className="delete-feedback-btn">
+                                <IoBanSharp
+                                  onClick={() =>
+                                    handleToggleFeedbackStatus(
+                                      feedback._id,
+                                      feedback.feedback_status
+                                    )
+                                  }
+                                  size={20}
+                                  title="Ẩn đánh giá này"
+                                  style={{ cursor: "pointer" }}
+                                />
+                              </span>
+                            )}
                           </span>
                         )}
                       </span>
@@ -539,56 +745,172 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                     <div className="review-content">
                       <p className="review-text">{feedback.feedback_comment}</p>
 
-                      {feedback.feedback_response && (
-                        <div className="business-response">
-                          <div className="response-header">
-                            <strong>Phản hồi từ doanh nghiệp:</strong>
-                          </div>
-                          <p className="response-text">
-                            {feedback.feedback_response}
-                          </p>
-                        </div>
+                      {feedback.feedback_response ? (
+                        <>
+                          {editingReplyId === feedback._id ? (
+                            // EDITING MODE FOR EXISTING REPLY
+                            <div
+                              className="reply-section"
+                              style={{ marginTop: "10px" }}
+                            >
+                              <textarea
+                                className="reply-textarea"
+                                value={editedReplyText}
+                                onChange={(e) =>
+                                  setEditedReplyText(e.target.value)
+                                }
+                                rows="3"
+                              />
+                              <div className="reply-actions">
+                                <button
+                                  className="submit-reply-btn"
+                                  onClick={() =>
+                                    handleSubmitEditReply(feedback._id)
+                                  }
+                                  disabled={
+                                    isReplying || !editedReplyText.trim()
+                                  }
+                                >
+                                  {isReplying ? "Đang lưu..." : "Lưu"}
+                                </button>
+                                <button
+                                  className="cancel-reply-btn"
+                                  onClick={handleCancelEditReply}
+                                  disabled={isReplying}
+                                >
+                                  Hủy
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // DISPLAY MODE FOR EXISTING REPLY
+                            <div className="business-response">
+                              <div className="response-header">
+                                <strong>Phản hồi từ doanh nghiệp:</strong>
+                                {canDelete && (
+                                  <div
+                                    className="review-owner-controls"
+                                    style={{ marginLeft: "auto" }}
+                                  >
+                                    <button
+                                      className="edit-review-btn"
+                                      onClick={() =>
+                                        handleStartEditReply(feedback)
+                                      }
+                                      aria-label="Sửa phản hồi"
+                                      title="Sửa phản hồi này"
+                                    >
+                                      <FaPencilAlt />
+                                    </button>
+                                    <button
+                                      className="delete-review-btn"
+                                      onClick={() =>
+                                        handleDeleteReply(feedback._id)
+                                      }
+                                      aria-label="Xóa phản hồi"
+                                      title="Xóa phản hồi này"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="response-text">
+                                {feedback.feedback_response}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        canDelete && (
+                          <>
+                            {replyingTo === feedback._id ? (
+                              <div className="reply-section">
+                                <textarea
+                                  className="reply-textarea"
+                                  placeholder="Nhập phản hồi của bạn..."
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  rows="3"
+                                />
+                                <div className="reply-actions">
+                                  <button
+                                    className="submit-reply-btn"
+                                    onClick={() =>
+                                      handleSubmitReply(feedback._id)
+                                    }
+                                    disabled={isReplying || !replyText.trim()}
+                                  >
+                                    {isReplying
+                                      ? "Đang gửi..."
+                                      : "Gửi phản hồi"}
+                                  </button>
+                                  <button
+                                    className="cancel-reply-btn"
+                                    onClick={() => {
+                                      setReplyingTo(null);
+                                      setReplyText("");
+                                    }}
+                                  >
+                                    Hủy
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                className="reply-toggle-btn"
+                                onClick={() => {
+                                  setReplyingTo(feedback._id);
+                                  handleCancelEditReply(); // Close edit box if it's open
+                                }}
+                              >
+                                💬 Phản hồi
+                              </button>
+                            )}
+                          </>
+                        )
                       )}
                     </div>
 
-                    <div className="review-footer">
-                      <button
-                        className="share-btn"
-                        onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({
-                              text: feedback.feedback_comment,
-                              url: window.location.href,
-                            });
-                          } else {
-                            navigator.clipboard.writeText(window.location.href);
-                            toast.success("Đã sao chép link");
-                          }
-                        }}
-                      >
-                        <span className="share-icon">↗</span> Chia sẻ
-                      </button>
+                    {feedback.feedback_status !== "inactive" && (
+                      <div className="review-footer">
+                        <button
+                          className="share-btn"
+                          onClick={() => {
+                            if (navigator.share) {
+                              navigator.share({
+                                text: feedback.feedback_comment,
+                                url: window.location.href,
+                              });
+                            } else {
+                              navigator.clipboard.writeText(
+                                window.location.href
+                              );
+                              toast.success("Đã sao chép link");
+                            }
+                          }}
+                        >
+                          <span className="share-icon">↗</span> Chia sẻ
+                        </button>
 
-                      <div className="helpful-section">
-                        <span className="helpful-text">
-                          Đánh giá này có hữu ích không?
-                        </span>
-                        <div className="helpful-buttons">
-                          <button
-                            className="helpful-btn like-btn"
-                            onClick={() => handleLike(feedback._id)}
-                          >
-                            👍 {feedback.feedback_like || 0}
-                          </button>
-                          <button
-                            className="helpful-btn dislike-btn"
-                            onClick={() => handleDislike(feedback._id)}
-                          >
-                            👎 {feedback.feedback_dislike || 0}
-                          </button>
+                        <div className="helpful-section">
+                          <div className="helpful-buttons">
+                            <button
+                              className="helpful-btn like-btn"
+                              onClick={() => handleLike(feedback._id)}
+                            >
+                              👍 {feedback.feedback_like || 0}
+                            </button>
+                            <button
+                              className="helpful-btn dislike-btn"
+                              onClick={() => handleDislike(feedback._id)}
+                            >
+                              👎 {feedback.feedback_dislike || 0}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
