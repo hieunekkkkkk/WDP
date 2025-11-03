@@ -74,22 +74,26 @@ const Header = () => {
       >
         Trang chủ
       </Link>
-      <Link
-        to="/discover"
-        className={`header-nav-link ${isActive("/discover") ? "active" : ""}`}
-      >
-        Kết nối doanh nghiệp
-      </Link>
 
       {role === "client" && (
-        <Link
-          to="/dashboard"
-          className={`header-nav-link ${
-            isActive("/dashboard") ? "active" : ""
-          }`}
-        >
-          Hỗ trợ học tập
-        </Link>
+        <>
+          <Link
+            to="/discover"
+            className={`header-nav-link ${
+              isActive("/discover") ? "active" : ""
+            }`}
+          >
+            Kết nối doanh nghiệp
+          </Link>
+          <Link
+            to="/dashboard"
+            className={`header-nav-link ${
+              isActive("/dashboard") ? "active" : ""
+            }`}
+          >
+            Hỗ trợ học tập
+          </Link>
+        </>
       )}
     </nav>
   );
@@ -117,6 +121,19 @@ const Header = () => {
     return null;
   };
 
+  const renderMenu = () => {
+    // Nếu là admin và đang ở homepage, không hiển thị menu
+    if (role === "admin" && !isAdminPage) {
+      return null;
+    }
+    // Nếu là admin và đang ở admin page, hiển thị admin menu
+    if (role === "admin" && isAdminPage) {
+      return renderAdminMenu();
+    }
+    // Các trường hợp khác hiển thị user menu
+    return renderUserMenu();
+  };
+
   return (
     <header className="header">
       <div className="header-container">
@@ -130,7 +147,7 @@ const Header = () => {
           </Link>
         </div>
 
-        {role === "admin" && isAdminPage ? renderAdminMenu() : renderUserMenu()}
+        {renderMenu()}
 
         <SignedOut>
           <AuthTokenReset />
