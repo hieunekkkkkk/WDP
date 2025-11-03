@@ -1,28 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import HeroSectionAdmin from '../../components/HeroSectionAdmin';
-import Footer from '../../components/Footer';
-import '../../css/ManageTransactionPage.css';
-import { toast } from 'react-toastify';
-import Chart from 'chart.js/auto';
-import Header from '../../components/Header';
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import HeroSectionAdmin from "../../components/HeroSectionAdmin";
+import Footer from "../../components/Footer";
+import "../../css/ManageTransactionPage.css";
+import { toast } from "react-toastify";
+import Chart from "chart.js/auto";
+import Header from "../../components/Header";
 import { FaTrash, FaXmark } from "react-icons/fa6";
-import LoadingScreen from '../../components/LoadingScreen';
+import LoadingScreen from "../../components/LoadingScreen";
 
 function ManageTransactionPage() {
   const [payments, setPayments] = useState([]);
   const [stacks, setStacks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [sortConfig, setSortConfig] = useState({ sortBy: 'payment_date', sortOrder: 'desc' });
+  const [search, setSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    sortBy: "payment_date",
+    sortOrder: "desc",
+  });
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    totalItems: 0
+    totalItems: 0,
   });
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [userNames, setUserNames] = useState({});
 
   const monthlyChartRef = useRef(null);
@@ -33,7 +36,7 @@ function ManageTransactionPage() {
   const revenueChartInstance = useRef(null);
 
   useEffect(() => {
-    const uniqueIds = [...new Set(payments.map(p => p.user_id))];
+    const uniqueIds = [...new Set(payments.map((p) => p.user_id))];
     const fetchUsers = async () => {
       const fetchedNames = {};
       await Promise.all(
@@ -44,7 +47,7 @@ function ManageTransactionPage() {
             const data = await res.json();
             fetchedNames[id] = data.users.fullName;
           } catch (err) {
-            fetchedNames[id] = 'Unknown';
+            fetchedNames[id] = "Unknown";
           }
         })
       );
@@ -62,7 +65,7 @@ function ManageTransactionPage() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const baseURL = import.meta.env.VITE_BE_URL;
 
       // Build query parameters for payments
@@ -73,9 +76,9 @@ function ManageTransactionPage() {
       // Fetch payments with sorting and date filters
       const paymentsResponse = await fetch(paymentsUrl, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (paymentsResponse.ok) {
@@ -84,18 +87,18 @@ function ManageTransactionPage() {
         setPagination({
           currentPage: paymentsData.data.currentPage || 1,
           totalPages: paymentsData.data.totalPages || 1,
-          totalItems: paymentsData.data.totalItems || 0
+          totalItems: paymentsData.data.totalItems || 0,
         });
       } else {
-        throw new Error('Failed to fetch payments');
+        throw new Error("Failed to fetch payments");
       }
 
       // Fetch stacks
       const stacksResponse = await fetch(`${baseURL}/api/stack`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (stacksResponse.ok) {
@@ -103,60 +106,95 @@ function ManageTransactionPage() {
         setStacks(stacksData.stacks || []);
       }
 
-      // Fetch categories  
+      // Fetch categories
       const categoriesResponse = await fetch(`${baseURL}/api/category`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (categoriesResponse.ok) {
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData.categories || []);
       }
-
     } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Không thể tải dữ liệu');
+      console.error("Error fetching data:", error);
+      toast.error("Không thể tải dữ liệu");
     } finally {
       setLoading(false);
     }
   };
 
+  const ConfirmToast = ({ closeToast, onConfirm }) => (
+    <div className="confirm-toast">
+      <p>Bạn có chắc muốn xóa giao dịch này?</p>
+      <div className="confirm-toast-buttons">
+        <button
+          className="confirm-btn ok"
+          onClick={() => {
+            onConfirm();
+            closeToast();
+          }}
+        >
+          Xóa
+        </button>
+        <button className="confirm-btn cancel" onClick={closeToast}>
+          Hủy
+        </button>
+      </div>
+    </div>
+  );
+
   // Xóa giao dịch
-  const handleDeletePayment = async (paymentId) => {
-    if (!window.confirm('Bạn có chắc muốn xóa giao dịch này?')) return;
+  const handleDeletePayment = (paymentId) => {
+    // 1. Định nghĩa logic xóa
+    const executeDelete = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const baseURL = import.meta.env.VITE_BE_URL;
 
-    try {
-      const token = localStorage.getItem('accessToken');
-      const baseURL = import.meta.env.VITE_BE_URL;
+        const response = await fetch(`${baseURL}/api/payment/${paymentId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      const response = await fetch(`${baseURL}/api/payment/${paymentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        if (response.ok) {
+          toast.success("Xóa giao dịch thành công");
+          // Cập nhật state bằng cách lọc ra
+          setPayments((prevPayments) =>
+            prevPayments.filter((payment) => payment._id !== paymentId)
+          );
+          // Cân nhắc: gọi lại fetchAllData() nếu bạn muốn cập nhật
+          // tổng số trang (pagination) sau khi xóa.
+        } else {
+          throw new Error("Xóa giao dịch thất bại");
         }
-      });
-
-      if (response.ok) {
-        toast.success('Xóa giao dịch thành công');
-        setPayments(payments.filter(payment => payment._id !== paymentId));
-      } else {
-        throw new Error('Xóa giao dịch thất bại');
+      } catch (error) {
+        console.error("Error deleting payment:", error);
+        toast.error("Không thể xóa giao dịch");
       }
-    } catch (error) {
-      console.error('Error deleting payment:', error);
-      toast.error('Không thể xóa giao dịch');
-    }
+    };
+
+    // 2. Thay thế window.confirm bằng toast
+    toast.warn(<ConfirmToast onConfirm={executeDelete} />, {
+      closeOnClick: false, // Ngăn toast tự đóng khi click
+      autoClose: false, // Ngăn toast tự đóng sau thời gian
+      position: "top-center",
+      theme: "colored",
+      draggable: false,
+    });
   };
 
   // Filter payments (only search, no sorting)
   const getFilteredPayments = () => {
-    return payments.filter((payment) =>
-      payment.transaction_id?.toLowerCase().includes(search.toLowerCase()) ||
-      payment.user_id?.toLowerCase().includes(search.toLowerCase())
+    return payments.filter(
+      (payment) =>
+        payment.transaction_id?.toLowerCase().includes(search.toLowerCase()) ||
+        payment.user_id?.toLowerCase().includes(search.toLowerCase())
     );
   };
 
@@ -164,15 +202,18 @@ function ManageTransactionPage() {
 
   // Tính tổng giá trị giao dịch
   const getTotalValue = () => {
-    const total = payments.reduce((sum, payment) => sum + payment.payment_amount, 0);
-    return (total / 1000000).toFixed(1) + 'M';
+    const total = payments.reduce(
+      (sum, payment) => sum + payment.payment_amount,
+      0
+    );
+    return (total / 1000000).toFixed(1) + "M";
   };
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 
@@ -180,26 +221,44 @@ function ManageTransactionPage() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
 
-    return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth() + 1).toString().padStart(2, '0')
-      }/${date.getUTCFullYear()} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')
-      }`;
+    return `${date.getUTCDate().toString().padStart(2, "0")}/${(
+      date.getUTCMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}/${date.getUTCFullYear()} ${date
+      .getUTCHours()
+      .toString()
+      .padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`;
   };
 
   // Tạo dữ liệu thống kê cho charts
   const getMonthlyData = () => {
     const monthlyStats = {};
-    payments.forEach(payment => {
+    payments.forEach((payment) => {
       const month = new Date(payment.payment_date).getMonth();
       monthlyStats[month] = (monthlyStats[month] || 0) + 1;
     });
 
-    const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+    const months = [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T8",
+      "T9",
+      "T10",
+      "T11",
+      "T12",
+    ];
     return months.map((month, index) => monthlyStats[index] || 0);
   };
 
   const getStackStats = () => {
     const stackStats = {};
-    payments.forEach(payment => {
+    payments.forEach((payment) => {
       const stackName = payment.payment_stack.stack_name;
       stackStats[stackName] = (stackStats[stackName] || 0) + 1;
     });
@@ -208,20 +267,20 @@ function ManageTransactionPage() {
 
   // Handle sort change
   const handleSortChange = (e) => {
-    const [sortBy, sortOrder] = e.target.value.split(':');
+    const [sortBy, sortOrder] = e.target.value.split(":");
     setSortConfig({ sortBy, sortOrder });
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   // Handle date filter changes
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   const handleEndDateChange = (e) => {
     setEndDate(e.target.value);
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   // Render charts
@@ -230,7 +289,7 @@ function ManageTransactionPage() {
 
     // Monthly transactions chart
     if (monthlyChartRef.current) {
-      const ctx = monthlyChartRef.current.getContext('2d');
+      const ctx = monthlyChartRef.current.getContext("2d");
 
       if (monthlyChartInstance.current) {
         monthlyChartInstance.current.destroy();
@@ -239,57 +298,72 @@ function ManageTransactionPage() {
       const monthlyData = getMonthlyData();
 
       monthlyChartInstance.current = new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
-          labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-          datasets: [{
-            label: 'Giao dịch',
-            data: monthlyData,
-            borderColor: '#E91E63',
-            backgroundColor: 'rgba(233, 30, 99, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#E91E63',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 6
-          }]
+          labels: [
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6",
+            "T7",
+            "T8",
+            "T9",
+            "T10",
+            "T11",
+            "T12",
+          ],
+          datasets: [
+            {
+              label: "Giao dịch",
+              data: monthlyData,
+              borderColor: "#E91E63",
+              backgroundColor: "rgba(233, 30, 99, 0.1)",
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: "#E91E63",
+              pointBorderColor: "#fff",
+              pointBorderWidth: 2,
+              pointRadius: 6,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false
-            }
+              display: false,
+            },
           },
           scales: {
             y: {
               beginAtZero: true,
               grid: {
-                color: '#f1f3f4'
+                color: "#f1f3f4",
               },
               ticks: {
-                color: '#6c757d'
-              }
+                color: "#6c757d",
+              },
             },
             x: {
               grid: {
-                display: false
+                display: false,
               },
               ticks: {
-                color: '#6c757d'
-              }
-            }
-          }
-        }
+                color: "#6c757d",
+              },
+            },
+          },
+        },
       });
     }
 
     // Stack statistics chart
     if (categoryChartRef.current) {
-      const ctx = categoryChartRef.current.getContext('2d');
+      const ctx = categoryChartRef.current.getContext("2d");
 
       if (categoryChartInstance.current) {
         categoryChartInstance.current.destroy();
@@ -300,124 +374,128 @@ function ManageTransactionPage() {
       const stackData = Object.values(stackStats);
 
       categoryChartInstance.current = new Chart(ctx, {
-        type: 'bar',
+        type: "bar",
         data: {
           labels: stackLabels,
-          datasets: [{
-            data: stackData,
-            backgroundColor: [
-              '#4FC3F7',
-              '#B52857',
-              '#E3DB10',
-              '#0288D1',
-              '#0277BD'
-            ],
-            borderRadius: 5,
-            borderSkipped: false,
-          }]
+          datasets: [
+            {
+              data: stackData,
+              backgroundColor: [
+                "#4FC3F7",
+                "#B52857",
+                "#E3DB10",
+                "#0288D1",
+                "#0277BD",
+              ],
+              borderRadius: 5,
+              borderSkipped: false,
+            },
+          ],
         },
         options: {
-          indexAxis: 'y',
+          indexAxis: "y",
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false
-            }
+              display: false,
+            },
           },
           scales: {
             x: {
               beginAtZero: true,
               grid: {
-                color: '#f1f3f4'
+                color: "#f1f3f4",
               },
               ticks: {
-                color: '#6c757d'
-              }
+                color: "#6c757d",
+              },
             },
             y: {
               grid: {
-                display: false
+                display: false,
               },
               ticks: {
-                color: '#6c757d'
-              }
-            }
-          }
-        }
+                color: "#6c757d",
+              },
+            },
+          },
+        },
       });
     }
 
     // Revenue chart
     if (revenueChartRef.current) {
-      const ctx = revenueChartRef.current.getContext('2d');
+      const ctx = revenueChartRef.current.getContext("2d");
 
       if (revenueChartInstance.current) {
         revenueChartInstance.current.destroy();
       }
 
-      const revenueData = getStackRevenues().map(stack => ({
+      const revenueData = getStackRevenues().map((stack) => ({
         name: stack.name,
         amount: payments
-          .filter(p => p.payment_stack.stack_name === stack.name)
-          .reduce((sum, p) => sum + p.payment_amount, 0)
+          .filter((p) => p.payment_stack.stack_name === stack.name)
+          .reduce((sum, p) => sum + p.payment_amount, 0),
       }));
 
       revenueChartInstance.current = new Chart(ctx, {
-        type: 'bar',
+        type: "bar",
         data: {
-          labels: revenueData.map(item => item.name),
-          datasets: [{
-            data: revenueData.map(item => item.amount),
-            backgroundColor: [
-              '#4FC3F7',
-              '#B52857',
-              '#E3DB10',
-              '#0288D1',
-              '#0277BD'
-            ],
-            borderRadius: 5,
-            borderSkipped: false,
-          }]
+          labels: revenueData.map((item) => item.name),
+          datasets: [
+            {
+              data: revenueData.map((item) => item.amount),
+              backgroundColor: [
+                "#4FC3F7",
+                "#B52857",
+                "#E3DB10",
+                "#0288D1",
+                "#0277BD",
+              ],
+              borderRadius: 5,
+              borderSkipped: false,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false
+              display: false,
             },
             tooltip: {
               callbacks: {
                 label: function (context) {
                   return `${context.label}: ${formatCurrency(context.raw)}`;
-                }
-              }
-            }
+                },
+              },
+            },
           },
           scales: {
             x: {
               grid: {
-                display: false
+                display: false,
               },
               ticks: {
-                color: '#6c757d'
-              }
+                color: "#6c757d",
+              },
             },
             y: {
               beginAtZero: true,
               grid: {
-                color: '#f1f3f4'
+                color: "#f1f3f4",
               },
               ticks: {
-                color: '#6c757d',
+                color: "#6c757d",
                 callback: function (value) {
                   return formatCurrency(value);
-                }
-              }
-            }
-          }
-        }
+                },
+              },
+            },
+          },
+        },
       });
     }
 
@@ -437,9 +515,10 @@ function ManageTransactionPage() {
   // Stack revenue data for bar chart
   const getStackRevenues = () => {
     const revenueData = {};
-    payments.forEach(payment => {
+    payments.forEach((payment) => {
       const stackName = payment.payment_stack.stack_name;
-      revenueData[stackName] = (revenueData[stackName] || 0) + payment.payment_amount;
+      revenueData[stackName] =
+        (revenueData[stackName] || 0) + payment.payment_amount;
     });
 
     return Object.entries(revenueData)
@@ -447,19 +526,28 @@ function ManageTransactionPage() {
       .slice(0, 7)
       .map(([name, amount]) => ({
         name,
-        height: Math.max(60, (amount / Math.max(...Object.values(revenueData))) * 200)
+        height: Math.max(
+          60,
+          (amount / Math.max(...Object.values(revenueData))) * 200
+        ),
       }));
   };
 
   const handlePageChange = (page) => {
-    setPagination(prev => ({ ...prev, currentPage: page }));
+    setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
   if (loading) {
     return (
       <>
         <Header />
-        <HeroSectionAdmin message={<>Trang quản lý <br /> giao dịch</>} />
+        <HeroSectionAdmin
+          message={
+            <>
+              Trang quản lý <br /> giao dịch
+            </>
+          }
+        />
         <LoadingScreen />
       </>
     );
@@ -468,7 +556,13 @@ function ManageTransactionPage() {
   return (
     <>
       <Header />
-      <HeroSectionAdmin message={<>Trang quản lý <br /> giao dịch</>} />
+      <HeroSectionAdmin
+        message={
+          <>
+            Trang quản lý <br /> giao dịch
+          </>
+        }
+      />
 
       <div className="manage-transaction-container">
         {/* Header với search và filter */}
@@ -481,9 +575,7 @@ function ManageTransactionPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="total-value">
-            Tổng giá trị: {getTotalValue()} VND
-          </div>
+          <div className="total-value">Tổng giá trị: {getTotalValue()} VND</div>
         </div>
         <div className="transaction-filter-section">
           <div className="date-filter">
@@ -499,8 +591,8 @@ function ManageTransactionPage() {
                   type="button"
                   className="clear-date-btn"
                   onClick={() => {
-                    setStartDate('');
-                    setPagination(prev => ({ ...prev, currentPage: 1 }));
+                    setStartDate("");
+                    setPagination((prev) => ({ ...prev, currentPage: 1 }));
                   }}
                   aria-label="Xoá ngày bắt đầu"
                 >
@@ -521,8 +613,8 @@ function ManageTransactionPage() {
                   type="button"
                   className="clear-date-btn"
                   onClick={() => {
-                    setEndDate('');
-                    setPagination(prev => ({ ...prev, currentPage: 1 }));
+                    setEndDate("");
+                    setPagination((prev) => ({ ...prev, currentPage: 1 }));
                   }}
                   aria-label="Xoá ngày kết thúc"
                 >
@@ -532,7 +624,10 @@ function ManageTransactionPage() {
             </div>
           </div>
           <div className="sort-select">
-            <select value={`${sortConfig.sortBy}:${sortConfig.sortOrder}`} onChange={handleSortChange}>
+            <select
+              value={`${sortConfig.sortBy}:${sortConfig.sortOrder}`}
+              onChange={handleSortChange}
+            >
               <option value="payment_date:desc">Mới nhất</option>
               <option value="payment_date:asc">Cũ nhất</option>
               <option value="payment_amount:desc">Giá trị cao nhất</option>
@@ -570,24 +665,40 @@ function ManageTransactionPage() {
                       <span className="tx-id">{payment.transaction_id}</span>
                     </td>
                     <td data-label="User ID">
-                      {userNames[payment.user_id] || 'Loading...'}
+                      {userNames[payment.user_id] || "Loading..."}
                     </td>
                     <td data-label="Giá trị">
                       <span className="transaction-amount">
                         {formatCurrency(payment.payment_amount)}
                       </span>
                     </td>
-                    <td data-label="Ngày/Giờ">{formatDate(payment.payment_date)}</td>
-                    <td data-label="Gói dịch vụ">{payment.payment_stack.stack_name}</td>
+                    <td data-label="Ngày/Giờ">
+                      {formatDate(payment.payment_date)}
+                    </td>
+                    <td data-label="Gói dịch vụ">
+                      {payment.payment_stack.stack_name}
+                    </td>
                     <td data-label="Trạng thái">
-                      <span className={`status ${payment.payment_status === 'completed' ? 'status-open' :
-                        payment.payment_status === 'pending' ? 'status-busy' : 'status-closed'}`}>
-                        {payment.payment_status === 'completed' ? 'Hoàn thành' :
-                          payment.payment_status === 'pending' ? 'Đang xử lý' : 'Thất bại'}
+                      <span
+                        className={`status ${
+                          payment.payment_status === "completed"
+                            ? "status-open"
+                            : payment.payment_status === "pending"
+                            ? "status-busy"
+                            : "status-closed"
+                        }`}
+                      >
+                        {payment.payment_status === "completed"
+                          ? "Hoàn thành"
+                          : payment.payment_status === "pending"
+                          ? "Đang xử lý"
+                          : "Thất bại"}
                       </span>
                     </td>
                     <td data-label="Hành động" className="delete-button">
-                      <FaTrash onClick={() => handleDeletePayment(payment._id)} />
+                      <FaTrash
+                        onClick={() => handleDeletePayment(payment._id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -611,15 +722,17 @@ function ManageTransactionPage() {
             </span>
           )}
 
-          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
-            <span
-              key={page}
-              className={pagination.currentPage === page ? 'page-active' : ''}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </span>
-          ))}
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+            (page) => (
+              <span
+                key={page}
+                className={pagination.currentPage === page ? "page-active" : ""}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </span>
+            )
+          )}
 
           {pagination.currentPage < pagination.totalPages && (
             <span onClick={() => handlePageChange(pagination.currentPage + 1)}>
@@ -634,7 +747,9 @@ function ManageTransactionPage() {
           <div className="chart-container">
             <h3 className="chart-title">Giao dịch hàng tháng</h3>
             <p className="chart-subtitle">
-              Thống kê lượng giao dịch hàng tháng<br />của hệ thống
+              Thống kê lượng giao dịch hàng tháng
+              <br />
+              của hệ thống
             </p>
             <div className="chart-wrapper">
               <canvas ref={monthlyChartRef}></canvas>
@@ -655,7 +770,13 @@ function ManageTransactionPage() {
                   <div
                     className="legend-color"
                     style={{
-                      background: ['#4FC3F7', '#B52857', '#E3DB10', '#0288D1', '#0277BD'][index % 5]
+                      background: [
+                        "#4FC3F7",
+                        "#B52857",
+                        "#E3DB10",
+                        "#0288D1",
+                        "#0277BD",
+                      ][index % 5],
                     }}
                   ></div>
                   <span>{stack.stack_name}</span>
