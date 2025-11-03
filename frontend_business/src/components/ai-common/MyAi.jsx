@@ -141,14 +141,12 @@ const NoBotView = ({ stacks = [], onActivate, isActivating, businessInfo }) => (
       ) : (
         <div className="stack-cards-container">
           {stacks.map((stack, index) => {
-            // --- 2. LOGIC ĐIỀU KIỆN MỚI ---
             const isPriorityStack =
               stack.stack_name.toLowerCase() === 'tăng view cho doanh nghiệp';
             const hasPriority =
               businessInfo && businessInfo.business_priority > 0;
             const showPriorityInfo = isPriorityStack && hasPriority;
 
-            // Xác định văn bản nút
             let buttonText = isActivating
               ? 'Đang xử lý...'
               : '🔓 Kích hoạt gói này';

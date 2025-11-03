@@ -242,3 +242,11 @@
   border: 2px dashed #ccc;
   cursor: pointer;
 }
+
+.product-reg.form-group.checkbox-group{
+  flex-direction: row;
+}
+
+.product-reg.form-group.checkbox-group label{
+  font-size: medium;
+}

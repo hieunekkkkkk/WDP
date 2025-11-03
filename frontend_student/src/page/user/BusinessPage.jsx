@@ -472,7 +472,7 @@ const BusinessPage = () => {
       )}
 
       {/* Feedback Section - Use BusinessFeedback component */}
-      <BusinessFeedback businessId={id} />
+      <BusinessFeedback businessId={id} canDelete={true} />
 
       <ProductDetailModal
         showModal={showModal}

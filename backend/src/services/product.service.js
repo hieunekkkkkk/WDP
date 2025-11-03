@@ -88,6 +88,20 @@ class ProductService {
         }
     }
 
+    //Update product stock
+    async updateProductStock(id, amount) {
+        try {
+            const product = await Product.findById(id);
+            if (!product) {
+                throw new Error('Product not found');
+            }
+            product.product_amount = amount;
+            return await product.save();
+        } catch (error) {
+            throw new Error(`Error updating product stock: ${error.message}`);
+        }
+    }   
+
     // Delete product
     async deleteProduct(id) {
         try {
