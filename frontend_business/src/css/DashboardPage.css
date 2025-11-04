@@ -331,6 +331,9 @@ footer {
 .modal-actions button {
   margin-left: 0;
 }
+.edit-btn{
+  opacity: 1;
+}
 
 @media (max-width: 768px) {
   .charts-section {
