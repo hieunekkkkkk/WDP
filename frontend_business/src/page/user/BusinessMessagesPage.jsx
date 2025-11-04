@@ -108,7 +108,9 @@ const BusinessMessagesPage = () => {
             id: Date.now(),
             type: "received",
             content: msg.message,
-            time: new Date(msg.ts).toLocaleTimeString([], {
+            time: new Date(msg.ts).toLocaleString([], {
+              day: "2-digit",
+              month: "2-digit",
               hour: "2-digit",
               minute: "2-digit",
             }),
@@ -284,7 +286,9 @@ const BusinessMessagesPage = () => {
       id: Date.now(),
       type: "sent",
       content: message,
-      time: new Date().toLocaleTimeString([], {
+      time: new Date().toLocaleString([], {
+        day: "2-digit",
+        month: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
       }),
@@ -361,7 +365,9 @@ const BusinessMessagesPage = () => {
         id: msg.ts,
         type: msg.sender_id === businessId ? "sent" : "received",
         content: msg.message,
-        time: new Date(msg.ts).toLocaleTimeString([], {
+        time: new Date(msg.ts).toLocaleString([], {
+          day: "2-digit",
+          month: "2-digit",
           hour: "2-digit",
           minute: "2-digit",
         }),

@@ -327,7 +327,9 @@ const StudentMessagesPage = () => {
         id: msg.ts,
         type: msg.sender_id === studentId ? "sent" : "received",
         content: msg.message,
-        time: new Date(msg.ts).toLocaleTimeString([], {
+        time: new Date(msg.ts).toLocaleString([], {
+          day: "2-digit",
+          month: "2-digit",
           hour: "2-digit",
           minute: "2-digit",
         }),
