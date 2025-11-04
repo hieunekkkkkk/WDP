@@ -15,12 +15,7 @@ import { FaInfoCircle } from "react-icons/fa";
 //  Modal Component (Tìm sinh viên)
 // (Giữ nguyên, không thay đổi)
 // ===============================
-const NewChatModal = ({
-  isOpen,
-  onClose,
-  studentList,
-  onSelectStudent,
-}) => {
+const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
   const [searchTerm, setSearchTerm] = useState("");
   if (!isOpen) return null;
   const filteredList = studentList.filter((student) =>
@@ -106,7 +101,7 @@ const BusinessMessagesPage = () => {
       transports: ["websocket"],
     });
     socketRef.current.emit("join", businessId);
-    
+
     // ===============================================
     //   CHANGE 2: CẬP NHẬT SIDEBAR KHI NHẬN TIN NHẮN
     // ===============================================
@@ -137,13 +132,13 @@ const BusinessMessagesPage = () => {
         // Nếu là chat mới (sinh viên nhắn trước)
         if (convoIndex === -1) {
           // Thử tìm thông tin sinh viên từ list đã tải
-          const studentInfo = allStudents.find(s => s.id === msg.sender_id);
-          
+          const studentInfo = allStudents.find((s) => s.id === msg.sender_id);
+
           if (studentInfo) {
             const newConvo = {
               student: studentInfo,
               lastMessage: msg.message,
-              lastMessageSenderId: msg.sender_id // Người gửi là sinh viên
+              lastMessageSenderId: msg.sender_id, // Người gửi là sinh viên
             };
             return [newConvo, ...prevConvos];
           }
@@ -168,7 +163,7 @@ const BusinessMessagesPage = () => {
     });
     return () => socketRef.current.disconnect();
     // Thêm allStudents vào dependency array
-  }, [businessId, selectedStudent, allStudents]); 
+  }, [businessId, selectedStudent, allStudents]);
 
   // ====================================================================
   //  useEffect để tải danh sách chat VÀ danh sách sinh viên
@@ -179,11 +174,9 @@ const BusinessMessagesPage = () => {
     // 1. Hàm tải TẤT CẢ sinh viên (để lấy info: tên, avatar)
     const fetchAllStudents = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/user`
-        );
+        const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`);
         const allUsers = res.data.users || [];
-        const studentsOnly = allUsers.filter(user => user.role === 'client');
+        const studentsOnly = allUsers.filter((user) => user.role === "client");
         setAllStudents(studentsOnly);
         return studentsOnly; // Trả về để xử lý
       } catch (err) {
@@ -196,7 +189,9 @@ const BusinessMessagesPage = () => {
     const fetchHistories = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/conversation/user/${businessId}/histories`
+          `${
+            import.meta.env.VITE_BE_URL
+          }/api/conversation/user/${businessId}/histories`
         );
         return res.data || []; // Mong đợi trả về 1 mảng
       } catch (err) {
@@ -221,33 +216,35 @@ const BusinessMessagesPage = () => {
 
       // Tạo một Map để tra cứu thông tin sinh viên nhanh (O(1))
       const studentMap = new Map();
-      students.forEach(student => {
-        studentMap.set(student.id, student);
+      students.forEach((student) => {
+        studentMap.set(student.clerkId, student);
       });
 
       // 4. Xử lý mảng histories để tạo mảng conversations
-      const processedConversations = histories.map(history => {
+      const processedConversations = histories
+        .map((history) => {
           // Định dạng chatId là "user_ID1_user_ID2"
-          const ids = history.chatId.split('_');
-          
+          const ids = history.chatId.split("_");
+
           if (ids.length < 4) return null; // Bỏ qua nếu chatId lỗi
 
           const userId1 = ids[1];
           const userId2 = ids[3];
-          
+
           // Tìm ID của sinh viên (là ID KHÔNG PHẢI businessId)
           const studentId = userId1 === businessId ? userId2 : userId1;
 
           // Lấy thông tin sinh viên từ Map
-          const studentInfo = studentMap.get(studentId);
-          
+          const studentInfo = studentMap.get("user_" + studentId);
+
           // ===============================================
           //   CHANGE 1: LẤY SENDER ID CỦA TIN NHẮN CUỐI
           // ===============================================
           let lastMessage = "Chưa có tin nhắn";
           let lastMessageSenderId = null;
           if (history.conversation && history.conversation.length > 0) {
-            const lastMessageObject = history.conversation[history.conversation.length - 1];
+            const lastMessageObject =
+              history.conversation[history.conversation.length - 1];
             lastMessage = lastMessageObject.message;
             lastMessageSenderId = lastMessageObject.sender_id; // <-- Thêm dòng này
           }
@@ -257,10 +254,10 @@ const BusinessMessagesPage = () => {
             return {
               student: studentInfo, // Chứa { id, fullName, imageUrl, ... }
               lastMessage: lastMessage,
-              lastMessageSenderId: lastMessageSenderId // <-- Thêm dòng này
+              lastMessageSenderId: lastMessageSenderId, // <-- Thêm dòng này
             };
           }
-          
+
           return null; // Bỏ qua nếu không tìm thấy sinh viên
         })
         .filter(Boolean); // Lọc bỏ các giá trị null
@@ -270,10 +267,8 @@ const BusinessMessagesPage = () => {
     };
 
     loadAndProcessData();
-
   }, [businessId]); // Chỉ chạy lại khi businessId thay đổi
 
-  
   // ... (useEffect cho Bot Access giữ nguyên) ...
   useEffect(() => {
     if (!businessId) return;
@@ -283,11 +278,12 @@ const BusinessMessagesPage = () => {
         const res = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/payment/userid/${businessId}`
         );
-        const payments = res.data.data || []; 
+        const payments = res.data.data || [];
 
-        const hasValidPayment = payments.some(payment => 
-          payment.payment_stack?.stack_name.toLowerCase() === "bot tư vấn viên" &&
-          payment.payment_status === "completed"
+        const hasValidPayment = payments.some(
+          (payment) =>
+            payment.payment_stack?.stack_name.toLowerCase() ===
+              "bot tư vấn viên" && payment.payment_status === "completed"
         );
         setHasBotAccess(hasValidPayment);
       } catch (err) {
@@ -298,14 +294,13 @@ const BusinessMessagesPage = () => {
     checkBotAccess();
   }, [businessId]);
 
-  
   // ===============================================
   //   CHANGE 3: CẬP NHẬT SIDEBAR KHI GỬI TIN NHẮN
   // ===============================================
   const handleSendMessage = () => {
     if (!message.trim() || !selectedStudent || !businessId) return;
 
-    const chatId = `${selectedStudent.id}_${businessId}`;
+    const chatId = `${selectedStudent.clerkId}_${businessId}`;
     const newMsg = {
       id: Date.now(),
       type: "sent",
@@ -315,31 +310,29 @@ const BusinessMessagesPage = () => {
         minute: "2-digit",
       }),
     };
-    
+
     const sentMessageContent = message; // Lưu lại nội dung trước khi clear
-    
+
     setMessages((prev) => [...prev, newMsg]);
     setMessage(""); // Clear input
 
-    // ... (logic Gửi socket.emit giữ nguyên) ...
-    if (responseType === 'Bot' && hasBotAccess) {
+    if (responseType === "Bot" && hasBotAccess) {
       console.warn("Đã chọn Bot, nhưng đang gửi như Manager...");
-      socketRef.current.emit("send_message_socket", {
+      socketRef.current.emit("send_message_bot", {
         chatId,
         sender_id: businessId,
-        receiver_id: selectedStudent.id,
+        receiver_id: selectedStudent.clerkId,
         message: sentMessageContent,
       });
     } else {
       socketRef.current.emit("send_message_socket", {
         chatId,
         sender_id: businessId,
-        receiver_id: selectedStudent.id,
+        receiver_id: selectedStudent.clerkId,
         message: sentMessageContent,
       });
     }
 
-    // Cập nhật sidebar
     setConversations((prevConvos) => {
       const convoIndex = prevConvos.findIndex(
         (c) => c.student?.id === selectedStudent.id
@@ -381,7 +374,7 @@ const BusinessMessagesPage = () => {
         method: "post",
         url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
         data: {
-          sender_id: student.id,
+          sender_id: student.clerkId,
           receiver_id: businessId,
         },
       });
@@ -405,7 +398,7 @@ const BusinessMessagesPage = () => {
 
   // ... (Các hook và handler phụ trợ) ...
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -431,7 +424,7 @@ const BusinessMessagesPage = () => {
     setResponseType(type);
     setShowMenu(false);
   };
-  
+
   const handleBotOptionClick = () => {
     if (hasBotAccess) {
       handleSelectDropdown("Bot");
@@ -455,14 +448,14 @@ const BusinessMessagesPage = () => {
         <div className="business-mess-sidebar">
           <div className="business-mess-sidebar-header">
             <h2 className="business-mess-sidebar-title">Tin nhắn</h2>
-            <button
+            {/* <button
               className="business-mess-new-chat-btn"
               onClick={() => setIsModalOpen(true)}
             >
               <FaPlus />
-            </button>
+            </button> */}
           </div>
-          
+
           <div className="business-mess-chat-list">
             {conversations.map((convo) => (
               <div
@@ -483,7 +476,7 @@ const BusinessMessagesPage = () => {
                   <p className="business-mess-chat-name">
                     {convo.student.fullName}
                   </p>
-                  
+
                   {/* =============================================== */}
                   {/* CHANGE 4: CẬP NHẬT JSX HIỂN THỊ "BẠN: "       */}
                   {/* =============================================== */}
@@ -491,7 +484,6 @@ const BusinessMessagesPage = () => {
                     {convo.lastMessageSenderId === businessId ? "Bạn: " : ""}
                     {convo.lastMessage}
                   </p>
-
                 </div>
               </div>
             ))}
@@ -517,10 +509,13 @@ const BusinessMessagesPage = () => {
 
               <div className="business-mess-body">
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`business-mess-row ${msg.type === 'sent' ? 'right' : 'left'}`}>
-                    <div className="business-mess-message">
-                      {msg.content}
-                    </div>
+                  <div
+                    key={msg.id}
+                    className={`business-mess-row ${
+                      msg.type === "sent" ? "right" : "left"
+                    }`}
+                  >
+                    <div className="business-mess-message">{msg.content}</div>
                     <span className="business-mess-time">{msg.time}</span>
                   </div>
                 ))}
@@ -536,7 +531,7 @@ const BusinessMessagesPage = () => {
                   >
                     {responseType}
                   </button>
-                  
+
                   {showMenu && (
                     <div className="business-mess-dropdown-menu">
                       <div
@@ -547,8 +542,8 @@ const BusinessMessagesPage = () => {
                       </div>
                       <div
                         className={responseType === "Bot" ? "active" : ""}
-                        disabled={!hasBotAccess} 
-                        onClick={handleBotOptionClick} 
+                        disabled={!hasBotAccess}
+                        onClick={handleBotOptionClick}
                       >
                         Bot
                         {!hasBotAccess && (
@@ -559,14 +554,14 @@ const BusinessMessagesPage = () => {
                   )}
                 </div>
 
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder={`Send as ${responseType}...`}
                   value={message}
-                  onChange={(e) => setMessage(e.g.value)}
+                  onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
-                <button 
+                <button
                   className="business-mess-send-btn"
                   onClick={handleSendMessage}
                   disabled={!message.trim()}
