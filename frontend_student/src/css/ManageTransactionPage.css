@@ -364,6 +364,41 @@
   color: red;
 }
 
+.confirm-toast-buttons {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-toast-buttons .confirm-btn {
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+/* Style for the "OK" (confirm delete) button */
+.confirm-toast-buttons .confirm-btn.ok {
+  background-color: #dc3545;
+  color: white;
+}
+.confirm-toast-buttons .confirm-btn.ok:hover {
+  background-color: #c82333;
+}
+
+/* Style for the "Cancel" button */
+.confirm-toast-buttons .confirm-btn.cancel {
+  background-color: #e9ecef;
+  color: #333;
+}
+.confirm-toast-buttons .confirm-btn.cancel:hover {
+  background-color: #d6d8db;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .charts-section {

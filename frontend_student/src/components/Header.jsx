@@ -68,28 +68,31 @@ const Header = () => {
 
   const renderUserMenu = () => (
     <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
-      <Link
-        to="/"
-        className={`header-nav-link ${isActive("/", true) ? "active" : ""}`}
-      >
-        Trang chủ
-      </Link>
-      <Link
-        to="/discover"
-        className={`header-nav-link ${isActive("/discover") ? "active" : ""}`}
-      >
-        Kết nối doanh nghiệp
-      </Link>
-
       {role === "client" && (
-        <Link
-          to="/dashboard"
-          className={`header-nav-link ${
-            isActive("/dashboard") ? "active" : ""
-          }`}
-        >
-          Hỗ trợ học tập
-        </Link>
+        <>
+          <Link
+            to="/"
+            className={`header-nav-link ${isActive("/", true) ? "active" : ""}`}
+          >
+            Trang chủ
+          </Link>
+          <Link
+            to="/discover"
+            className={`header-nav-link ${
+              isActive("/discover") ? "active" : ""
+            }`}
+          >
+            Kết nối doanh nghiệp
+          </Link>
+          <Link
+            to="/dashboard"
+            className={`header-nav-link ${
+              isActive("/dashboard") ? "active" : ""
+            }`}
+          >
+            Hỗ trợ học tập
+          </Link>
+        </>
       )}
     </nav>
   );
