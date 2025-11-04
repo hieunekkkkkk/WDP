@@ -83,6 +83,27 @@ class AiBotService {
         return await AiBot.find({ owner_id: ownerId });
     }
 
+    async getAllBotsWithKnowledge() {
+        const bots = await AiBot.find();
+        const botsWithKnowledge = [];
+        for (const bot of bots) {
+            const knowledge = await BotKnowledgeService.getKnowledgeByBotId(bot._id);
+            botsWithKnowledge.push({
+                id: bot._id,
+                name: bot.name,
+                description: bot.description,
+                status: bot.status,
+                ownerId: bot.owner_id,
+                knowledge: knowledge.map(k => ({
+                    title: k.title,
+                    content: k.content,
+                    tags: k.tags,
+                }))
+            });
+        }
+        return botsWithKnowledge;
+    }
+
     // Lấy chi tiết bot
     async getBotById(id) {
         const bot = await AiBot.findById(id);
