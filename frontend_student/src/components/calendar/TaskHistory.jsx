@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; // FIX: Added useEffect here
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -15,6 +15,8 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaTimesCircle,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 
 // Helper function to format date strings for display
@@ -42,6 +44,10 @@ const TaskHistory = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
+
+  // ===== Pagination State =====
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const CALENDAR_URL = import.meta.env.VITE_BE_URL + "/api/calendar";
   const CALENDAR_BY_CREATOR_URL = `${CALENDAR_URL}/creator/${userId}`;
@@ -103,17 +109,17 @@ const TaskHistory = () => {
     }
 
     setFilteredTasks(result);
+    setCurrentPage(1); // Reset về trang 1 khi filter thay đổi
   }, [searchTerm, filterStatus, startDate, endDate, allTasks]);
 
-  //  Hàm khôi phục task bị huỷ
+  // Hàm khôi phục task bị huỷ
   const restoreTask = async (taskId) => {
     try {
-      // Gọi API cập nhật trạng thái task về "chưa làm"
       await axios.put(`${CALENDAR_URL}/${taskId}`, {
         task_status: "chưa làm",
       });
 
-      toast.success(" Khôi phục công việc thành công!");
+      toast.success("Khôi phục công việc thành công!");
 
       // Cập nhật lại danh sách task sau khi khôi phục
       const res = await axios.get(CALENDAR_BY_CREATOR_URL);
@@ -127,8 +133,59 @@ const TaskHistory = () => {
       setFilteredTasks(historyData);
     } catch (error) {
       console.error("Lỗi khi khôi phục công việc:", error);
-      toast.error(" Không thể khôi phục công việc!");
+      toast.error("Không thể khôi phục công việc!");
     }
+  };
+
+  // ===== Pagination Logic =====
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const indexOfLastTask = currentPage * itemsPerPage;
+  const indexOfFirstTask = indexOfLastTask - itemsPerPage;
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return pageNumbers;
   };
 
   const renderContent = () => {
@@ -146,73 +203,154 @@ const TaskHistory = () => {
       );
     }
 
-    return filteredTasks.map((task) => (
-      <div key={task._id} className="history-item-card">
-        <div className="history-item-main">
-          <h2 className="history-item-title">{task.task_name}</h2>
-          <p className="history-item-description">{task.task_description}</p>
-          <div className="history-item-tags">
-            <span
-              className={`history-item-tag level-${task.task_level.replace(
-                " ",
-                "-"
-              )}`}
-            >
-              {task.task_level}
-            </span>
-            <span
-              className={`history-item-tag status-${
-                task.task_status === "đã hoàn thành" ? "completed" : "cancelled"
-              }`}
-            >
-              {task.task_status === "đã hoàn thành" ? (
-                <FaCheckCircle />
-              ) : (
-                <FaTimesCircle />
-              )}
-              {task.task_status}
-            </span>
+    return (
+      <>
+        {/* Pagination info and controls at top */}
+        <div className="pagination-info">
+          <div style={{ fontSize: "0.9rem", color: "#6c757d" }}>
+            Hiển thị {indexOfFirstTask + 1}-
+            {Math.min(indexOfLastTask, filteredTasks.length)} trong tổng số{" "}
+            {filteredTasks.length} công việc
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <label style={{ fontSize: "0.9rem", color: "#6c757d" }}>
+              Số mục mỗi trang:
+            </label>
+            <select
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="items-per-page-select"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        </div>
 
-          {/*  Thêm nút khôi phục nếu task bị huỷ */}
-          {task.task_status === "đã huỷ" && (
+        {/* Task list */}
+        <div className="history-tasks-wrapper">
+          {currentTasks.map((task) => (
+            <div key={task._id} className="history-item-card">
+              <div className="history-item-main">
+                <h2 className="history-item-title">{task.task_name}</h2>
+                <p className="history-item-description">
+                  {task.task_description}
+                </p>
+                <div className="history-item-tags">
+                  <span
+                    className={`history-item-tag level-${task.task_level.replace(
+                      " ",
+                      "-"
+                    )}`}
+                  >
+                    {task.task_level}
+                  </span>
+                  <span
+                    className={`history-item-tag status-${
+                      task.task_status === "đã hoàn thành"
+                        ? "completed"
+                        : "cancelled"
+                    }`}
+                  >
+                    {task.task_status === "đã hoàn thành" ? (
+                      <FaCheckCircle />
+                    ) : (
+                      <FaTimesCircle />
+                    )}
+                    {task.task_status}
+                  </span>
+                </div>
+
+                {/* Thêm nút khôi phục nếu task bị huỷ */}
+                {task.task_status === "đã huỷ" && (
+                  <button
+                    className="restore-btn"
+                    onClick={() => restoreTask(task._id)}
+                  >
+                    🔄 Khôi phục công việc
+                  </button>
+                )}
+              </div>
+              <div className="history-item-details">
+                <div className="history-item-date-group">
+                  <span className="date-label">
+                    <FaCalendarAlt size={12} /> Bắt đầu:
+                  </span>
+                  <span className="date-value">
+                    {formatDate(task.start_time)}
+                  </span>
+                </div>
+                <div className="history-item-date-group">
+                  <span className="date-label">
+                    <FaClock size={12} /> Kết thúc:
+                  </span>
+                  <span className="date-value">
+                    {formatDate(task.end_time)}
+                  </span>
+                </div>
+              </div>
+              <div className="history-item-action">
+                <FaChevronDown />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination Controls at bottom */}
+        {totalPages > 1 && (
+          <div className="pagination-controls">
             <button
-              className="restore-btn"
-              onClick={() => restoreTask(task._id)}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-btn"
               style={{
-                marginTop: "8px",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                backgroundColor: "#4caf50",
-                color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "500",
+                backgroundColor: currentPage === 1 ? "#e9ecef" : "#007bff",
+                color: currentPage === 1 ? "#6c757d" : "white",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
               }}
             >
-              🔄 Khôi phục công việc
+              <FaChevronLeft size={12} />
+              Trước
             </button>
-          )}
-        </div>
-        <div className="history-item-details">
-          <div className="history-item-date-group">
-            <span className="date-label">
-              <FaCalendarAlt size={12} /> Bắt đầu:
-            </span>
-            <span className="date-value">{formatDate(task.start_time)}</span>
+
+            {renderPageNumbers().map((page, index) =>
+              page === "..." ? (
+                <span key={`ellipsis-${index}`} className="pagination-ellipsis">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`pagination-number ${
+                    currentPage === page ? "active" : ""
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+              style={{
+                backgroundColor:
+                  currentPage === totalPages ? "#e9ecef" : "#007bff",
+                color: currentPage === totalPages ? "#6c757d" : "white",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              Sau
+              <FaChevronRight size={12} />
+            </button>
           </div>
-          <div className="history-item-date-group">
-            <span className="date-label">
-              <FaClock size={12} /> Kết thúc:
-            </span>
-            <span className="date-value">{formatDate(task.end_time)}</span>
-          </div>
-        </div>
-        <div className="history-item-action">
-          <FaChevronDown />
-        </div>
-      </div>
-    ));
+        )}
+      </>
+    );
   };
 
   return (
@@ -242,7 +380,7 @@ const TaskHistory = () => {
             </button>
             <button
               className="history-nav-btn"
-              onclick={() => nav("/dashboard/analytics")}
+              onClick={() => nav("/dashboard/analytics")}
             >
               <FaChartBar /> Phân tích dữ liệu
             </button>

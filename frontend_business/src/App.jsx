@@ -1,37 +1,39 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import "./index.css";
-import "@fontsource/montserrat";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import ProtectedRoute from "./components/ProtectedRoute";
+import React from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import './index.css';
+import '@fontsource/montserrat';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import ProtectedRoute from './components/ProtectedRoute';
 
-import LandingPage from "./page/user/LandingPage";
-import LoginPage from "./page/user/LoginPage";
-import SignupPage from "./page/user/SignupPage";
-import BusinessPage from "./page/user/BusinessPage";
-import UserProfilePage from "./page/user/UserProfilePage";
-import AuthCallback from "./auth/AuthCallback";
-import PersonalizedPage from "./page/user/PersonalizedPage";
-import DiscoverPage from "./page/user/DiscoverPage";
-import DiscoverByCategoryPage from "./page/user/DiscoverByCategoryPage";
-import AnimatedLayout from "./components/AnimatedLayout";
-import MyBusinessPage from "./page/user/MyBusinessPage";
-import ProductRegistrationPage from "./page/user/ProductRegistrationPage";
-import BusinessMessagesPage from "./page/user/BusinessMessagesPage";
-import BusinessRegistrationPage from "./page/user/BusinessRegistrationPage";
-import UserPayComplete from "./components/UserPayComplete";
-import StackPage from "./page/user/StackPage";
-import OwnerRoute from "./components/OwnerRoute";
-import NoBusinessRoute from "./components/NoBusinessRoute";
-import AiChatLayout from "./layout/AiChatLayout.jsx";
-import AboutLandingPage from "./page/user/AboutLandingPage.jsx";
-import DashboardPage from "./page/user/DashboardPage.jsx";
-import KnowledgePage from "./components/ai-support/KnowledgePage.jsx";
-import MyAi from "./components/ai-common/MyAi.jsx";
-import BusinessAiChat from "./components/ai-assistant/BusinessAiChat.jsx";
+import LandingPage from './page/user/LandingPage';
+import LoginPage from './page/user/LoginPage';
+import SignupPage from './page/user/SignupPage';
+import BusinessPage from './page/user/BusinessPage';
+import UserProfilePage from './page/user/UserProfilePage';
+import AuthCallback from './auth/AuthCallback';
+import PersonalizedPage from './page/user/PersonalizedPage';
+import DiscoverPage from './page/user/DiscoverPage';
+import DiscoverByCategoryPage from './page/user/DiscoverByCategoryPage';
+import AnimatedLayout from './components/AnimatedLayout';
+import MyBusinessPage from './page/user/MyBusinessPage';
+import ProductRegistrationPage from './page/user/ProductRegistrationPage';
+import BusinessMessagesPage from './page/user/BusinessMessagesPage';
+import BusinessRegistrationPage from './page/user/BusinessRegistrationPage';
+import UserPayComplete from './components/UserPayComplete';
+import StackPage from './page/user/StackPage';
+import OwnerRoute from './components/OwnerRoute';
+import NoBusinessRoute from './components/NoBusinessRoute';
+import AiChatLayout from './layout/AiChatLayout.jsx';
+import AboutLandingPage from './page/user/AboutLandingPage.jsx';
+import DashboardPage from './page/user/DashboardPage.jsx';
+import KnowledgePage from './components/ai-support/KnowledgePage.jsx';
+import MyAi from './components/ai-common/MyAi.jsx';
+import BusinessAiChat from './components/ai-assistant/BusinessAiChat.jsx';
+import StockPage from './page/user/StockPage.jsx';
+
 const AppRoutes = () => {
   const location = useLocation();
   const ComingSoonPage = () => <div>🚧 Coming soon...</div>;
@@ -55,6 +57,7 @@ const AppRoutes = () => {
           <Route path="messages" element={<BusinessMessagesPage />} />
           <Route path="my-ai" element={<MyAi />} />
           <Route path="bot-knowledge/:botId" element={<KnowledgePage />} />
+          <Route path="stock" element={<StockPage />} />
         </Route>
 
         <Route
