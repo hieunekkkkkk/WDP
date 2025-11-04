@@ -47,17 +47,24 @@ class UserService {
   async lockUser(userId) {
     const clerk = await getClerkClient();
     try {
-      const user = await clerk.users.updateUser(userId, {
-        publicMetadata: { locked: true },
+      const user = await clerk.users.getUser(userId);
+
+      const newMetadata = {
+        ...user.publicMetadata,
+        locked: true
+      };
+
+      const updatedUser = await clerk.users.updateUser(userId, {
+        publicMetadata: newMetadata,
       });
 
-      // Cập nhật đồng bộ trong Mongo luôn
       await User.findOneAndUpdate(
-        { clerkId: user.id },
-        { locked: true, publicMetadata: { ...user.publicMetadata } }
+        { clerkId: updatedUser.id },
+        { locked: true, publicMetadata: newMetadata }
       );
 
-      return { success: true, userId: user.id, locked: true };
+      return { success: true, userId: updatedUser.id, locked: true };
+
     } catch (error) {
       throw new Error(`Error locking user: ${error.message}`);
     }
@@ -66,17 +73,24 @@ class UserService {
   async unlockUser(userId) {
     const clerk = await getClerkClient();
     try {
-      const user = await clerk.users.updateUser(userId, {
-        publicMetadata: { locked: false },
+      const user = await clerk.users.getUser(userId);
+
+      const newMetadata = {
+        ...user.publicMetadata,
+        locked: false
+      };
+
+      const updatedUser = await clerk.users.updateUser(userId, {
+        publicMetadata: newMetadata,
       });
 
-      // Cập nhật đồng bộ trong Mongo luôn
       await User.findOneAndUpdate(
-        { clerkId: user.id },
-        { locked: false, publicMetadata: { ...user.publicMetadata } }
+        { clerkId: updatedUser.id },
+        { locked: false, publicMetadata: newMetadata }
       );
 
-      return { success: true, userId: user.id, locked: false };
+      return { success: true, userId: updatedUser.id, locked: false };
+
     } catch (error) {
       throw new Error(`Error unlocking user: ${error.message}`);
     }

@@ -68,7 +68,7 @@ const Header = () => {
 
   const renderUserMenu = () => (
     <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
-      {role === "client" && (
+      {role !== "admin" && (
         <>
           <Link
             to="/"
@@ -135,7 +135,7 @@ const Header = () => {
 
   return (
     <header className="header">
-      <div className="header-container">
+      <div className="main-header-container">
         <div className="header-left">
           <Link to="/">
             <img
