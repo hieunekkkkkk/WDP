@@ -650,3 +650,13 @@
   padding: 20px;
   box-sizing: border-box;
 }
+
+.business-mess-placeholder-fullpage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 70vh; /* Hoặc 100% nếu bạn muốn */
+  text-align: center;
+  color: #888;
+}

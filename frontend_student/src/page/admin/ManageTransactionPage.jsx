@@ -45,7 +45,7 @@ function ManageTransactionPage() {
             const baseURL = import.meta.env.VITE_BE_URL;
             const res = await fetch(`${baseURL}/api/user/${id}`);
             const data = await res.json();
-            fetchedNames[id] = data.users.fullName;
+            fetchedNames[id] = data.fullName;
           } catch (err) {
             fetchedNames[id] = "Unknown";
           }
@@ -650,7 +650,7 @@ function ManageTransactionPage() {
               <thead>
                 <tr>
                   <th>Mã GD</th>
-                  <th>User ID</th>
+                  <th>Tên người dùng</th>
                   <th>Giá trị</th>
                   <th>Ngày/Giờ</th>
                   <th>Gói dịch vụ</th>

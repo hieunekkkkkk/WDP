@@ -45,7 +45,7 @@ function ManageFeedbackPage() {
         const usernameMap = {};
         userResponses.forEach((res) => {
           const user = res?.data;
-          if (user?.id) usernameMap[user.id] = user.fullName;
+          if (user?.clerkId) usernameMap[user.clerkId] = user.fullName;
         });
 
         setFiltered((prev) =>

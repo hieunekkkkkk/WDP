@@ -15,7 +15,7 @@ const ClientRoute = ({ children }) => {
     }
 
     if (role !== "client" && role !== "business") {
-      navigate("/landingPage");
+      navigate("/");
     } else {
       setChecking(false);
     }

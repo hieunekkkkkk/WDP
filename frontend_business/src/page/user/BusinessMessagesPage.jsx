@@ -7,14 +7,8 @@ import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { IoSend, IoClose } from "react-icons/io5";
 import { FaPlus } from "react-icons/fa";
-import { FaPhoneAlt } from "react-icons/fa";
-import { HiVideoCamera } from "react-icons/hi2";
-import { FaInfoCircle } from "react-icons/fa";
+import LoadingScreen from "../../components/LoadingScreen";
 
-// ===============================
-//  Modal Component (Tìm sinh viên)
-// (Giữ nguyên, không thay đổi)
-// ===============================
 const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
   const [searchTerm, setSearchTerm] = useState("");
   if (!isOpen) return null;
@@ -26,19 +20,15 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
 
   return (
     <div className="business-mess-modal-overlay">
-           {" "}
       <div className="business-mess-modal-content">
-               {" "}
         <div className="business-mess-modal-header">
-                    <h2>Bắt đầu trò chuyện với sinh viên</h2>         {" "}
+          <h2>Bắt đầu trò chuyện với sinh viên</h2>
           <button onClick={onClose} className="business-mess-modal-close-btn">
-                        <IoClose />         {" "}
+            <IoClose />
           </button>
-                 {" "}
         </div>
-               {" "}
+
         <div className="business-mess-search-wrapper">
-                   {" "}
           <input
             type="text"
             placeholder="Tìm kiếm sinh viên..."
@@ -46,11 +36,9 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-                 {" "}
         </div>
-               {" "}
+
         <div className="business-mess-modal-list">
-                   {" "}
           {filteredList.map((student) => (
             <div
               key={student.id}
@@ -60,39 +48,29 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
                 onClose();
               }}
             >
-                           {" "}
               <div className="business-mess-avatar-wrapper">
-                               {" "}
                 <img
                   src={student.imageUrl || "/default-avatar.png"}
                   alt="avatar"
                   className="business-mess-avatar"
                 />
-                             {" "}
               </div>
-                           {" "}
+
               <div className="business-mess-chat-info">
-                               {" "}
                 <p className="business-mess-chat-name">
-                                    {student.fullName || "Student User"}       
-                         {" "}
+                  {student.fullName || "Student User"}
                 </p>
-                             {" "}
               </div>
-                         {" "}
             </div>
           ))}
-                 {" "}
         </div>
-             {" "}
       </div>
-         {" "}
     </div>
   );
 };
 
 // ===============================
-//  Main Page Component
+// Main Page Component
 // ===============================
 const BusinessMessagesPage = () => {
   const { user } = useUser();
@@ -107,6 +85,7 @@ const BusinessMessagesPage = () => {
 
   const [hasBotAccess, setHasBotAccess] = useState(false); // State theo dõi quyền truy cập
   const navigate = useNavigate(); // Hook để chuyển hướng
+  const [isLoading, setIsLoading] = useState(true);
 
   const dropdownRef = useRef(null);
   const socketRef = useRef(null);
@@ -118,7 +97,7 @@ const BusinessMessagesPage = () => {
     socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
       transports: ["websocket"],
     });
-    socketRef.current.emit("join", businessId); // =============================================== //   CHANGE 2: CẬP NHẬT SIDEBAR KHI NHẬN TIN NHẮN // ===============================================
+    socketRef.current.emit("join", businessId); // =============================================== //  CHANGE 2: CẬP NHẬT SIDEBAR KHI NHẬN TIN NHẮN // ===============================================
 
     socketRef.current.on("receive_message", (msg) => {
       // Cập nhật cửa sổ chat nếu đang mở
@@ -173,24 +152,29 @@ const BusinessMessagesPage = () => {
       });
     });
     return () => socketRef.current.disconnect(); // Thêm allStudents vào dependency array
-  }, [businessId, selectedStudent, allStudents]); // ==================================================================== //  useEffect để tải danh sách chat VÀ danh sách sinh viên // ====================================================================
+  }, [businessId, selectedStudent, allStudents]); // ==================================================================== // useEffect để tải danh sách chat VÀ danh sách sinh viên // ====================================================================
 
+  // ====================================================================
+  // useEffect để tải danh sách chat VÀ danh sách sinh viên
+  // ====================================================================
   useEffect(() => {
-    if (!businessId) return; // 1. Hàm tải TẤT CẢ sinh viên (để lấy info: tên, avatar)
+    if (!businessId) return;
 
+    // 1. Hàm tải TẤT CẢ sinh viên (Giữ nguyên)
     const fetchAllStudents = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`);
         const allUsers = res.data.users || [];
         const studentsOnly = allUsers.filter((user) => user.role === "client");
         setAllStudents(studentsOnly);
-        return studentsOnly; // Trả về để xử lý
+        return studentsOnly;
       } catch (err) {
         console.error("Error fetching all students:", err);
-        return []; // Trả về mảng rỗng nếu lỗi
+        return [];
       }
-    }; // 2. Hàm tải LỊCH SỬ các cuộc trò chuyện
+    };
 
+    // 2. Hàm tải LỊCH SỬ các cuộc trò chuyện (Giữ nguyên)
     const fetchHistories = async () => {
       try {
         const res = await axios.get(
@@ -198,44 +182,47 @@ const BusinessMessagesPage = () => {
             import.meta.env.VITE_BE_URL
           }/api/conversation/user/${businessId}/histories`
         );
-        return res.data || []; // Mong đợi trả về 1 mảng
+        return res.data || [];
       } catch (err) {
         console.error("Error fetching conversation histories:", err);
-        return []; // Trả về mảng rỗng nếu lỗi
+        return [];
       }
-    }; // 3. Hàm kết hợp cả hai nguồn dữ liệu
+    };
 
+    // 3. Hàm kết hợp cả hai nguồn dữ liệu (ĐÃ SỬA LỖI)
     const loadAndProcessData = async () => {
-      // Chạy song song 2 API cho nhanh
+      setIsLoading(true); // Bắt đầu loading
+
+      // Chạy song song 2 API
       const [students, histories] = await Promise.all([
         fetchAllStudents(),
         fetchHistories(),
       ]);
 
-      if (students.length === 0 || histories.length === 0) {
-        // Nếu 1 trong 2 không có dữ liệu thì không cần xử lý
+      // === SỬA LỖI LOGIC TẠI ĐÂY ===
+      // Nếu không có lịch sử, set mảng rỗng VÀ TẮT LOADING
+      if (histories.length === 0) {
         setConversations([]);
-        return;
-      } // Tạo một Map để tra cứu thông tin sinh viên nhanh (O(1))
+        setIsLoading(false); // <-- PHẢI TẮT LOADING Ở ĐÂY
+        return; // An toàn return
+      }
+      // === KẾT THÚC SỬA LỖI ===
 
+      // Nếu có histories, tiếp tục xử lý
       const studentMap = new Map();
       students.forEach((student) => {
         studentMap.set(student.clerkId, student);
-      }); // 4. Xử lý mảng histories để tạo mảng conversations
+      });
 
       const processedConversations = histories
         .map((history) => {
-          // Định dạng chatId là "user_ID1_user_ID2"
           const ids = history.chatId.split("_");
-
-          if (ids.length < 4) return null; // Bỏ qua nếu chatId lỗi
+          if (ids.length < 4) return null;
 
           const userId1 = ids[1];
-          const userId2 = ids[3]; // Tìm ID của sinh viên (là ID KHÔNG PHẢI businessId)
-
-          const studentId = userId1 === businessId ? userId2 : userId1; // Lấy thông tin sinh viên từ Map
-
-          const studentInfo = studentMap.get("user_" + studentId); // =============================================== //   CHANGE 1: LẤY SENDER ID CỦA TIN NHẮN CUỐI // ===============================================
+          const userId2 = ids[3];
+          const studentId = userId1 === businessId ? userId2 : userId1;
+          const studentInfo = studentMap.get("user_" + studentId);
 
           let lastMessage = "Chưa có tin nhắn";
           let lastMessageSenderId = null;
@@ -243,26 +230,27 @@ const BusinessMessagesPage = () => {
             const lastMessageObject =
               history.conversation[history.conversation.length - 1];
             lastMessage = lastMessageObject.message;
-            lastMessageSenderId = lastMessageObject.sender_id; // <-- Thêm dòng này
-          } // Chỉ thêm vào nếu tìm thấy thông tin sinh viên
+            lastMessageSenderId = lastMessageObject.sender_id;
+          }
 
           if (studentInfo) {
             return {
-              student: studentInfo, // Chứa { id, fullName, imageUrl, ... }
+              student: studentInfo,
               lastMessage: lastMessage,
-              lastMessageSenderId: lastMessageSenderId, // <-- Thêm dòng này
+              lastMessageSenderId: lastMessageSenderId,
             };
           }
-
-          return null; // Bỏ qua nếu không tìm thấy sinh viên
+          return null;
         })
-        .filter(Boolean); // Lọc bỏ các giá trị null // 5. Cập nhật state
+        .filter(Boolean);
 
+      // 5. Cập nhật state và TẮT LOADING
       setConversations(processedConversations);
-    }; // <-- ***FIXED: Changed comma (,) to semicolon (;)***
+      setIsLoading(false); // Tắt loading sau khi xử lý xong
+    };
 
     loadAndProcessData();
-  }, [businessId]); // Chỉ chạy lại khi businessId thay đổi // ... (useEffect cho Bot Access giữ nguyên) ...
+  }, [businessId]); // Chỉ chạy lại khi businessId thay đổi
 
   useEffect(() => {
     if (!businessId) return;
@@ -286,7 +274,7 @@ const BusinessMessagesPage = () => {
       }
     };
     checkBotAccess();
-  }, [businessId]); // =============================================== //   CHANGE 3: CẬP NHẬT SIDEBAR KHI GỬI TIN NHẮN // ===============================================
+  }, [businessId]); // =============================================== //  CHANGE 3: CẬP NHẬT SIDEBAR KHI GỬI TIN NHẮN // ===============================================
 
   const handleSendMessage = () => {
     if (!message.trim() || !selectedStudent || !businessId) return;
@@ -424,159 +412,164 @@ const BusinessMessagesPage = () => {
 
   return (
     <>
-           {" "}
       <NewChatModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         studentList={allStudents}
         onSelectStudent={handleSelectStudent}
       />
-           {" "}
-      <div className="business-mess-container">
-                {/* Sidebar */}       {" "}
-        <div className="business-mess-sidebar">
-                   {" "}
-          <div className="business-mess-sidebar-header">
-                       {" "}
-            <h2 className="business-mess-sidebar-title">Tin nhắn</h2>           {" "}
-            {/* <button
-              className="business-mess-new-chat-btn"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <FaPlus />
-            </button> */}
-                     {" "}
-          </div>
-                   {" "}
-          <div className="business-mess-chat-list">
-                       {" "}
-            {conversations.map((convo) => (
-              <div
-                key={convo.student.id}
-                className={`business-mess-chat-item ${
-                  selectedStudent?.id === convo.student.id ? "active" : ""
-                }`}
-                onClick={() => handleSelectStudent(convo.student)}
+
+      {/* Phần logic được cập nhật: 
+      Kiểm tra 3 trạng thái: Đang tải, Tải xong (trống), Tải xong (có data)
+    */}
+      {isLoading ? (
+        // 1. Trạng thái ĐANG TẢI
+        <div className="business-mess-placeholder-fullpage">
+          <LoadingScreen />
+          {/* Bạn có thể thêm spinner ở đây */}
+        </div>
+      ) : conversations.length === 0 ? (
+        // 2. Tải xong nhưng KHÔNG CÓ tin nhắn
+        <div className="business-mess-placeholder-fullpage">
+          <p>💬 Bạn chưa có cuộc trò chuyện nào.</p>
+        </div>
+      ) : (
+        // 3. Tải xong và CÓ tin nhắn (hiển thị container)
+        <div className="business-mess-container">
+          {/* Sidebar */}
+          <div className="business-mess-sidebar">
+            <div className="business-mess-sidebar-header">
+              <h2 className="business-mess-sidebar-title">Tin nhắn</h2>
+              {/* Nút này được bỏ comment để bạn có thể thêm chat mới */}
+              {/* <button
+                className="business-mess-new-chat-btn"
+                onClick={() => setIsModalOpen(true)}
+                title="Tạo tin nhắn mới"
               >
-                               {" "}
-                <div className="business-mess-avatar-wrapper">
-                                   {" "}
-                  <img
-                    src={convo.student.imageUrl || "/default-avatar.png"}
-                    alt="avatar"
-                    className="business-mess-avatar"
-                  />
-                                 {" "}
-                </div>
-                               {" "}
-                <div className="business-mess-chat-info">
-                                   {" "}
-                  <p className="business-mess-chat-name">
-                                        {convo.student.fullName}               
-                     {" "}
-                  </p>
-                             {" "}
-                  <p className="business-mess-chat-status">
-                    {convo.lastMessageSenderId === businessId ? "Bạn: " : ""}
-                    {convo.lastMessage}
-                  </p>
-                                 {" "}
-                </div>
-                             {" "}
-              </div>
-            ))}
-                     {" "}
-          </div>
-                 {" "}
-        </div>
-                {/* Chat window */}        {/* Chat window */}
-        <div className="business-mess-window">
-          {selectedStudent ? (
-            <>
-              <div className="business-mess-header">
-                <div className="business-mess-header-left">
-                  <img
-                    src={selectedStudent.imageUrl || "/default-avatar.png"}
-                    alt="avatar"
-                    className="business-mess-avatar" // Fixed: Added className
-                  />
-                  <div>
-                    <h4>{selectedStudent.fullName}</h4>
-                  </div>
-                </div>
-              </div>
-
-              <div className="business-mess-body">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`business-mess-row ${
-                      // Fixed: sName to className
-                      msg.type === "sent" ? "right" : "left"
-                    }`}
-                  >
-                    <div className="business-mess-message">{msg.content}</div>
-                    <span className="business-mess-time">{msg.time}</span>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input area */}
-              <div className="business-mess-input">
-                <div className="business-mess-dropdown" ref={dropdownRef}>
-                  <button
-                    className="business-mess-more-btn"
-                    onClick={() => setShowMenu((prev) => !prev)}
-                  >
-                    {responseType}
-                  </button>
-
-                  {showMenu && (
-                    <div className="business-mess-dropdown-menu">
-                      <div
-                        className={responseType === "Manager" ? "active" : ""}
-                        onClick={() => handleSelectDropdown("Manager")}
-                      >
-                        Manager
-                      </div>
-                      <div
-                        className={responseType === "Bot" ? "active" : ""} // Fixed: sName to className
-                        disabled={!hasBotAccess}
-                        onClick={handleBotOptionClick}
-                      >
-                        Bot {/* Added back missing text */}
-                        {!hasBotAccess && (
-                          <span className="upgrade-tooltip"> (Nâng cấp)</span>
-                        )}
-                      </div>
-                    </div> /* Fixed: broken 'd=' tag */
-                  )}
-                </div>
-
-                <input
-                  type="text"
-                  placeholder={`Send as ${responseType}...`}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)} // Fixed: 'Data(e) =>'
-                  onKeyPress={handleKeyPress}
-                />
-                <button
-                  className="business-mess-send-btn" // Fixed: sName to className
-                  onClick={handleSendMessage}
-                  disabled={!message.trim()}
-                >
-                  <IoSend />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="business-mess-placeholder">
-              <p>💬 Chọn một sinh viên để bắt đầu trò chuyện</p>
+                <FaPlus />
+              </button> */}
             </div>
-          )}
+
+            <div className="business-mess-chat-list">
+              {conversations.map((convo) => (
+                <div
+                  key={convo.student.clerkId}
+                  className={`business-mess-chat-item ${
+                    selectedStudent?.clerkId === convo.student.clerkId
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => handleSelectStudent(convo.student)}
+                >
+                  <div className="business-mess-avatar-wrapper">
+                    <img
+                      src={convo.student.imageUrl || "/default-avatar.png"}
+                      alt="avatar"
+                      className="business-mess-avatar"
+                    />
+                  </div>
+                  <div className="business-mess-chat-info">
+                    <p className="business-mess-chat-name">
+                      {convo.student.fullName}
+                    </p>
+                    <p className="business-mess-chat-status">
+                      {convo.lastMessageSenderId === businessId ? "Bạn: " : ""}
+                      {convo.lastMessage}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Chat window */}
+          <div className="business-mess-window">
+            {selectedStudent ? (
+              <>
+                <div className="business-mess-header">
+                  <div className="business-mess-header-left">
+                    <img
+                      src={selectedStudent.imageUrl || "/default-avatar.png"}
+                      alt="avatar"
+                      className="business-mess-avatar"
+                    />
+                    <div>
+                      <h4>{selectedStudent.fullName}</h4>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="business-mess-body">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`business-mess-row ${
+                        msg.type === "sent" ? "right" : "left"
+                      }`}
+                    >
+                      <div className="business-mess-message">{msg.content}</div>
+                      <span className="business-mess-time">{msg.time}</span>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input area */}
+                <div className="business-mess-input">
+                  <div className="business-mess-dropdown" ref={dropdownRef}>
+                    <button
+                      className="business-mess-more-btn"
+                      onClick={() => setShowMenu((prev) => !prev)}
+                    >
+                      {responseType}
+                    </button>
+
+                    {showMenu && (
+                      <div className="business-mess-dropdown-menu">
+                        <div
+                          className={responseType === "Manager" ? "active" : ""}
+                          onClick={() => handleSelectDropdown("Manager")}
+                        >
+                          Manager
+                        </div>
+                        <div
+                          className={responseType === "Bot" ? "active" : ""}
+                          disabled={!hasBotAccess}
+                          onClick={handleBotOptionClick}
+                        >
+                          Bot
+                          {!hasBotAccess && (
+                            <span className="upgrade-tooltip"> (Nâng cấp)</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder={`Send as ${responseType}...`}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                  />
+                  <button
+                    className="business-mess-send-btn"
+                    onClick={handleSendMessage}
+                    disabled={!message.trim()}
+                  >
+                    <IoSend />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="business-mess-placeholder">
+                <p>💬 Chọn một sinh viên để bắt đầu trò chuyện</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

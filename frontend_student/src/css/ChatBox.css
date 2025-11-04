@@ -121,6 +121,22 @@
   background: #e85b25;
 }
 
+.business-view-expand,
+.business-view-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px; /* Chỉnh kích thước icon */
+  color: #555; /* Chỉnh màu icon */
+  line-height: 1;
+}
+
+.business-view-expand:hover,
+.business-view-close:hover {
+  color: #000; /* Màu khi hover */
+}
+
 /* Optional: Responsive tweaks */
 @media (max-width: 480px) {
   .business-view-container {

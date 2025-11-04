@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaBuilding } from "react-icons/fa";
+import { FaUserCircle, FaBuilding, FaBell } from "react-icons/fa";
+import { IoNotificationsOutline } from "react-icons/io5";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import axios from "axios";
 import "../css/Header.css";
 import AuthTokenReset from "../auth/AuthTokenReset";
 import { getCurrentUserId } from "../utils/useCurrentUserId";
+import NotificationDropdown from "./NotificationDropdown";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -14,7 +16,9 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [hasBusiness, setHasBusiness] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const accountRef = useRef(null);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     const fetchBusinessStatus = async () => {
@@ -22,7 +26,9 @@ const Header = () => {
         const ownerId = await getCurrentUserId();
         if (!ownerId) return;
 
-        const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/business/owner/${ownerId}`);
+        const response = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/business/owner/${ownerId}`
+        );
         if (response.data && response.data.length > 0) {
           setHasBusiness(true);
         } else {
@@ -35,6 +41,25 @@ const Header = () => {
     };
 
     fetchBusinessStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
+        setShowAccountMenu(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const isActive = (path, exact = false) => {
@@ -58,18 +83,21 @@ const Header = () => {
         Kết nối doanh nghiệp
       </Link>
 
-      {/* Show conditional link based on business existence */}
       {hasBusiness ? (
         <Link
           to="/my-business"
-          className={`header-nav-link ${isActive("/my-business", true) ? "active" : ""}`}
+          className={`header-nav-link ${
+            isActive("/my-business", true) ? "active" : ""
+          }`}
         >
           Doanh nghiệp của tôi
         </Link>
       ) : (
         <Link
           to="/business-registration"
-          className={`header-nav-link ${isActive("/business-registration", true) ? "active" : ""}`}
+          className={`header-nav-link ${
+            isActive("/business-registration", true) ? "active" : ""
+          }`}
         >
           Đăng ký doanh nghiệp
         </Link>
@@ -77,7 +105,9 @@ const Header = () => {
 
       <Link
         to="/business-dashboard"
-        className={`header-nav-link ${isActive("/business-dashboard") ? "active" : ""}`}
+        className={`header-nav-link ${
+          isActive("/business-dashboard") ? "active" : ""
+        }`}
       >
         Hỗ trợ doanh nghiệp
       </Link>
@@ -145,10 +175,24 @@ const Header = () => {
         </SignedOut>
 
         <SignedIn>
-          <div className="header-user-info">
-            <UserButton userProfileUrl="/user-profile">
-              {renderUserButtonMenu()}
-            </UserButton>
+          <div className="signed-in-controls">
+            <div className="notification-wrapper" ref={notificationRef}>
+              <button
+                className="header-icon-btn"
+                onClick={() => setShowNotifications((prev) => !prev)}
+                title="Thông báo"
+              >
+                <FaBell size={20} />
+              </button>
+
+              <NotificationDropdown isOpen={showNotifications} />
+            </div>
+
+            <div className="header-user-info">
+              <UserButton userProfileUrl="/user-profile" appearance={{}}>
+                {renderUserButtonMenu()}
+              </UserButton>
+            </div>
           </div>
         </SignedIn>
       </div>
