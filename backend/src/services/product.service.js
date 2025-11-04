@@ -95,7 +95,7 @@ class ProductService {
             if (!product) {
                 throw new Error('Product not found');
             }
-            product.product_amount = amount;
+            product.product_number = amount;
             return await product.save();
         } catch (error) {
             throw new Error(`Error updating product stock: ${error.message}`);

@@ -1,15 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
-import "../../css/MessagesPage.css";
-import axios from "axios";
-import { io } from "socket.io-client";
-import { useUser } from "@clerk/clerk-react";
+import React, { useEffect, useRef, useState } from 'react';
+import '../../css/MessagesPage.css';
+import axios from 'axios';
+// import { io } from "socket.io-client";
+import { useUser } from '@clerk/clerk-react';
 // 1. Import hook useNavigate
-import { useNavigate } from "react-router-dom";
-import { IoSend, IoClose } from "react-icons/io5";
-import { FaPlus } from "react-icons/fa";
-import { FaPhoneAlt } from "react-icons/fa";
-import { HiVideoCamera } from "react-icons/hi2";
-import { FaInfoCircle } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
+import { IoSend, IoClose } from 'react-icons/io5';
+import { FaPlus } from 'react-icons/fa';
+import { FaPhoneAlt } from 'react-icons/fa';
+import { HiVideoCamera } from 'react-icons/hi2';
+import { FaInfoCircle } from 'react-icons/fa';
 
 // ===============================
 //  Modal Component (Tìm sinh viên)
@@ -19,7 +19,7 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
   const [searchTerm, setSearchTerm] = useState("");
   if (!isOpen) return null;
   const filteredList = studentList.filter((student) =>
-    (student.fullName || "Student")
+    (student.fullName || 'Student')
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
@@ -54,14 +54,14 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
             >
               <div className="business-mess-avatar-wrapper">
                 <img
-                  src={student.imageUrl || "/default-avatar.png"}
+                  src={student.imageUrl || '/default-avatar.png'}
                   alt="avatar"
                   className="business-mess-avatar"
                 />
               </div>
               <div className="business-mess-chat-info">
                 <p className="business-mess-chat-name">
-                  {student.fullName || "Student User"}
+                  {student.fullName || 'Student User'}
                 </p>
               </div>
             </div>
@@ -81,10 +81,11 @@ const BusinessMessagesPage = () => {
   const [allStudents, setAllStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [responseType, setResponseType] = useState("Manager");
+  const [responseType, setResponseType] = useState('Manager');
   const [showMenu, setShowMenu] = useState(false);
+
 
   // 2. Thêm state và hook mới
   const [hasBotAccess, setHasBotAccess] = useState(false); // State theo dõi quyền truy cập
@@ -98,7 +99,7 @@ const BusinessMessagesPage = () => {
   useEffect(() => {
     if (!businessId) return;
     socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
-      transports: ["websocket"],
+      transports: ['websocket'],
     });
     socketRef.current.emit("join", businessId);
 
@@ -112,11 +113,11 @@ const BusinessMessagesPage = () => {
           ...prev,
           {
             id: Date.now(),
-            type: "received",
+            type: 'received',
             content: msg.message,
             time: new Date(msg.ts).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
+              hour: '2-digit',
+              minute: '2-digit',
             }),
           },
         ]);
@@ -174,6 +175,7 @@ const BusinessMessagesPage = () => {
     // 1. Hàm tải TẤT CẢ sinh viên (để lấy info: tên, avatar)
     const fetchAllStudents = async () => {
       try {
+        const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`);
         const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`);
         const allUsers = res.data.users || [];
         const studentsOnly = allUsers.filter((user) => user.role === "client");
@@ -303,11 +305,11 @@ const BusinessMessagesPage = () => {
     const chatId = `${selectedStudent.clerkId}_${businessId}`;
     const newMsg = {
       id: Date.now(),
-      type: "sent",
+      type: 'sent',
       content: message,
       time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
+        hour: '2-digit',
+        minute: '2-digit',
       }),
     };
 
@@ -371,7 +373,7 @@ const BusinessMessagesPage = () => {
 
     try {
       const res = await axios.request({
-        method: "post",
+        method: 'post',
         url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
         data: {
           sender_id: student.clerkId,
@@ -382,16 +384,16 @@ const BusinessMessagesPage = () => {
       const chatHistory = res.data.history || [];
       const formattedHistory = chatHistory.map((msg) => ({
         id: msg.ts,
-        type: msg.sender_id === businessId ? "sent" : "received",
+        type: msg.sender_id === businessId ? 'sent' : 'received',
         content: msg.message,
         time: new Date(msg.ts).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+          hour: '2-digit',
+          minute: '2-digit',
         }),
       }));
       setMessages(formattedHistory);
     } catch (err) {
-      console.error("Error fetching chat history:", err);
+      console.error('Error fetching chat history:', err);
       setMessages([]);
     }
   };
@@ -405,7 +407,7 @@ const BusinessMessagesPage = () => {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -414,9 +416,9 @@ const BusinessMessagesPage = () => {
         setShowMenu(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -430,7 +432,7 @@ const BusinessMessagesPage = () => {
       handleSelectDropdown("Bot");
     } else {
       setShowMenu(false);
-      navigate("/business-dashboard/my-ai");
+      navigate('/business-dashboard/my-ai');
     }
   };
 
@@ -461,13 +463,13 @@ const BusinessMessagesPage = () => {
               <div
                 key={convo.student.id}
                 className={`business-mess-chat-item ${
-                  selectedStudent?.id === convo.student.id ? "active" : ""
+                  selectedStudent?.id === convo.student.id ? 'active' : ''
                 }`}
                 onClick={() => handleSelectStudent(convo.student)}
               >
                 <div className="business-mess-avatar-wrapper">
                   <img
-                    src={convo.student.imageUrl || "/default-avatar.png"}
+                    src={convo.student.imageUrl || '/default-avatar.png'}
                     alt="avatar"
                     className="business-mess-avatar"
                   />
@@ -497,7 +499,7 @@ const BusinessMessagesPage = () => {
               <div className="business-mess-header">
                 <div className="business-mess-header-left">
                   <img
-                    src={selectedStudent.imageUrl || "/default-avatar.png"}
+                    src={selectedStudent.imageUrl || '/default-avatar.png'}
                     alt="avatar"
                     className="business-mess-avatar"
                   />
@@ -535,8 +537,8 @@ const BusinessMessagesPage = () => {
                   {showMenu && (
                     <div className="business-mess-dropdown-menu">
                       <div
-                        className={responseType === "Manager" ? "active" : ""}
-                        onClick={() => handleSelectDropdown("Manager")}
+                        className={responseType === 'Manager' ? 'active' : ''}
+                        onClick={() => handleSelectDropdown('Manager')}
                       >
                         Manager
                       </div>
@@ -556,11 +558,14 @@ const BusinessMessagesPage = () => {
 
                 <input
                   type="text"
+                <input
+                  type="text"
                   placeholder={`Send as ${responseType}...`}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
+                <button
                 <button
                   className="business-mess-send-btn"
                   onClick={handleSendMessage}
@@ -582,3 +587,4 @@ const BusinessMessagesPage = () => {
 };
 
 export default BusinessMessagesPage;
+

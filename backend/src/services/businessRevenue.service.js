@@ -87,6 +87,18 @@ class BusinessRevenueService {
             throw err;
         }
     }
+
+      async deleteRevenueById(id) {
+    try {
+      const deletedRevenue = await BusinessRevenue.findByIdAndDelete(id);
+      return deletedRevenue;
+    } catch (error) {
+      throw new Error('Không thể xóa doanh thu: ' + error.message);
+    }
+  }
+
+  
 }
+
 
 module.exports = new BusinessRevenueService();
