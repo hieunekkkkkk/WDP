@@ -104,6 +104,7 @@
 }
 
 .business-mess-chat-info {
+  min-width: 0;
   flex: 1;
 }
 
@@ -118,6 +119,9 @@
   font-size: 12px;
   color: #6b7280;
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .business-mess-chat-meta span {

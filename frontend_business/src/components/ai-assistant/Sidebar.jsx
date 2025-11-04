@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   FaHome,
   FaCog,
@@ -7,9 +7,10 @@ import {
   FaBars,
   FaTimes,
   FaArrowLeft,
-} from "react-icons/fa";
-import { NavLink, useNavigate } from "react-router-dom";
-import "./../../css/Sidebar.css";
+  FaWarehouse,
+} from 'react-icons/fa';
+import { NavLink, useNavigate } from 'react-router-dom';
+import './../../css/Sidebar.css';
 
 const Sidebar = ({ darkMode, setDarkMode }) => {
   const [open, setOpen] = useState(true);
@@ -23,21 +24,26 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       if (window.innerWidth > 768) setOpen(true);
     };
     handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const menus = [
-    { icon: <FaHome />, label: "Dashboard", path: "/business-dashboard" },
+    { icon: <FaHome />, label: 'Thống kê', path: '/business-dashboard' },
     {
       icon: <FaRegComments />,
-      label: "Messages",
-      path: "/business-dashboard/messages",
+      label: 'Tin nhắn',
+      path: '/business-dashboard/messages',
+    },
+    {
+      icon: <FaWarehouse />,
+      label: 'Tồn kho',
+      path: '/business-dashboard/stock',
     },
     {
       icon: <FaRobot />,
-      label: "AI",
-      path: "/business-dashboard/my-ai",
+      label: 'AI',
+      path: '/business-dashboard/my-ai',
     },
   ];
 
@@ -48,8 +54,8 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       )}
 
       <aside
-        className={`sidebar ${open ? "open" : "collapsed"} ${
-          isMobile ? "mobile" : ""
+        className={`sidebar ${open ? 'open' : 'collapsed'} ${
+          isMobile ? 'mobile' : ''
         }`}
       >
         {/* Header */}
@@ -64,7 +70,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
 
           {/* Toggle đóng/mở kiểu ChatGPT */}
           <button className="menu-toggle" onClick={() => setOpen(!open)}>
-            <span className="toggle-icon">{open ? "«" : "»"}</span>
+            <span className="toggle-icon">{open ? '«' : '»'}</span>
           </button>
         </div>
 
@@ -77,7 +83,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
                   to={item.path}
                   end
                   className={({ isActive }) =>
-                    `menu-link ${isActive ? "active" : ""}`
+                    `menu-link ${isActive ? 'active' : ''}`
                   }
                 >
                   <span className="menu-icon">{item.icon}</span>
@@ -96,7 +102,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           {/* Back button */}
           <button
             className="sidebar-back-btn"
-            onClick={() => navigate("/")}
+            onClick={() => navigate('/')}
             title="Quay về trang chính"
           >
             <FaArrowLeft className="back-icon" />
@@ -113,7 +119,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
               />
               <span className="slider round"></span>
             </label>
-            {open && <span>{darkMode ? "Dark Mode" : "Light Mode"}</span>}
+            {open && <span>{darkMode ? 'Dark Mode' : 'Light Mode'}</span>}
           </div>
         </div>
       </aside>

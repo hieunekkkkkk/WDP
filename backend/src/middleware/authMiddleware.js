@@ -1,15 +1,14 @@
-// src/middleware/authMiddleware.js
-const { ensureClerkConnection } = require('./clerkClient');
+const { getClerkClient } = require('./clerkClient');
 
 const authMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!authHeader?.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'No token provided' });
         }
 
         const token = authHeader.split(' ')[1];
-        const clerk = await ensureClerkConnection();
+        const clerk = await getClerkClient();
 
         const decoded = await clerk.verifyToken(token);
         if (!decoded) {
@@ -20,9 +19,14 @@ const authMiddleware = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('[AuthMiddleware] Token verification error:', error.message);
-        if (error.message.includes('fetch failed')) {
-            console.warn('[AuthMiddleware] Clerk API unreachable. Retrying connection...');
+
+        // Nếu lỗi là do mất kết nối Clerk API
+        if (error.message.includes('fetch failed') || error.code === 'ECONNREFUSED') {
+            // reset clerkClient để tự reconnect lần sau
+            const { getClerkClient } = require('./clerkClient');
+            getClerkClient();
         }
+
         return res.status(401).json({ error: 'Unauthorized access' });
     }
 };

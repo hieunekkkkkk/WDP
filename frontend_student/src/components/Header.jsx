@@ -68,15 +68,14 @@ const Header = () => {
 
   const renderUserMenu = () => (
     <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
-      <Link
-        to="/"
-        className={`header-nav-link ${isActive("/", true) ? "active" : ""}`}
-      >
-        Trang chủ
-      </Link>
-
       {role === "client" && (
         <>
+          <Link
+            to="/"
+            className={`header-nav-link ${isActive("/", true) ? "active" : ""}`}
+          >
+            Trang chủ
+          </Link>
           <Link
             to="/discover"
             className={`header-nav-link ${

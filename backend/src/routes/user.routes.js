@@ -40,33 +40,6 @@ router.get('/', UserController.getAllUsers);
 router.get('/:userId', UserController.getUser);
 /**
  * @swagger
- * /api/users/{userId}:
- *   put:
- *     summary: Cập nhật user
- *     tags: [User]
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/User'
- *     responses:
- *       200:
- *         description: User đã được cập nhật
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- */
-router.put('/:userId', UserController.updateUser);
-/**
- * @swagger
  * /api/users/{userId}/lock:
  *   put:
  *     summary: Khoá user

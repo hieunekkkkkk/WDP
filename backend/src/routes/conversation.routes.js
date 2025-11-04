@@ -7,4 +7,6 @@ router.post('/check', conversationController.checkConversation);
 
 router.post('/:chatId', conversationController.sendMessage);
 
+router.get('/user/:userId/histories', conversationController.getAllHistoriesByUserId);
+
 module.exports = router;

@@ -59,6 +59,21 @@ class ConversationController {
             type: 'human'
         });
     }
+
+    async getAllHistoriesByUserId(req, res) {
+        try {
+            const userId = req.params.userId;
+            if (!userId) {
+                return res.status(400).json({ error: 'userId là bắt buộc' });
+            }
+            const histories = await conversationService.getAllHistoriesByUserId(userId);
+            return res.json(histories);
+        } catch (err) {
+            console.error('getAllHistoriesByUserId error', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
 }
 
 // Xuất instance của class

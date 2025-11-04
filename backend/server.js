@@ -1,10 +1,7 @@
 require('dotenv').config({ path: '.env.dev' });
-
-// --- CÁC THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ---
-
-const http = require('http'); // 1. Import 'http'
+const http = require('http');
 const app = require('./app');
-const chatGateway = require('./src/gateway/chatGateway'); // 2. Import chat gateway
+const chatGateway = require('./src/gateway/chatGateway');
 
 const logger = require('./src/log/logger');
 const PORT = process.env.PORT || 8080;
@@ -13,8 +10,6 @@ const httpServer = http.createServer(app); // 3. Tạo một server HTTP từ Ex
 
 // 4. KHỞI TẠO CHAT GATEWAY VÀ GẮN NÓ VÀO SERVER
 chatGateway.init(httpServer);
-
-// --- KẾT THÚC CÁC THAY ĐỔI ---
 
 
 // 5. Thay đổi 'app.listen' thành 'httpServer.listen'
