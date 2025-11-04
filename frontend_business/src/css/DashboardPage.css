@@ -260,7 +260,7 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999999999999999999999999;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -346,4 +346,62 @@ footer {
   .main-content {
     gap: 16px;
   }
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: black;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.edit-btn:hover {
+  background-color: #e0a800; 
+}
+
+
+.inline-stock-editor {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;   
+  gap: 8px;
+  max-width: 100px;
+  margin: 0; 
+}
+
+.inline-stock-editor span {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.inline-stock-btn {
+  background-color: #f1f3f5; 
+  border: 1px solid #ced4da;
+  color: #495057;
+  font-weight: bold;
+  border-radius: 50%; 
+  width: 24px;
+  height: 24px;
+  padding: 0; 
+  font-size: 16px;
+  line-height: 22px; 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inline-stock-btn:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.inline-stock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-group input:disabled {
+  background-color: #f1f3f5;
+  color: #6c757d; 
+  cursor: not-allowed;
 }
