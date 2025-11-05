@@ -124,7 +124,9 @@ const BusinessMessagesPage = () => {
 
         if (convoIndex === -1) {
           // Thử tìm thông tin sinh viên từ list đã tải
-          const studentInfo = allStudents.find((s) => s.clerkId === msg.sender_id);
+          const studentInfo = allStudents.find(
+            (s) => s.clerkId === msg.sender_id
+          );
 
           if (studentInfo) {
             const newConvo = {
@@ -258,23 +260,20 @@ const BusinessMessagesPage = () => {
     const checkBotAccess = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/payment/userid/${businessId}`
+          `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${businessId}`
         );
-        const payments = res.data.data || [];
 
-        const hasValidPayment = payments.some(
-          (payment) =>
-            payment.payment_stack?.stack_name.toLowerCase() ===
-              "bot tư vấn viên" && payment.payment_status === "completed"
-        );
-        setHasBotAccess(hasValidPayment);
+        const aibot = res.data;
+        const hasAnyBot = !!aibot;
+        setHasBotAccess(hasAnyBot);
       } catch (err) {
-        console.error("Lỗi khi kiểm tra thanh toán bot:", err);
+        console.error("Lỗi khi kiểm tra sở hữu aibot:", err);
         setHasBotAccess(false);
       }
     };
+
     checkBotAccess();
-  }, [businessId]); // =============================================== //  CHANGE 3: CẬP NHẬT SIDEBAR KHI GỬI TIN NHẮN // ===============================================
+  }, [businessId]);
 
   const handleSendMessage = () => {
     if (!message.trim() || !selectedStudent || !businessId) return;

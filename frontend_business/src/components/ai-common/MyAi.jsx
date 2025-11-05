@@ -133,55 +133,60 @@ export default function MyAi() {
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      // Lấy bot của user
+    const loadFallbackData = async () => {
+      try {
+        const stackRes = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/stack`
+        );
+        console.log(stackRes);
+
+        const data = stackRes.data;
+        const stackList = Array.isArray(data) ? data : data.stacks || [];
+        const filteredStacks = stackList.filter(
+          (stack) =>
+            stack.stack_name.toLowerCase() === "bot tư vấn viên"
+        );
+        setStacks(filteredStacks);
+      } catch (stackErr) {
+        console.error("❌ Lỗi khi tải stacks:", stackErr);
+        toast.error("Không thể tải danh sách dịch vụ");
+      }
+
+      try {
+        const bizRes = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/business/owner/${user.id}`
+        );
+        if (bizRes.data && bizRes.data.length > 0) {
+          setBusinessInfo(bizRes.data[0]);
+        }
+      } catch (bizErr) {
+        console.warn("Không tìm thấy thông tin business:", bizErr.message);
+        setBusinessInfo(null);
+      }
+    };
+
+    try {
       const botRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
       );
 
-      
       if (botRes.data) {
         const userBot = botRes.data;
         setBot(userBot);
         navigate(`/business-dashboard/bot-knowledge/${userBot.id}`);
       } else {
-        // Lấy danh sách stack
-        const stackRes = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/stack`
-        );
-        const data = stackRes.data;
-        const stackList = Array.isArray(data) ? data : data.stacks || [];
-
-        const filteredStacks = stackList.filter(
-          (stack) =>
-            // stack.stack_name.toLowerCase() === 'tăng view cho doanh nghiệp' ||
-            stack.stack_name.toLowerCase() === 'bot tư vấn viên'
-        );
-
-        setStacks(filteredStacks);
-
-        // Lấy thông tin business
-        try {
-          const bizRes = await axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/business/owner/${user.id}`
-          );
-          if (bizRes.data && bizRes.data.length > 0) {
-            setBusinessInfo(bizRes.data[0]);
-          }
-        } catch (bizErr) {
-          console.warn("Không tìm thấy thông tin business:", bizErr.message);
-          setBusinessInfo(null);
-        }
+        console.warn("User không có bot (API trả về data rỗng)");
+        await loadFallbackData(); 
       }
     } catch (err) {
-      console.error("❌ Lỗi khi tải My AI:", err);
-      toast.error("Không thể tải dữ liệu My AI");
+      console.warn("Không tìm thấy bot (API báo lỗi):", err.message);
+      await loadFallbackData();
     } finally {
       setLoading(false);
     }
-  }, [user?.id, navigate]);
+  }, [user?.id, navigate, setBot, setStacks, setBusinessInfo]);
 
   useEffect(() => {
     fetchData();
