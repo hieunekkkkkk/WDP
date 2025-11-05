@@ -89,8 +89,10 @@ const StudentMessagesPage = () => {
     socketRef.current.emit("join", studentId);
 
     socketRef.current.on("receive_message", (msg) => {
-      // Cập nhật cửa sổ chat nếu đang mở
-      if (msg.sender_id === selectedBusiness?.owner_id) {
+      const BLOCKED_MESSAGE = "No bot configured for owner";
+      const isBotErrorMessage =
+        msg.message && msg.message.startsWith(BLOCKED_MESSAGE);
+      if (msg.sender_id === selectedBusiness?.owner_id && !isBotErrorMessage) {
         setMessages((prev) => [
           ...prev,
           {
@@ -109,6 +111,9 @@ const StudentMessagesPage = () => {
 
       // Cập nhật tin nhắn cuối trong sidebar
       setConversations((prevConvos) => {
+        if (isBotErrorMessage) {
+          return prevConvos;
+        }
         const convoIndex = prevConvos.findIndex(
           (c) => c.business?.owner_id === msg.sender_id
         );
@@ -235,14 +240,18 @@ const StudentMessagesPage = () => {
   //  HẾT PHẦN THAY ĐỔI
   // ====================================================================
 
-  // ... (handleSendMessage) ...
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim() || !selectedBusiness || !studentId) return;
-    const chatId = `${studentId}_${selectedBusiness.owner_id}`;
+
+    const messageContent = message.trim();
+    const currentReceiverId = selectedBusiness.owner_id;
+    const currentChatId = `${studentId}_${currentReceiverId}`;
+    const currentSelectedBusiness = selectedBusiness; // Chụp lại object business
+
     const newMsg = {
       id: Date.now(),
       type: "sent",
-      content: message,
+      content: messageContent,
       time: new Date().toLocaleString([], {
         day: "2-digit",
         month: "2-digit",
@@ -250,44 +259,31 @@ const StudentMessagesPage = () => {
         minute: "2-digit",
       }),
     };
-
-    // Cập nhật UI
     setMessages((prev) => [...prev, newMsg]);
+    setMessage("");
 
-    // Gửi socket
-    socketRef.current.emit("send_message_socket", {
-      chatId,
-      sender_id: studentId,
-      receiver_id: selectedBusiness.owner_id,
-      message,
-    });
-
-    // Cập nhật sidebar
     setConversations((prevConvos) => {
       const convoIndex = prevConvos.findIndex(
-        (c) => c.business?.[0].owner_id === selectedBusiness.owner_id
+        (c) => c.business?.[0].owner_id === currentReceiverId
       );
 
-      // Nếu là chat mới (chưa có trong list sidebar)
       if (convoIndex === -1) {
-        // Tìm info trong businessList đầy đủ (từ modal)
         const newBizInfo = businessList.find(
-          (b) => b.owner_id === selectedBusiness.owner_id
+          (b) => b.owner_id === currentReceiverId
         );
         return [
           {
-            business: [newBizInfo || selectedBusiness],
-            lastMessage: message,
+            business: [newBizInfo || currentSelectedBusiness],
+            lastMessage: messageContent,
             lastMessageSenderId: studentId,
           },
           ...prevConvos,
         ];
       }
 
-      // Nếu là chat đã có, cập nhật và đưa lên đầu
       const updatedConvo = {
         ...prevConvos[convoIndex],
-        lastMessage: message,
+        lastMessage: messageContent,
         lastMessageSenderId: studentId,
       };
 
@@ -299,10 +295,36 @@ const StudentMessagesPage = () => {
       return newConvos;
     });
 
-    setMessage(""); // Xóa input
+    let eventName = "send_message_socket";
+    const BOT_STACK_ID = "684487342d0455bccda7021e";
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/payment/userid/${currentReceiverId}`
+      );
+
+      const payments = res.data.data || res.data || [];
+
+      const hasBotAccess = payments.some(
+        (payment) =>
+          payment.payment_stack._id === BOT_STACK_ID &&
+          payment.payment_status === "completed"
+      );
+
+      if (hasBotAccess) {
+        eventName = "send_message_bot";
+      }
+    } catch (err) {
+      console.error("Lỗi khi kiểm tra payment cho bot:", err);
+    }
+    socketRef.current.emit(eventName, {
+      chatId: currentChatId,
+      sender_id: studentId,
+      receiver_id: currentReceiverId,
+      message: messageContent,
+    });
   };
 
-  // ... (useEffect cho scroll) ...
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

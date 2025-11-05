@@ -42,7 +42,7 @@ function ManageUserPage() {
   const filteredUsers = users.filter(
     (user) =>
       (user.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        user.id.toLowerCase().includes(search.toLowerCase())) &&
+        user.clerkId.toLowerCase().includes(search.toLowerCase())) &&
       (sortStatus === "All" ||
         (user.publicMetadata.locked ?? false) === (sortStatus === "true"))
   );
@@ -154,7 +154,7 @@ function ManageUserPage() {
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <motion.tr
-                      key={user.id}
+                      key={user.clerkId}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -188,21 +188,21 @@ function ManageUserPage() {
                         )}
                       </td>
                       <td>
-                        {user.id !== currentUserId &&
+                        {user.role !== "admin" &&
                           (user.publicMetadata.locked ? (
                             <FaRegCircleCheck
                               className="manage-user-actions action-active"
-                              onClick={() => updateUserLock(user.id, false)}
+                              onClick={() => updateUserLock(user.clerkId, false)}
                               title="Kích hoạt người dùng"
                             ></FaRegCircleCheck>
                           ) : (
                             <IoBanSharp
                               className="manage-user-actions action-inactive"
-                              onClick={() => updateUserLock(user.id, true)}
+                              onClick={() => updateUserLock(user.clerkId, true)}
                               title="Vô hiệu hóa người dùng"
                             ></IoBanSharp>
                           ))}
-                        {user.id === currentUserId &&
+                        {user.role == "admin" &&
                           (user.publicMetadata.locked ? (
                             <FaRegCircleCheck
                               className="manage-user-actions disable"

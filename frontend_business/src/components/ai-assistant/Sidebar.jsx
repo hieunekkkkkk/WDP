@@ -12,21 +12,25 @@ import {
 import { NavLink, useNavigate } from 'react-router-dom';
 import './../../css/Sidebar.css';
 
-const Sidebar = ({ darkMode, setDarkMode }) => {
-  const [open, setOpen] = useState(true);
+const Sidebar = ({ darkMode, setDarkMode, open, setOpen }) => {
+  // const [open, setOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
   // Responsive
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      if (window.innerWidth > 768) setOpen(true);
+      const mobileCheck = window.innerWidth <= 768;
+      setIsMobile(mobileCheck);
+
+      if (mobileCheck) {
+        setOpen(false);
+      }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [setOpen]);
 
   const menus = [
     { icon: <FaHome />, label: 'Thống kê', path: '/business-dashboard' },
@@ -46,6 +50,12 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       path: '/business-dashboard/my-ai',
     },
   ];
+
+  const handleToggle = () => {
+    const newState = !open;
+    setOpen(newState);
+    localStorage.setItem('sidebarOpen', JSON.stringify(newState));
+  };
 
   return (
     <>
@@ -69,7 +79,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           </div>
 
           {/* Toggle đóng/mở kiểu ChatGPT */}
-          <button className="menu-toggle" onClick={() => setOpen(!open)}>
+          <button className="menu-toggle" onClick={handleToggle}>
             <span className="toggle-icon">{open ? '«' : '»'}</span>
           </button>
         </div>
@@ -110,7 +120,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           </button>
 
           {/* Dark Mode toggle */}
-          <div className="dark-toggle">
+          {/* <div className="dark-toggle">
             <label className="switch">
               <input
                 type="checkbox"
@@ -120,7 +130,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
               <span className="slider round"></span>
             </label>
             {open && <span>{darkMode ? 'Dark Mode' : 'Light Mode'}</span>}
-          </div>
+          </div> */}
         </div>
       </aside>
     </>

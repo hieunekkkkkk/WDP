@@ -36,12 +36,12 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
   const menus = [
     {
       icon: <FaEnvelope />,
-      label: "Messages",
+      label: "Tin nhắn",
       path: "/dashboard/messages",
     },
     {
       icon: <FaRobot />,
-      label: "My AI",
+      label: "AI của tôi",
       path: "/dashboard/my-ai",
     },
     {
@@ -137,7 +137,7 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
           </button>
 
           {/* Dark Mode */}
-          <div className="dark-toggle">
+          {/* <div className="dark-toggle">
             <label className="switch">
               <input
                 type="checkbox"
@@ -147,7 +147,7 @@ const SidebarStudent = ({ darkMode, setDarkMode }) => {
               <span className="slider round"></span>
             </label>
             {open && <span>{darkMode ? "Dark Mode" : "Light Mode"}</span>}
-          </div>
+          </div> */}
         </div>
       </aside>
     </>

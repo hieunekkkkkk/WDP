@@ -300,8 +300,7 @@ const BusinessMessagesPage = () => {
     setMessage(""); // Clear input
 
     if (responseType === "Bot" && hasBotAccess) {
-      console.warn("Đã chọn Bot, nhưng đang gửi như Manager...");
-      socketRef.current.emit("send_message_bot", {
+      socketRef.current.emit("send_message_socket", {
         chatId,
         sender_id: businessId,
         receiver_id: selectedStudent.clerkId,
@@ -558,6 +557,7 @@ const BusinessMessagesPage = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
+                    disabled= {responseType == "Bot"}
                   />
                   <button
                     className="business-mess-send-btn"
