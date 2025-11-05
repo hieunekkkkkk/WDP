@@ -20,7 +20,7 @@ const HeaderAi = () => {
 
   return (
     <header className="header">
-      <div className="header-container">
+      <div className="header-ai-container">
 
         {/* Bỏ logo FPT và nav Trang chủ/Khám phá/Cá nhân hóa */}
 

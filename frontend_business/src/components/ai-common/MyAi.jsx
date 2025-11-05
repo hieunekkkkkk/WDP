@@ -133,8 +133,6 @@ export default function MyAi() {
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
-    console.log(user.id);
-
     try {
       setLoading(true);
 
@@ -146,7 +144,6 @@ export default function MyAi() {
       if (botRes.data?.length > 0) {
         const userBot = botRes.data[0];
         setBot(userBot);
-
         navigate(`/business-dashboard/bot-knowledge/${userBot._id}`);
       } else {
         // Lấy danh sách stack
