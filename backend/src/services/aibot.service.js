@@ -1,3 +1,4 @@
+require('dotenv').config();
 const AiBot = require('../entity/module/aibot.model');
 const BotKnowledgeService = require('./botknowledge.service');
 const { QdrantClient } = require('@qdrant/js-client-rest');
@@ -8,13 +9,14 @@ const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
 const { PromptTemplate } = require('@langchain/core/prompts');
 const { StringOutputParser } = require('@langchain/core/output_parsers');
 const { RunnableSequence } = require('@langchain/core/runnables');
+const mongoose = require('mongoose');
 
 class AiBotService {
     constructor() {
         // Initialize Qdrant client
         this.qdrantClient = new QdrantClient({
             url: process.env.QDRANT_URL || 'http://localhost:6333',
-            apiKey: process.env.QDRANT_API_KEY || undefined,
+            // apiKey: process.env.QDRANT_API_KEY || undefined,
         });
 
         // Initialize Gemini embeddings
@@ -80,11 +82,11 @@ class AiBotService {
 
     // Lấy tất cả bot theo owner
     async getBotsByOwner(ownerId) {
-        const bot = await AiBot.find({ owner_id: ownerId });
-        if (!bot) {
-            throw new Error('Bots not found for the given owner');
-        }
-        return await this.getBotById(bot[0]._id);
+        const bot = await AiBot.findOne({ owner_id: ownerId });
+        if (!bot) return null;
+
+        const botId = new mongoose.Types.ObjectId(bot._id);
+        return await this.getBotById(botId);
     }
 
     async getAllBotsWithKnowledge() {
