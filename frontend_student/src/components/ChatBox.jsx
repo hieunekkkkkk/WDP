@@ -91,40 +91,54 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
         socketRef.current.disconnect();
       }
     };
-  }, [studentId, businessOwnerId]); // Re-establish socket if props change
+  }, [studentId, businessOwnerId]);
 
-  // Effect 3: Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]); // Run every time a new message is added
+  }, [messages]);
 
-  // Updated send handler
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim() || !studentId || !businessOwnerId) return;
 
-    const chatId = `${studentId}_${businessOwnerId}`;
+    // --- Phần 1: Cập nhật UI (Giữ nguyên) ---
+    const messageContent = input.trim();
+    const currentReceiverId = businessOwnerId;
+    const currentChatId = `${studentId}_${currentReceiverId}`;
+
     const newMsg = {
       id: Date.now(),
       type: "sent",
-      content: input,
+      content: messageContent,
       time: formatTime(new Date()),
     };
-
-    // 1. Update UI locally
     setMessages((prev) => [...prev, newMsg]);
+    setInput("");
 
-    // 2. Send message via socket
-    if (socketRef.current) {
-      socketRef.current.emit("send_message_socket", {
-        chatId,
-        sender_id: studentId,
-        receiver_id: businessOwnerId,
-        message: input,
-      });
+    let eventName = "send_message_socket"; 
+
+    try {
+      const botRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${currentReceiverId}`
+      );
+
+      const botData = botRes.data;
+
+      if (botData && botData.knowledge && botData.knowledge.length > 0) {
+        eventName = "send_message_bot"; 
+      } else {
+      }
+    } catch (botErr) {
+      console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
     }
 
-    // 3. Clear input
-    setInput("");
+    if (socketRef.current) {
+      socketRef.current.emit(eventName, {
+        chatId: currentChatId,
+        sender_id: studentId,
+        receiver_id: currentReceiverId,
+        message: messageContent,
+      });
+    }
   };
 
   const handleOpenMessagesPage = () => {
