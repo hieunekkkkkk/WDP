@@ -41,7 +41,7 @@ const NewChatModal = ({ isOpen, onClose, studentList, onSelectStudent }) => {
         <div className="business-mess-modal-list">
           {filteredList.map((student) => (
             <div
-              key={student.id}
+              key={student.clerkId}
               className="business-mess-chat-item"
               onClick={() => {
                 onSelectStudent(student);
@@ -97,11 +97,9 @@ const BusinessMessagesPage = () => {
     socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
       transports: ["websocket"],
     });
-    socketRef.current.emit("join", businessId); // =============================================== //  CHANGE 2: CẬP NHẬT SIDEBAR KHI NHẬN TIN NHẮN // ===============================================
-
+    socketRef.current.emit("join", businessId);
     socketRef.current.on("receive_message", (msg) => {
-      // Cập nhật cửa sổ chat nếu đang mở
-      if (msg.sender_id === selectedStudent?.id) {
+      if (msg.sender_id === selectedStudent?.clerkId) {
         setMessages((prev) => [
           ...prev,
           {
@@ -121,12 +119,12 @@ const BusinessMessagesPage = () => {
       setConversations((prevConvos) => {
         // Tìm convo bằng ID sinh viên (người gửi)
         const convoIndex = prevConvos.findIndex(
-          (c) => c.student?.id === msg.sender_id
+          (c) => c.student?.clerkId === msg.sender_id
         ); // Nếu là chat mới (sinh viên nhắn trước)
 
         if (convoIndex === -1) {
           // Thử tìm thông tin sinh viên từ list đã tải
-          const studentInfo = allStudents.find((s) => s.id === msg.sender_id);
+          const studentInfo = allStudents.find((s) => s.clerkId === msg.sender_id);
 
           if (studentInfo) {
             const newConvo = {
@@ -317,7 +315,7 @@ const BusinessMessagesPage = () => {
 
     setConversations((prevConvos) => {
       const convoIndex = prevConvos.findIndex(
-        (c) => c.student?.id === selectedStudent.id
+        (c) => c.student?.clerkId === selectedStudent.clerkId
       ); // Nếu là chat mới (chưa có trong list sidebar)
 
       if (convoIndex === -1) {
@@ -557,7 +555,7 @@ const BusinessMessagesPage = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    disabled= {responseType == "Bot"}
+                    disabled={responseType == "Bot"}
                   />
                   <button
                     className="business-mess-send-btn"
