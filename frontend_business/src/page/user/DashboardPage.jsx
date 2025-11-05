@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import '../../css/DashboardPage.css';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaPlusCircle } from 'react-icons/fa';
 
 const BACKEND_URL = 'http://localhost:3000';
 
@@ -146,6 +149,212 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
   );
 };
 
+const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
+  const pageNumbers = [];
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const maxPagesToShow = 5;
+  let startPage, endPage;
+  if (totalPages <= maxPagesToShow) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
+    const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
+    if (currentPage <= maxPagesBeforeCurrent) {
+      startPage = 1;
+      endPage = maxPagesToShow;
+    } else if (currentPage + maxPagesAfterCurrent >= totalPages) {
+      startPage = totalPages - maxPagesToShow + 1;
+      endPage = totalPages;
+    } else {
+      startPage = currentPage - maxPagesBeforeCurrent;
+      endPage = currentPage + maxPagesAfterCurrent;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <div className="pagination-container">
+      <nav>
+        <ul className="pagination">
+          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <a onClick={() => paginate(1)} href="#!" className="page-link">
+              «
+            </a>
+          </li>
+
+          {pageNumbers.map((number) => (
+            <li
+              key={number}
+              className={`page-item ${currentPage === number ? 'active' : ''}`}
+            >
+              <a
+                onClick={() => paginate(number)}
+                href="#!"
+                className="page-link"
+              >
+                {number}
+              </a>
+            </li>
+          ))}
+
+          <li
+            className={`page-item ${
+              currentPage === totalPages ? 'disabled' : ''
+            }`}
+          >
+            <a
+              onClick={() => paginate(totalPages)}
+              href="#!"
+              className="page-link"
+            >
+              »
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  );
+};
+
+const PriorityTimer = ({ updatedAt }) => {
+  const [remainingTime, setRemainingTime] = useState('');
+
+  useEffect(() => {
+    if (!updatedAt) return;
+
+    const interval = setInterval(() => {
+      const expirationTime = new Date(updatedAt).getTime() + 60 * 60 * 1000;
+      const now = Date.now();
+      const diff = expirationTime - now;
+
+      if (diff <= 0) {
+        setRemainingTime('Đã hết hạn');
+        clearInterval(interval);
+        return;
+      }
+
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      setRemainingTime(
+        `Còn lại: ${String(minutes).padStart(2, '0')} phút ${String(
+          seconds
+        ).padStart(2, '0')} giây`
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [updatedAt]);
+
+  if (!remainingTime) return null;
+
+  return (
+    <div
+      className="stack-expiration-info"
+      style={{
+        marginBottom: '10px',
+        fontSize: '14px',
+        color: remainingTime === 'Đã hết hạn' ? '#dc3545' : '#28a745',
+        fontWeight: '500',
+      }}
+    >
+      {remainingTime}
+    </div>
+  );
+};
+
+const StackModal = ({
+  isOpen,
+  onClose,
+  stack,
+  onActivate,
+  isActivating,
+  businessInfo,
+}) => {
+  if (!isOpen) return null;
+
+  if (!stack) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h2>Tăng ưu tiên hiển thị</h2>
+          <p>Không tìm thấy thông tin gói "Tăng view". Vui lòng thử lại.</p>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="btn-secondary dashboard-btn"
+              onClick={onClose}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const hasPriority = businessInfo && businessInfo.business_priority > 0;
+  let buttonText = isActivating ? 'Đang xử lý...' : '🔓 Kích hoạt gói này';
+  if (hasPriority && !isActivating) {
+    buttonText = `Đã mua ${businessInfo.business_priority} lần, mua thêm?`;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content stack-modal-content">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onActivate(stack);
+          }}
+        >
+          <h2>{stack.stack_name}</h2>
+          <p>{stack.stack_detail}</p>
+          <div
+            className="stack-price"
+            style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              margin: '15px 0',
+              color: '#283593',
+            }}
+          >
+            {Number(stack.stack_price).toLocaleString()}₫
+          </div>
+
+          {hasPriority && <PriorityTimer updatedAt={businessInfo.updated_at} />}
+
+          <div
+            className="modal-actions"
+            style={{ flexDirection: 'column', justifyContent: 'center' }}
+          >
+            <button
+              type="submit"
+              className="stack-activate-btn"
+              disabled={isActivating}
+            >
+              {buttonText}
+            </button>
+            <button
+              type="button"
+              className="stack-cancel-btn"
+              onClick={onClose}
+              disabled={isActivating}
+            >
+              Hủy
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const DashboardPage = () => {
   const [businessId, setBusinessId] = useState(null);
   const [tableData, setTableData] = useState([]);
@@ -168,6 +377,13 @@ const DashboardPage = () => {
     direction: 'descending',
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [businessInfo, setBusinessInfo] = useState(null);
+  const [isStackModalOpen, setIsStackModalOpen] = useState(false);
+  const [tangViewStack, setTangViewStack] = useState(null);
+  const [isActivating, setIsActivating] = useState(false);
   const { userId } = useAuth();
 
   useEffect(() => {
@@ -181,6 +397,7 @@ const DashboardPage = () => {
         .then((businesses) => {
           if (businesses && businesses.length > 0) {
             setBusinessId(businesses[0]._id);
+            setBusinessInfo(businesses[0]);
             setAppStatus('');
           } else {
             setAppStatus('Không tìm thấy business nào cho tài khoản này.');
@@ -196,6 +413,32 @@ const DashboardPage = () => {
       setAppStatus('Đang xác thực người dùng...');
     }
   }, [userId]);
+
+  useEffect(() => {
+    const fetchStackData = async () => {
+      try {
+        const stackRes = await axios.get(`${BACKEND_URL}/api/stack`);
+        const data = stackRes.data;
+        const stackList = Array.isArray(data) ? data : data.stacks || [];
+
+        const priorityStack = stackList.find(
+          (stack) =>
+            stack.stack_name.toLowerCase().includes('tăng view') ||
+            stack.stack_name.toLowerCase().includes('hiếu béo')
+        );
+
+        if (priorityStack) {
+          setTangViewStack(priorityStack);
+        } else {
+          console.warn('Không tìm thấy gói "Tăng view"');
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải thông tin stack:', err);
+      }
+    };
+
+    fetchStackData();
+  }, []);
 
   // Tách hàm fetch data
   const fetchTableData = () => {
@@ -311,42 +554,69 @@ const DashboardPage = () => {
   // Xử lý khi người dùng chọn file Excel
   const handleFileImport = async (e) => {
     const file = e.target.files[0];
-    if (!file || !businessId) {
-      if (!businessId) alert('Lỗi: Không tìm thấy ID của business.');
-      return;
-    }
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      setIsLoadingTable(true);
+    if (!file) return;
 
-      const res = await fetch(
-        `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
-        {
-          method: 'POST',
-          body: formData,
+    setIsLoadingTable(true);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = event.target.result;
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          toast.error('File Excel rỗng!');
+          return;
         }
-      );
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(
-          `Import file thất bại (HTTP ${res.status}): ${
-            errorData.error || 'Route not found'
-          }`
+        for (let i = 0; i < jsonData.length; i++) {
+          const row = jsonData[i];
+
+          if (!row.revenue_name && !row.name) {
+            throw new Error(`Cột 'revenue_name' có lỗi.`);
+          }
+
+          const amount = row.revenue_amount || row.amount;
+          if (amount === undefined || isNaN(parseFloat(amount))) {
+            throw new Error(`Cột 'revenue_amount' có lỗi.`);
+          }
+
+          if (row.revenue_date && isNaN(new Date(row.revenue_date).getTime())) {
+            throw new Error(`Cột 'revenue_date' có lỗi.`);
+          }
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(
+          `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
+          {
+            method: 'POST',
+            body: formData,
+          }
         );
-      }
 
-      const result = await res.json();
-      alert(result.message);
-      fetchTableData();
-    } catch (err) {
-      console.error('Error importing file:', err);
-      alert(err.message);
-      setIsLoadingTable(false);
-    } finally {
-      e.target.value = null;
-    }
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Lỗi từ server');
+        }
+
+        const result = await res.json();
+        toast.success(result.message);
+        fetchTableData();
+      } catch (err) {
+        console.error('Error importing file:', err);
+        toast.error(err.message);
+      } finally {
+        setIsLoadingTable(false);
+        e.target.value = null;
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const handleDeleteRevenue = async (revenueId) => {
@@ -367,6 +637,41 @@ const DashboardPage = () => {
       toast.error(err.response?.data?.message || 'Lỗi khi xóa.');
     }
   };
+
+  const handleActivateStack = useCallback(
+    async (selectedStack) => {
+      if (isActivating || !userId) return;
+      try {
+        setIsActivating(true);
+
+        const be = import.meta.env.VITE_BE_URL || BACKEND_URL;
+
+        if (!selectedStack?._id) {
+          throw new Error('Thiếu thông tin gói đăng ký');
+        }
+
+        const paymentUrl = `${be}/api/payment`;
+        const paymentData = {
+          user_id: userId,
+          stack_id: selectedStack._id,
+          type: 'business',
+        };
+
+        const res = await axios.post(paymentUrl, paymentData);
+
+        if (!res.data?.url) {
+          throw new Error('Không nhận được link thanh toán từ máy chủ.');
+        }
+
+        window.location.href = res.data.url;
+      } catch (err) {
+        console.error('[DashboardPage] Payment initiation failed:', err);
+        toast.error(err.message || 'Không thể khởi tạo thanh toán');
+        setIsActivating(false);
+      }
+    },
+    [userId, isActivating]
+  );
 
   const sortedTableData = useMemo(() => {
     let sortableData = [...tableData];
@@ -424,6 +729,19 @@ const DashboardPage = () => {
       currency: 'VND',
     }).format(amount);
   };
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTableItems = sortedTableData.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(sortedTableData.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber < 1) pageNumber = 1;
+    if (pageNumber > totalPages) pageNumber = totalPages;
+    setCurrentPage(pageNumber);
+  };
   const renderTableBody = () => {
     if (isLoadingTable) {
       return (
@@ -444,8 +762,8 @@ const DashboardPage = () => {
       );
     }
 
-    if (sortedTableData.length > 0) {
-      return sortedTableData.map((row) => (
+    if (currentTableItems.length > 0) {
+      return currentTableItems.map((row) => (
         <tr key={row._id}>
           <td>{row.revenue_name}</td>
           <td>{formatDate(row.revenue_date)}</td>
@@ -464,7 +782,7 @@ const DashboardPage = () => {
     }
     return (
       <tr>
-        <td colSpan="4" style={{ textAlign: 'center' }}>
+        <td colSpan="5" style={{ textAlign: 'center' }}>
           Chưa có thông tin
         </td>
       </tr>
@@ -509,6 +827,17 @@ const DashboardPage = () => {
         businessId={businessId}
         onSuccess={fetchTableData}
       />
+      {createPortal(
+        <StackModal
+          isOpen={isStackModalOpen}
+          onClose={() => setIsStackModalOpen(false)}
+          stack={tangViewStack}
+          onActivate={handleActivateStack}
+          isActivating={isActivating}
+          businessInfo={businessInfo}
+        />,
+        document.body
+      )}
       <div className="business-card table-section">
         <div
           style={{
@@ -572,12 +901,43 @@ const DashboardPage = () => {
           </thead>
           <tbody>{renderTableBody()}</tbody>
         </table>
+        {sortedTableData.length > itemsPerPage && (
+          <Pagination
+            itemsPerPage={itemsPerPage}
+            totalItems={sortedTableData.length}
+            paginate={paginate}
+            currentPage={currentPage}
+          />
+        )}
       </div>
 
       {/* Biểu đồ */}
       <div className="business-card charts-section">
         <div className="chart-wrapper">
-          <h3 className="card-title">Lượt truy cập trong tuần</h3>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              minHeight: '38px',
+            }}
+          >
+            <h3 className="card-title">Lượt truy cập trong tuần</h3>
+            <button
+              className="dashboard-btn"
+              style={{
+                padding: '4px 8px',
+                fontSize: '12px',
+                marginRight: '8px',
+              }}
+              onClick={() => setIsStackModalOpen(true)}
+              disabled={!tangViewStack}
+              title="Tăng ưu tiên hiển thị"
+            >
+              <FaPlusCircle style={{ marginRight: '5px' }} />
+              Tăng View
+            </button>
+          </div>
           <p> </p>
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
@@ -596,7 +956,16 @@ const DashboardPage = () => {
         </div>
 
         <div className="chart-wrapper">
-          <h3 className="card-title">Doanh thu theo thời gian</h3>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              minHeight: '38px',
+            }}
+          >
+            <h3 className="card-title">Doanh thu theo thời gian</h3>
+          </div>
           <div
             className="date-picker-group"
             style={{ display: 'flex', gap: '10px', margin: '10px 0' }}

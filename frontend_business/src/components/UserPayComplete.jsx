@@ -32,9 +32,9 @@ const UserPayComplete = () => {
         const stackName =
           completedPayment.payment_stack?.stack_name?.toLowerCase();
 
-        if (stackName === 'dịch vụ tăng kéo view  hiếu béo pro') {
+        if (stackName === 'tăng view cho doanh nghiệp') {
           console.log(
-            'Phát hiện gói "Dịch vụ tăng Kéo view  Hiếu Béo Pro", đang tìm business ID...'
+            'Phát hiện gói "Tăng view cho doanh nghiệp", đang tìm business ID...'
           );
           try {
             const businessResponse = await axios.get(

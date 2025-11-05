@@ -35,7 +35,8 @@
     "react-spinners": "^0.17.0",
     "react-toastify": "^11.0.5",
     "socket.io-client": "^4.8.1",
-    "vietnam-provinces": "^0.0.4"
+    "vietnam-provinces": "^0.0.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
