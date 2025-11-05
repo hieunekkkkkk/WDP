@@ -107,8 +107,9 @@ const StudentMessagesPage = () => {
 
       setConversations((prevConvos) => {
         const convoIndex = prevConvos.findIndex(
-          (c) => c.business?.owner_id === msg.sender_id
+          (c) => c.business?.[0].owner_id === msg.sender_id
         );
+        
         if (convoIndex === -1) return prevConvos;
 
         const updatedConvo = {
@@ -356,9 +357,9 @@ const StudentMessagesPage = () => {
           <div className="business-mess-chat-list">
             {conversations.map((convo) => (
               <div
-                key={convo.business._id}
+                key={convo.business.owner_id}
                 className={`business-mess-chat-item ${
-                  selectedBusiness?._id === convo.business._id ? "active" : ""
+                  selectedBusiness?.owner_id === convo.business?.[0].owner_id ? "active" : ""
                 }`}
                 onClick={() => handleSelectBusiness(convo.business?.[0])}
               >
