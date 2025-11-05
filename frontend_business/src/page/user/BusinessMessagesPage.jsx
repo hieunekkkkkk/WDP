@@ -81,10 +81,10 @@ const BusinessMessagesPage = () => {
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [responseType, setResponseType] = useState("Manager");
-  const [showMenu, setShowMenu] = useState(false); // 2. Thêm state và hook mới
+  const [showMenu, setShowMenu] = useState(false); 
 
-  const [hasBotAccess, setHasBotAccess] = useState(false); // State theo dõi quyền truy cập
-  const navigate = useNavigate(); // Hook để chuyển hướng
+  const [hasBotAccess, setHasBotAccess] = useState(false); 
+  const navigate = useNavigate(); 
   const [isLoading, setIsLoading] = useState(true);
 
   const dropdownRef = useRef(null);
@@ -265,7 +265,8 @@ const BusinessMessagesPage = () => {
 
         const aibot = res.data;
         const hasAnyBot = !!aibot;
-        setHasBotAccess(hasAnyBot);
+        if (hasAnyBot) setHasBotAccess("haveBot");
+        if (aibot.knowledge.length > 0) {setHasBotAccess("haveKnowledge"); setResponseType("Bot")}
       } catch (err) {
         console.error("Lỗi khi kiểm tra sở hữu aibot:", err);
         setHasBotAccess(false);
@@ -296,7 +297,7 @@ const BusinessMessagesPage = () => {
     setMessages((prev) => [...prev, newMsg]);
     setMessage(""); // Clear input
 
-    if (responseType === "Bot" && hasBotAccess) {
+    if (responseType === "Bot" && hasBotAccess == "haveKnowledge") {
       socketRef.current.emit("send_message_socket", {
         chatId,
         sender_id: businessId,
@@ -404,7 +405,7 @@ const BusinessMessagesPage = () => {
   };
 
   const handleBotOptionClick = () => {
-    if (hasBotAccess) {
+    if (hasBotAccess == "haveKnowledge") {
       handleSelectDropdown("Bot");
     } else {
       setShowMenu(false);
@@ -529,12 +530,6 @@ const BusinessMessagesPage = () => {
                     {showMenu && (
                       <div className="business-mess-dropdown-menu">
                         <div
-                          className={responseType === "Manager" ? "active" : ""}
-                          onClick={() => handleSelectDropdown("Manager")}
-                        >
-                          Manager
-                        </div>
-                        <div
                           className={responseType === "Bot" ? "active" : ""}
                           disabled={!hasBotAccess}
                           onClick={handleBotOptionClick}
@@ -543,6 +538,18 @@ const BusinessMessagesPage = () => {
                           {!hasBotAccess && (
                             <span className="upgrade-tooltip"> (Nâng cấp)</span>
                           )}
+                          {hasBotAccess == "haveBot" && (
+                            <span className="upgrade-tooltip">
+                              {" "}
+                              (Chưa có cấu hình bot)
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={responseType === "Manager" ? "active" : ""}
+                          onClick={() => handleSelectDropdown("Manager")}
+                        >
+                          Manager
                         </div>
                       </div>
                     )}
