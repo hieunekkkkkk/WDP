@@ -41,11 +41,9 @@ const KnowledgePage = () => {
   const fetchKnowledge = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/botknowledge`
+        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`
       );
-      // Tạm thời filter client-side vì BE chưa có API theo botId
-      const filtered = res.data.filter((k) => k.aibot_id === botId);
-      setKnowledges(filtered);
+      setKnowledges(res.data);
     } catch (err) {
       console.error("Error fetching knowledge:", err);
     }
