@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import '../../css/StockPage.css';
 import '../../css/DashboardPage.css';
 
 const BACKEND_URL = 'http://localhost:3000';
@@ -298,15 +299,15 @@ const StockPage = () => {
           <InlineStockEditor product={product} onSuccess={fetchProducts} />
         </td>
 
-        <td>
+        <td className="stock-action-buttons">
           <button
-            className="edit-btn dashboard-btn"
+            className="stock-action-btn edit"
             onClick={() => handleOpenEditModal(product)}
           >
             <FaEdit />
           </button>
           <button
-            className="delete-btn"
+            className="stock-action-btn delete"
             onClick={() => handleDeleteProduct(product._id)}
           >
             <FaTrash />
@@ -329,22 +330,13 @@ const StockPage = () => {
         document.body
       )}
 
-      <div className="main-content">
-        <div className="business-card table-section">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
-            <h2 className="card-title" style={{ margin: 0 }}>
-              Quản lý Kho hàng
-            </h2>
+      <div className="stock-page-content">
+        <div className="business-card table-section stock-table-card">
+          <div className="stock-table-header">
+            <h2 className="stock-table-title">Quản lý Kho hàng</h2>
             <div className="table-actions">
               <button
-                className="add-btn"
+                className="stock-add-btn"
                 onClick={handleNavigateToCreate}
                 disabled={!businessId}
               >
@@ -352,7 +344,7 @@ const StockPage = () => {
               </button>
             </div>
           </div>
-          <table className="data-table">
+          <table className="data-table stock-data-table">
             <thead>
               <tr>
                 <th style={{ width: '35%' }}>Tên sản phẩm</th>
