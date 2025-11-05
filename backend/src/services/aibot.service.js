@@ -84,7 +84,7 @@ class AiBotService {
         if (!bot) {
             throw new Error('Bots not found for the given owner');
         }
-        return await this.getBotById(bot._id);
+        return await this.getBotById(bot[0]._id);
     }
 
     async getAllBotsWithKnowledge() {
