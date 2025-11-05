@@ -5,7 +5,8 @@
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: sticky;
+  top: 0;
   transition: width 0.3s ease-in-out;
   z-index: 1000;
 }
@@ -41,6 +42,15 @@
   padding: 0 16px;
   border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 0;
 }
 
 .sidebar-logo {
@@ -99,6 +109,10 @@
   padding: 16px 0;
 }
 
+.sidebar.collapsed .sidebar-nav {
+  overflow: hidden;
+}
+
 .menu-list {
   list-style: none;
   margin: 0;
@@ -117,7 +131,7 @@
   font-size: 14px;
   color: #374151;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 0 8px 8px 0;
   transition: all 0.25s ease;
 }
 
@@ -289,4 +303,11 @@ input:checked + .slider:before {
 
 .layout.dark .dark-toggle {
   color: #e2e8f0;
+}
+
+
+/* Căn giữa các icon khi thu gọn */
+.sidebar.collapsed .menu-link {
+  padding: 12px; 
+  justify-content: center;
 }

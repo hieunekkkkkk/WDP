@@ -1,5 +1,5 @@
 /* ======================
-   LAYOUT CƠ BẢN
+   LAYOUT CƠ BẢN
 ====================== */
 .layout {
   min-height: 100vh;
@@ -12,17 +12,18 @@
 
 .layout-container {
   display: flex;
-  flex: 1; /* chiếm toàn bộ phần trên footer */
+  flex: 1;
+  position: relative;
+  height: 100vh;
 }
 
 .layout-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* fix flex con */
-  overflow: hidden;
-  height: 100vh;
+  min-height: 0;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
 }
 
 /* ======================
@@ -32,21 +33,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   padding: 0;
 }
 
 /* Wrapper chuẩn hóa cho Outlet */
 .content-wrapper {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #f3f4f6; /* nền nhạt */
+  background: #f3f4f6;
   display: flex;
   flex-direction: column;
-  padding: 24px; /* spacing đồng đều */
-  gap: 24px; /* khoảng cách giữa các block */
+  padding: 24px; 
+  gap: 24px; 
   box-sizing: border-box;
+  min-height: calc(100vh - 64px);
 }
 
 /* ======================
@@ -114,15 +113,18 @@ footer {
 @media (max-width: 768px) {
   .layout-container {
     position: relative;
+    height: 100%;
   }
 
   .layout-main {
     width: 100%;
+    overflow-y: auto;
   }
 
   .content-wrapper {
     padding: 16px;
     gap: 16px;
+    min-height: calc(100vh - 64px);
   }
 
   footer {
@@ -144,19 +146,27 @@ footer {
 /* ======================
    SCROLLBAR STYLE
 ====================== */
-.content-wrapper::-webkit-scrollbar {
-  width: 6px;
+.layout-main::-webkit-scrollbar {
+ width: 6px;
 }
 
-.content-wrapper::-webkit-scrollbar-track {
-  background: transparent;
+.layout-main::-webkit-scrollbar-track {
+ background: transparent;
 }
 
-.content-wrapper::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+.layout-main::-webkit-scrollbar-thumb {
+ background: #cbd5e1;
+ border-radius: 3px;
 }
 
-.content-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.layout-main::-webkit-scrollbar-thumb:hover {
+ background: #94a3b8;
+}
+
+/* CSS cho Dark mode scrollbar (nếu có) */
+.layout.dark .layout-main::-webkit-scrollbar-thumb {
+ background: #475569;
+}
+.layout.dark .layout-main::-webkit-scrollbar-thumb:hover {
+ background: #64748b;
 }

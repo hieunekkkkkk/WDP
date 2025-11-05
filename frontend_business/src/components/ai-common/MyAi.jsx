@@ -338,8 +338,7 @@ export default function MyAi() {
 
         const filteredStacks = stackList.filter(
           (stack) =>
-            stack.stack_name.toLowerCase() ===
-              'dịch vụ tăng kéo view  hiếu béo pro' ||
+            // stack.stack_name.toLowerCase() === 'tăng view cho doanh nghiệp' ||
             stack.stack_name.toLowerCase() === 'bot tư vấn viên'
         );
 
