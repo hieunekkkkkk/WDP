@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useUser, useAuth, useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
@@ -11,13 +11,17 @@ const AuthCallback = () => {
   const { setRole } = useUserRole();
   const { signOut } = useClerk();
   const navigate = useNavigate();
+  const hasRun = useRef(false); // 🧠 chặn chạy lại useEffect
 
   useEffect(() => {
     const handleAuth = async () => {
+      if (hasRun.current) return; // nếu đã chạy rồi thì bỏ qua
+      hasRun.current = true;
+
       if (isSignedIn && user) {
         try {
           const clerkToken = await getToken({ template: 'node-backend' });
-          if (!clerkToken) throw new Error("Không lấy được token từ Clerk");
+          if (!clerkToken) throw new Error('Không lấy được token từ Clerk');
 
           const requestOptions = {
             method: 'POST',
@@ -28,14 +32,13 @@ const AuthCallback = () => {
           };
 
           const hasRoleField = Object.prototype.hasOwnProperty.call(user.publicMetadata, 'role');
-          
           if (!hasRoleField) {
             requestOptions.body = JSON.stringify({ role: 'owner' });
           }
 
           const response = await fetch(`${import.meta.env.VITE_BE_URL}/api/auth`, requestOptions);
-
           const data = await response.json();
+
           if (!response.ok) throw new Error(data.message || 'Lỗi xác thực từ server');
 
           const role = data.claims?.role || user.publicMetadata?.role;
@@ -50,7 +53,6 @@ const AuthCallback = () => {
 
           localStorage.setItem('accessToken', data.accessToken);
           navigate('/');
-
         } catch (err) {
           console.error('Lỗi xác thực:', err);
           toast.error('Không thể xác thực. Vui lòng thử lại sau.');
