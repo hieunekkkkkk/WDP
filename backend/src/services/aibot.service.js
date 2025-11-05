@@ -80,7 +80,11 @@ class AiBotService {
 
     // Lấy tất cả bot theo owner
     async getBotsByOwner(ownerId) {
-        return await AiBot.find({ owner_id: ownerId });
+        const bot = await AiBot.find({ owner_id: ownerId });
+        if (!bot) {
+            throw new Error('Bots not found for the given owner');
+        }
+        return await this.getBotById(bot[0]._id);
     }
 
     async getAllBotsWithKnowledge() {

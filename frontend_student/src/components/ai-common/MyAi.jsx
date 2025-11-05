@@ -254,6 +254,7 @@ export default function MyAi() {
         `${import.meta.env.VITE_BE_URL}/api/stack`
       );
       const raw = stackRes.data;
+      console.log(stackRes);
       const stacks = Array.isArray(raw) ? raw : raw.stacks || raw.data || [];
       const personal = pickStudentPersonalStack(stacks || []);
       setStack(personal || null);

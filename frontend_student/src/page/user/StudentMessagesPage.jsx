@@ -79,7 +79,6 @@ const StudentMessagesPage = () => {
 
   const studentId = user?.id;
 
-  // ... (useEffect cho Socket.io) ...
   useEffect(() => {
     if (!studentId) return;
 
@@ -89,10 +88,7 @@ const StudentMessagesPage = () => {
     socketRef.current.emit("join", studentId);
 
     socketRef.current.on("receive_message", (msg) => {
-      const BLOCKED_MESSAGE = "No bot configured for owner";
-      const isBotErrorMessage =
-        msg.message && msg.message.startsWith(BLOCKED_MESSAGE);
-      if (msg.sender_id === selectedBusiness?.owner_id && !isBotErrorMessage) {
+      if (msg.sender_id === selectedBusiness?.owner_id) {
         setMessages((prev) => [
           ...prev,
           {
@@ -109,15 +105,11 @@ const StudentMessagesPage = () => {
         ]);
       }
 
-      // Cập nhật tin nhắn cuối trong sidebar
       setConversations((prevConvos) => {
-        if (isBotErrorMessage) {
-          return prevConvos;
-        }
         const convoIndex = prevConvos.findIndex(
           (c) => c.business?.owner_id === msg.sender_id
         );
-        if (convoIndex === -1) return prevConvos; // Chưa có trong list thì bỏ qua
+        if (convoIndex === -1) return prevConvos;
 
         const updatedConvo = {
           ...prevConvos[convoIndex],
@@ -125,7 +117,6 @@ const StudentMessagesPage = () => {
           lastMessageSenderId: msg.sender_id,
         };
 
-        // Đưa convo vừa cập nhật lên đầu
         const newConvos = [
           updatedConvo,
           ...prevConvos.slice(0, convoIndex),
@@ -137,7 +128,6 @@ const StudentMessagesPage = () => {
     return () => socketRef.current.disconnect();
   }, [studentId, selectedBusiness]); // Thêm selectedBusiness
 
-  // Load danh sách TẤT CẢ doanh nghiệp (cho modal)
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
@@ -152,17 +142,12 @@ const StudentMessagesPage = () => {
     fetchBusinesses();
   }, []);
 
-  // ====================================================================
-  //  ĐÂY LÀ PHẦN ĐƯỢC THAY ĐỔI
-  //  Load histories, SAU ĐÓ GỌI API CHO TỪNG BUSINESS
-  // ====================================================================
   useEffect(() => {
     if (!studentId) return;
 
     const loadHistoriesAndDetails = async () => {
       let histories = [];
       try {
-        // 1. Tải lịch sử chat
         const historyRes = await axios.get(
           `${
             import.meta.env.VITE_BE_URL
@@ -180,8 +165,6 @@ const StudentMessagesPage = () => {
         return;
       }
 
-      // 2. Lặp qua histories và tạo mảng các promise
-      //    để gọi API cho TỪNG business
       const conversationPromises = histories.map(async (history) => {
         if (!history.conversation || history.conversation.length === 0) {
           return null;
@@ -196,49 +179,38 @@ const StudentMessagesPage = () => {
           "user_" + userId1 === studentId ? userId2 : userId1;
 
         try {
-          // *** GỌI API THEO YÊU CẦU CỦA BẠN ***
           const bizRes = await axios.get(
             `${import.meta.env.VITE_BE_URL}/api/business/owner/${
               "user_" + businessOwnerId
             }`
           );
 
-          // Giả sử API trả về { business: {...} }
           const businessInfo = bizRes.data;
 
           if (!businessInfo) return null;
 
           const lastMessageObject =
             history.conversation[history.conversation.length - 1];
-          // --- HẾT SỬA ---
-
           return {
             business: businessInfo,
-            // --- SỬA Ở ĐÂY ---
             lastMessage: lastMessageObject.message,
-            lastMessageSenderId: lastMessageObject.sender_id, // Thêm dòng này
-            // --- HẾT SỬA ---
+            lastMessageSenderId: lastMessageObject.sender_id,
           };
         } catch (err) {
           console.error(`Error fetching biz info for ${businessOwnerId}:`, err);
-          return null; // Bỏ qua nếu API lỗi (vd: business đã bị xóa)
+          return null;
         }
       });
 
-      // 3. Chờ tất cả các API call trong loop hoàn thành
       const processedConversations = (
         await Promise.all(conversationPromises)
-      ).filter(Boolean); // Lọc bỏ các giá trị null
+      ).filter(Boolean);
 
       setConversations(processedConversations);
     };
 
     loadHistoriesAndDetails();
-  }, [studentId]); // Chỉ chạy lại khi studentId thay đổi
-
-  // ====================================================================
-  //  HẾT PHẦN THAY ĐỔI
-  // ====================================================================
+  }, [studentId]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedBusiness || !studentId) return;
@@ -246,7 +218,7 @@ const StudentMessagesPage = () => {
     const messageContent = message.trim();
     const currentReceiverId = selectedBusiness.owner_id;
     const currentChatId = `${studentId}_${currentReceiverId}`;
-    const currentSelectedBusiness = selectedBusiness; // Chụp lại object business
+    const currentSelectedBusiness = selectedBusiness;
 
     const newMsg = {
       id: Date.now(),
@@ -286,7 +258,6 @@ const StudentMessagesPage = () => {
         lastMessage: messageContent,
         lastMessageSenderId: studentId,
       };
-
       const newConvos = [
         updatedConvo,
         ...prevConvos.slice(0, convoIndex),
@@ -295,28 +266,23 @@ const StudentMessagesPage = () => {
       return newConvos;
     });
 
-    let eventName = "send_message_socket";
-    const BOT_STACK_ID = "684487342d0455bccda7021e";
+    let eventName = "send_message_socket"; 
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/payment/userid/${currentReceiverId}`
+      const botRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${currentReceiverId}`
       );
 
-      const payments = res.data.data || res.data || [];
+      const botData = botRes.data;
 
-      const hasBotAccess = payments.some(
-        (payment) =>
-          payment.payment_stack._id === BOT_STACK_ID &&
-          payment.payment_status === "completed"
-      );
-
-      if (hasBotAccess) {
+      if (botData && botData.knowledge && botData.knowledge.length > 0) {
         eventName = "send_message_bot";
+      } else {
       }
-    } catch (err) {
-      console.error("Lỗi khi kiểm tra payment cho bot:", err);
+    } catch (botErr) {
+      console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
     }
+
     socketRef.current.emit(eventName, {
       chatId: currentChatId,
       sender_id: studentId,

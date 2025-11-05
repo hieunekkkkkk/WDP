@@ -91,15 +91,16 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
         socketRef.current.disconnect();
       }
     };
-  }, [studentId, businessOwnerId]); 
+  }, [studentId, businessOwnerId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]); 
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || !studentId || !businessOwnerId) return;
 
+    // --- Phần 1: Cập nhật UI (Giữ nguyên) ---
     const messageContent = input.trim();
     const currentReceiverId = businessOwnerId;
     const currentChatId = `${studentId}_${currentReceiverId}`;
@@ -114,26 +115,20 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
     setInput("");
 
     let eventName = "send_message_socket"; 
-    const BOT_STACK_ID = "684487342d0455bccda7021e";
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/payment/userid/${currentReceiverId}`
+      const botRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${currentReceiverId}`
       );
 
-      const payments = res.data.data || res.data || [];
+      const botData = botRes.data;
 
-      const hasBotAccess = payments.some(
-        (payment) =>
-          payment.payment_stack._id === BOT_STACK_ID &&
-          payment.payment_status === "completed"
-      );
-
-      if (hasBotAccess) {
+      if (botData && botData.knowledge && botData.knowledge.length > 0) {
         eventName = "send_message_bot"; 
+      } else {
       }
-    } catch (err) {
-      console.error("Lỗi khi kiểm tra payment cho bot:", err);
+    } catch (botErr) {
+      console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
     }
 
     if (socketRef.current) {
@@ -141,7 +136,7 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
         chatId: currentChatId,
         sender_id: studentId,
         receiver_id: currentReceiverId,
-        message: messageContent, 
+        message: messageContent,
       });
     }
   };

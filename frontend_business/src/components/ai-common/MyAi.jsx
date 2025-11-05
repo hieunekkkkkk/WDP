@@ -141,10 +141,11 @@ export default function MyAi() {
         `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
       );
 
-      if (botRes.data?.length > 0) {
-        const userBot = botRes.data[0];
+      
+      if (botRes.data) {
+        const userBot = botRes.data;
         setBot(userBot);
-        navigate(`/business-dashboard/bot-knowledge/${userBot._id}`);
+        navigate(`/business-dashboard/bot-knowledge/${userBot.id}`);
       } else {
         // Lấy danh sách stack
         const stackRes = await axios.get(
