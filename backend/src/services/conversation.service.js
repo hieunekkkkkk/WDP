@@ -75,7 +75,7 @@ class ConversationService {
             let botResponseText;
 
             if (bot) {
-                botResponseText = await aibotService.handleMessage(bot, message);
+                botResponseText = await aibotService.testHandleMessage(bot, message);
             } else {
                 botResponseText = `No bot configured for owner ${rId}`;
             }

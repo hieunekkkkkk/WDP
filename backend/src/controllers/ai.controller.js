@@ -11,7 +11,7 @@ class AiController {
     }
     async recommend(req, res) {
         try {
-            const { text } = req.query;
+            const { text } = req.body;
             const recommendations = await AiService.getRecommendations(text);
             res.status(200).json(recommendations);
         } catch (error) {
