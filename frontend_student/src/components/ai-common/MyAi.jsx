@@ -233,11 +233,11 @@ export default function MyAi() {
   const [stack, setStack] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Tải bot của user hoặc hiển thị đúng 1 gói “Bot hỗ trợ cá nhân” nếu chưa có bot
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
     try {
       setLoading(true);
+      console.log(user.id);
 
       // 1) Kiểm tra user đã có bot hay chưa
       //    BE cần hỗ trợ GET /api/aibot/owner/:userId
@@ -373,7 +373,8 @@ export default function MyAi() {
   );
 
   const handleNavigateToKnowledge = useCallback(() => {
-    if (bot?._id) navigate(`/dashboard/bot-knowledge/${bot._id}`);
+    const id = bot?._id || bot?.id;
+    if (id) navigate(`/dashboard/bot-knowledge/${id}`);
   }, [bot, navigate]);
 
   // Render
