@@ -35,7 +35,7 @@ function PersonalizedPage() {
     const handleSendMessage = async () => {
         if (!userMessage.trim()) return;
 
-        const formattedText = `Yêu cầu: ${userMessage}, loại doanh nghiệp: ${type}, giá tối đa: ${budget === 'Tự chọn...' ? customBudget : budget.replace(/,/g, '')}, đánh giá: ${rating} sao`;
+        const formattedText = `${userMessage}`;
 
         try {
             setIsLoadingPlaces(true);
