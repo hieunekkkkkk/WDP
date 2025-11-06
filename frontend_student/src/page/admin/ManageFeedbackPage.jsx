@@ -8,6 +8,7 @@ import HeroSectionAdmin from "../../components/HeroSectionAdmin";
 import "../../css/ManageAIBotsPage.css";
 import { RiLoginCircleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { FaTrash } from "react-icons/fa";
 
 function ManageFeedbackPage() {
   const navigate = useNavigate();
@@ -153,6 +154,26 @@ function ManageFeedbackPage() {
   };
 
   const handleEnterBusiness = (id) => navigate(`/business/${id}`);
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa phản hồi này không?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`
+      );
+      toast.success("Đã xóa phản hồi thành công!");
+
+      setFeedbacks((prev) => prev.filter((fb) => fb._id !== feedbackId));
+      setFiltered((prev) => prev.filter((fb) => fb._id !== feedbackId));
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Lỗi khi xóa phản hồi:", err);
+      toast.error("Không thể xóa phản hồi. Vui lòng thử lại.");
+    }
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -304,10 +325,17 @@ function ManageFeedbackPage() {
                           timeStyle: "short",
                         })}
                       </td>
-                      <td>
+                      <td style={{display: "flex", alignItems: "center"}}>
+                        <FaTrash
+                          className="manage-business-actions delete"
+                          onClick={() => handleDeleteFeedback(fb._id)}
+                          title="Xóa phản hồi"
+                        />
                         <RiLoginCircleLine
                           className="manage-business-actions enter"
-                          onClick={() => handleEnterBusiness(fb?.business_id?._id)}
+                          onClick={() =>
+                            handleEnterBusiness(fb?.business_id?._id)
+                          }
                           title="Truy cập doanh nghiệp"
                         />
                       </td>
