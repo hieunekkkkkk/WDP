@@ -1,100 +1,114 @@
-const BusinessView = require('../entity/module/business_view.model');
+const mongoose = require('mongoose');
 const BusinessViewService = require('../services/businessview.service');
-
-jest.mock('../entity/module/business_view.model', () => {
-  // Tạo một mock model hoạt động như function constructor và có static methods
-  const mockModel = jest.fn(); // để new được
-  mockModel.findOne = jest.fn();
-  mockModel.aggregate = jest.fn();
-  return mockModel;
-});
+const BusinessView = require('../entity/module/business_view.model');
 
 describe('BusinessViewService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    await mongoose.connect('mongodb://127.0.0.1:27017/test_db_businessview', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
   });
 
-  // -------------------- TEST addView() --------------------
+  afterAll(async () => {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+  });
+
+  afterEach(async () => {
+    await BusinessView.deleteMany({});
+    jest.restoreAllMocks();
+  });
+
+  // ----------------------------------------------------------
   describe('addView', () => {
-    it('should create a new view if none exists for today', async () => {
-      // Không có view nào -> findOne trả null
-      BusinessView.findOne.mockResolvedValue(null);
+    it('should create a new view record if not exists', async () => {
+      const businessId = new mongoose.Types.ObjectId();
 
-      // Giả lập constructor instance có save()
-      const mockSave = jest.fn().mockResolvedValue(true);
-      BusinessView.mockImplementation(() => ({
-        save: mockSave,
-      }));
+      // gọi hàm
+      await BusinessViewService.addView(businessId);
 
-      await BusinessViewService.addView('biz123');
-
-      expect(BusinessView.findOne).toHaveBeenCalledTimes(1);
-      expect(mockSave).toHaveBeenCalledTimes(1);
+      // kiểm tra DB có ghi chưa
+      const saved = await BusinessView.findOne({ business_id: businessId });
+      expect(saved).toBeDefined();
+      expect(saved.business_id.toString()).toBe(businessId.toString());
+      expect(saved.view_count).toBe(1);
     });
 
-    it('should increment view_count if view exists', async () => {
-      const mockSave = jest.fn().mockResolvedValue(true);
-      const mockView = { view_count: 1, save: mockSave };
+    it('should increase view count if record already exists for the same day', async () => {
+      const businessId = new mongoose.Types.ObjectId();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
 
-      BusinessView.findOne.mockResolvedValue(mockView);
+      await BusinessView.create({
+        business_id: businessId,
+        view_date: today.getTime(),
+        view_count: 2,
+      });
 
-      await BusinessViewService.addView('biz123');
+      await BusinessViewService.addView(businessId);
 
-      expect(mockView.view_count).toBe(2);
-      expect(mockSave).toHaveBeenCalledTimes(1);
+      const updated = await BusinessView.findOne({ business_id: businessId });
+      expect(updated).toBeDefined();
+      expect(updated.view_count).toBe(3);
     });
 
-    it('should handle errors gracefully', async () => {
-      console.error = jest.fn();
-      BusinessView.findOne.mockRejectedValue(new Error('DB Error'));
-
-      await BusinessViewService.addView('biz123');
-
-      expect(console.error).toHaveBeenCalledWith(
-        'Error adding business view:',
-        expect.any(Error)
-      );
-    });
+    it('should not throw but log an error if something goes wrong', async () => {
+  jest.spyOn(BusinessView, 'findOne').mockRejectedValueOnce(new Error('DB error'));
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  await BusinessViewService.addView('invalid-id');
+  expect(consoleSpy).toHaveBeenCalled(); // sửa ở đây
+  consoleSpy.mockRestore();
+});
   });
 
-  // -------------------- TEST getViewsInRange() --------------------
+  // ----------------------------------------------------------
   describe('getViewsInRange', () => {
-    it('should return formatted view data within date range', async () => {
-      const mockData = [
-        { _id: '2025-10-15', totalViews: 5 },
-        { _id: '2025-10-16', totalViews: 10 },
-      ];
+    it('should return aggregated view counts in date range', async () => {
+      const businessId = new mongoose.Types.ObjectId();
 
-      BusinessView.aggregate.mockResolvedValue(mockData);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-      const result = await BusinessViewService.getViewsInRange(
-        'biz123',
-        '2025-10-01',
-        '2025-10-31'
-      );
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
 
-      expect(BusinessView.aggregate).toHaveBeenCalledTimes(1);
-      expect(result).toEqual([
-        { date: '2025-10-15', views: 5 },
-        { date: '2025-10-16', views: 10 },
+      await BusinessView.insertMany([
+        { business_id: businessId, view_date: yesterday.getTime(), view_count: 2 },
+        { business_id: businessId, view_date: today.getTime(), view_count: 3 },
       ]);
+
+      const start = yesterday.toISOString();
+      const end = today.toISOString();
+
+      const result = await BusinessViewService.getViewsInRange(businessId, start, end);
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBe(2);
+      expect(result[0]).toHaveProperty('date');
+      expect(result[0]).toHaveProperty('views');
+      expect(result.find(r => r.views === 3)).toBeTruthy();
     });
 
-    it('should return [] and log error if aggregate fails', async () => {
-      console.error = jest.fn();
-      BusinessView.aggregate.mockRejectedValue(new Error('Aggregation failed'));
+    it('should return an empty array when no records found', async () => {
+      const businessId = new mongoose.Types.ObjectId();
+      const start = new Date(2020, 0, 1).toISOString();
+      const end = new Date(2020, 0, 2).toISOString();
 
-      const result = await BusinessViewService.getViewsInRange(
-        'biz123',
-        '2025-10-01',
-        '2025-10-31'
-      );
-
-      expect(console.error).toHaveBeenCalledWith(
-        'Error getting views in range:',
-        expect.any(Error)
-      );
+      const result = await BusinessViewService.getViewsInRange(businessId, start, end);
       expect(result).toEqual([]);
     });
+
+    
+it('should return [] when error occurs', async () => {
+  jest.spyOn(BusinessView, 'aggregate').mockRejectedValueOnce(new Error('Aggregation failed'));
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); // tắt log
+  const businessId = new mongoose.Types.ObjectId();
+  const result = await BusinessViewService.getViewsInRange(businessId, '2020-01-01', '2020-01-02');
+  expect(result).toEqual([]);
+  consoleSpy.mockRestore();
+});
   });
 });

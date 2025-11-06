@@ -1,224 +1,217 @@
-const FeedbackService = require("../services/feedback.service");
-const Feedback = require("../entity/module/feedback.model");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const FeedbackService = require('../services/feedback.service');
+const Feedback = require('../entity/module/feedback.model');
 
-jest.mock("../entity/module/feedback.model");
+mongoose.model('business', new mongoose.Schema({ business_name: String }));
+mongoose.model('product', new mongoose.Schema({ product_name: String }));
+let mongoServer;
 
-describe("FeedbackService", () => {
-  afterEach(() => jest.clearAllMocks());
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+});
 
-  // === CREATE ===
-  describe("createFeedback()", () => {
-    it("✅ Nên tạo feedback thành công", async () => {
-      const mockData = {
-        business_id: "507f1f77bcf86cd799439011",
-        product_id: "507f191e810c19729de860ea",
-        feedback_comment: "Great product!",
-      };
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
 
-      const savedFeedback = { _id: "1", ...mockData };
+afterEach(async () => {
+  await Feedback.deleteMany();
+});
 
-      Feedback.mockImplementation(() => ({
-        save: jest.fn().mockResolvedValue(savedFeedback),
-      }));
+// Mock populate to avoid schema registration errors
+jest.spyOn(Feedback.prototype, 'populate').mockImplementation(function () {
+  return this;
+});
 
-      const result = await FeedbackService.createFeedback(mockData);
+describe('FeedbackService', () => {
+  const sampleFeedback = {
+    user_id: 'user123',
+    business_id: new mongoose.Types.ObjectId(),
+    feedback_type: 'business',
+    feedback_comment: 'Great place!',
+    feedback_rating: 5,
+    feedback_like: 0,
+    feedback_dislike: 0,
+  };
 
-      expect(result).toEqual(savedFeedback);
-      expect(Feedback).toHaveBeenCalledWith({
-        ...mockData,
-        business_id: new mongoose.Types.ObjectId(mockData.business_id),
-        product_id: new mongoose.Types.ObjectId(mockData.product_id),
-      });
+  // -------------------- CREATE --------------------
+  describe('createFeedback', () => {
+    it('should create a new feedback successfully', async () => {
+      const result = await FeedbackService.createFeedback(sampleFeedback);
+      expect(result).toHaveProperty('_id');
+      expect(result.feedback_comment).toBe('Great place!');
     });
 
-    it("❌ Nên báo lỗi nếu save thất bại", async () => {
-      Feedback.mockImplementation(() => ({
-        save: jest.fn().mockRejectedValue(new Error("DB Error")),
-      }));
+    it('should not throw when empty data (schema allows it)', async () => {
+      const result = await FeedbackService.createFeedback({});
+      expect(result).toHaveProperty('_id');
+      expect(result.feedback_status).toBeDefined();
+    });
 
-      await expect(FeedbackService.createFeedback({}))
-        .rejects
-        .toThrow("Error creating feedback: DB Error");
+    it('should convert business_id to ObjectId', async () => {
+      const feedbackData = { ...sampleFeedback, business_id: String(new mongoose.Types.ObjectId()) };
+      const result = await FeedbackService.createFeedback(feedbackData);
+      expect(result.business_id).toBeInstanceOf(mongoose.Types.ObjectId);
     });
   });
 
-  // === GET ALL ===
-  describe("getAllFeedbacks()", () => {
-    it("✅ Nên trả về tất cả feedbacks", async () => {
-      const mockFeedbacks = [{ _id: "1" }, { _id: "2" }];
-
-      // Mock chain .populate().populate()
-      const mockPopulate = jest.fn().mockReturnThis();
-      const mockChain = {
-        populate: mockPopulate,
-        then: (resolve) => resolve(mockFeedbacks),
-      };
-      Feedback.find.mockReturnValue(mockChain);
-
+  // -------------------- GET ALL --------------------
+  describe('getAllFeedbacks', () => {
+    it('should return empty array when no feedbacks exist', async () => {
       const result = await FeedbackService.getAllFeedbacks();
-
-      expect(result).toEqual(mockFeedbacks);
-      expect(Feedback.find).toHaveBeenCalled();
+      expect(result).toEqual([]);
     });
 
-    it("❌ Nên báo lỗi khi query thất bại", async () => {
-      Feedback.find.mockImplementation(() => {
-        throw new Error("Failed to fetch");
+    it('should return all feedbacks', async () => {
+      await Feedback.create(sampleFeedback);
+      const result = await FeedbackService.getAllFeedbacks();
+      expect(result.length).toBe(1);
+      expect(result[0].feedback_comment).toBe('Great place!');
+    });
+  });
+
+  // -------------------- GET BY ID --------------------
+  describe('getFeedbackById', () => {
+    it('should get feedback by ID', async () => {
+      const fb = await Feedback.create(sampleFeedback);
+      const result = await FeedbackService.getFeedbackById(fb._id);
+      expect(result.feedback_comment).toBe('Great place!');
+    });
+
+    it('should throw when ID invalid', async () => {
+      await expect(FeedbackService.getFeedbackById('123')).rejects.toThrow(/Invalid feedback ID/);
+    });
+
+    it('should throw when not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.getFeedbackById(fakeId)).rejects.toThrow(/Feedback not found/);
+    });
+  });
+
+  // -------------------- FIND BY BUSINESS --------------------
+  describe('findFeedbackByBusinessId', () => {
+    it('should return feedbacks by business ID', async () => {
+      const fb = await Feedback.create(sampleFeedback);
+      const result = await FeedbackService.findFeedbackByBusinessId(fb.business_id);
+      expect(result.length).toBe(1);
+    });
+
+    it('should return empty array when none found', async () => {
+      const result = await FeedbackService.findFeedbackByBusinessId(new mongoose.Types.ObjectId());
+      expect(result).toEqual([]);
+    });
+  });
+
+  // -------------------- FIND BY PRODUCT --------------------
+  describe('findFeedbackByProductId', () => {
+    it('should return feedbacks by product ID', async () => {
+      const productFeedback = await Feedback.create({
+        ...sampleFeedback,
+        feedback_type: 'product',
+        product_id: new mongoose.Types.ObjectId(),
       });
+      const result = await FeedbackService.findFeedbackByProductId(productFeedback.product_id);
+      expect(result.length).toBe(1);
+    });
 
-      await expect(FeedbackService.getAllFeedbacks())
-        .rejects
-        .toThrow("Error fetching feedbacks: Failed to fetch");
+    it('should return empty array when none found', async () => {
+      const result = await FeedbackService.findFeedbackByProductId(new mongoose.Types.ObjectId());
+      expect(result).toEqual([]);
     });
   });
 
-  // === GET BY ID ===
-  describe("getFeedbackById()", () => {
-    it("✅ Nên trả về feedback khi tồn tại", async () => {
-      const mockFeedback = { _id: "1", feedback_comment: "Nice" };
-
-      const mockPopulate = jest.fn().mockReturnThis();
-      const mockChain = {
-        populate: mockPopulate,
-        then: (resolve) => resolve(mockFeedback),
-      };
-      Feedback.findById.mockReturnValue(mockChain);
-
-      const result = await FeedbackService.getFeedbackById("507f1f77bcf86cd799439011");
-
-      expect(result).toEqual(mockFeedback);
+  // -------------------- UPDATE --------------------
+  describe('updateFeedback', () => {
+    it('should update feedback comment successfully', async () => {
+      const fb = await Feedback.create(sampleFeedback);
+      const updated = await FeedbackService.updateFeedback(fb._id, { feedback_comment: 'Updated!' });
+      expect(updated.feedback_comment).toBe('Updated!');
     });
 
-    it("❌ Nên báo lỗi khi ID không hợp lệ", async () => {
-      await expect(FeedbackService.getFeedbackById("invalid_id"))
-        .rejects
-        .toThrow("Error fetching feedback: Invalid feedback ID");
+    it('should throw if invalid ID', async () => {
+      await expect(FeedbackService.updateFeedback('123', {})).rejects.toThrow(/Invalid feedback ID/);
     });
 
-    it("❌ Nên báo lỗi khi không tìm thấy feedback", async () => {
-      const mockPopulate = jest.fn().mockReturnThis();
-      const mockChain = {
-        populate: mockPopulate,
-        then: (resolve) => resolve(null),
-      };
-      Feedback.findById.mockReturnValue(mockChain);
-
-      const validId = new mongoose.Types.ObjectId().toString();
-
-      await expect(FeedbackService.getFeedbackById(validId))
-        .rejects
-        .toThrow("Feedback not found");
+    it('should throw if feedback not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.updateFeedback(fakeId, { feedback_comment: 'x' }))
+        .rejects.toThrow(/Feedback not found/);
     });
   });
 
-  // === UPDATE ===
-  describe("updateFeedback()", () => {
-    it("✅ Nên cập nhật feedback thành công", async () => {
-      const updated = { _id: "1", feedback_comment: "Updated!" };
-      Feedback.findByIdAndUpdate.mockResolvedValue(updated);
-
-      const result = await FeedbackService.updateFeedback(
-        "507f1f77bcf86cd799439011",
-        { feedback_comment: "Updated!" }
-      );
-
-      expect(result).toEqual(updated);
-      expect(Feedback.findByIdAndUpdate).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
-        { feedback_comment: "Updated!" },
-        { new: true, runValidators: true }
-      );
+  // -------------------- DELETE --------------------
+  describe('deleteFeedback', () => {
+    it('should delete feedback successfully', async () => {
+      const fb = await Feedback.create(sampleFeedback);
+      const result = await FeedbackService.deleteFeedback(fb._id);
+      expect(result._id.toString()).toBe(fb._id.toString());
     });
 
-    it("❌ Nên báo lỗi khi ID không hợp lệ", async () => {
-      await expect(FeedbackService.updateFeedback("invalid_id", {}))
-        .rejects
-        .toThrow("Invalid feedback ID");
+    it('should throw if invalid ID', async () => {
+      await expect(FeedbackService.deleteFeedback('123')).rejects.toThrow(/Invalid feedback ID/);
     });
 
-    it("❌ Nên báo lỗi khi không tìm thấy feedback", async () => {
-      Feedback.findByIdAndUpdate.mockResolvedValue(null);
-
-      const validId = new mongoose.Types.ObjectId().toString();
-
-      await expect(FeedbackService.updateFeedback(validId, {}))
-        .rejects
-        .toThrow("Feedback not found");
+    it('should throw if not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.deleteFeedback(fakeId)).rejects.toThrow(/Feedback not found/);
     });
   });
 
-  // === DELETE ===
-  describe("deleteFeedback()", () => {
-    it("✅ Nên xóa feedback thành công", async () => {
-      const mockFeedback = { _id: "1" };
-      Feedback.findByIdAndDelete.mockResolvedValue(mockFeedback);
-
-      const result = await FeedbackService.deleteFeedback("507f1f77bcf86cd799439011");
-      expect(result).toEqual(mockFeedback);
+  // -------------------- INCREMENT LIKE --------------------
+  describe('incrementLike', () => {
+    it('should increase feedback_like by 1', async () => {
+      const fb = await Feedback.create({ ...sampleFeedback, feedback_like: 2 });
+      const updated = await FeedbackService.incrementLike(fb._id);
+      expect(updated.feedback_like).toBe(3);
     });
 
-    it("❌ Nên báo lỗi khi không tìm thấy feedback", async () => {
-      Feedback.findByIdAndDelete.mockResolvedValue(null);
+    it('should throw if invalid ID', async () => {
+      await expect(FeedbackService.incrementLike('123')).rejects.toThrow(/Invalid feedback ID/);
+    });
 
-      const validId = new mongoose.Types.ObjectId().toString();
-      await expect(FeedbackService.deleteFeedback(validId))
-        .rejects
-        .toThrow("Feedback not found");
+    it('should throw if not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.incrementLike(fakeId)).rejects.toThrow(/Feedback not found/);
     });
   });
 
-  // === INCREMENT LIKE ===
-  describe("incrementLike()", () => {
-    it("✅ Nên tăng feedback_like", async () => {
-      const updated = { _id: "1", feedback_like: 5 };
-      Feedback.findByIdAndUpdate.mockResolvedValue(updated);
+  // -------------------- INCREMENT DISLIKE --------------------
+  describe('incrementDislike', () => {
+    it('should increase feedback_dislike by 1', async () => {
+      const fb = await Feedback.create({ ...sampleFeedback, feedback_dislike: 1 });
+      const updated = await FeedbackService.incrementDislike(fb._id);
+      expect(updated.feedback_dislike).toBe(2);
+    });
 
-      const result = await FeedbackService.incrementLike("507f1f77bcf86cd799439011");
+    it('should throw if invalid ID', async () => {
+      await expect(FeedbackService.incrementDislike('123')).rejects.toThrow(/Invalid feedback ID/);
+    });
 
-      expect(result).toEqual(updated);
-      expect(Feedback.findByIdAndUpdate).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
-        { $inc: { feedback_like: 1 } },
-        { new: true }
-      );
+    it('should throw if not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.incrementDislike(fakeId)).rejects.toThrow(/Feedback not found/);
     });
   });
 
-  // === INCREMENT DISLIKE ===
-  describe("incrementDislike()", () => {
-    it("✅ Nên tăng feedback_dislike", async () => {
-      const updated = { _id: "1", feedback_dislike: 2 };
-      Feedback.findByIdAndUpdate.mockResolvedValue(updated);
-
-      const result = await FeedbackService.incrementDislike("507f1f77bcf86cd799439011");
-
-      expect(result).toEqual(updated);
-      expect(Feedback.findByIdAndUpdate).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
-        { $inc: { feedback_dislike: 1 } },
-        { new: true }
-      );
+  // -------------------- UPDATE RESPONSE --------------------
+  describe('updateFeedbackResponse', () => {
+    it('should update feedback response successfully', async () => {
+      const fb = await Feedback.create(sampleFeedback);
+      const updated = await FeedbackService.updateFeedbackResponse(fb._id, 'Thank you!');
+      expect(updated.feedback_response).toBe('Thank you!');
     });
-  });
 
-  // === UPDATE RESPONSE ===
-  describe("updateFeedbackResponse()", () => {
-    it("✅ Nên cập nhật phản hồi thành công", async () => {
-      const updated = { _id: "1", feedback_response: "Thanks!" };
-      Feedback.findByIdAndUpdate.mockResolvedValue(updated);
+    it('should throw if invalid ID', async () => {
+      await expect(FeedbackService.updateFeedbackResponse('123', 'ok')).rejects.toThrow(/Invalid feedback ID/);
+    });
 
-      const result = await FeedbackService.updateFeedbackResponse(
-        "507f1f77bcf86cd799439011",
-        "Thanks!"
-      );
-
-      expect(result).toEqual(updated);
-      expect(Feedback.findByIdAndUpdate).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
-        { feedback_response: "Thanks!" },
-        { new: true, runValidators: true }
-      );
+    it('should throw if feedback not found', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      await expect(FeedbackService.updateFeedbackResponse(fakeId, 'ok')).rejects.toThrow(/Feedback not found/);
     });
   });
 });

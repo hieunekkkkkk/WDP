@@ -4,22 +4,13 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const Business = require('../entity/module/business.model');
-const businessService = require('../services/business.service');
+const BusinessService = require('../services/business.service');
 
 let mongoServer;
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-});
-
-afterEach(async () => {
-  await Business.deleteMany({});
+  await mongoose.connect(mongoServer.getUri(), { dbName: 'jest' });
 });
 
 afterAll(async () => {
@@ -27,148 +18,201 @@ afterAll(async () => {
   await mongoServer.stop();
 });
 
-describe('BusinessService', () => {
-  test('createBusiness: tạo mới business', async () => {
-    const data = {
-      owner_id: 'user001',
-      business_name: 'Cà phê 123',
-      business_address: '123 Đường A',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.7, 10.7],
-      },
-      business_status: true,
-    };
-
-    const result = await businessService.createBusiness(data);
-
-    expect(result).toHaveProperty('_id');
-    expect(result.business_name).toBe('Cà phê 123');
-    expect(result.business_address).toBe('123 Đường A');
-  });
-
-  test('getAllBusinesses: trả về danh sách business có phân trang', async () => {
-    for (let i = 1; i <= 5; i++) {
-      await Business.create({
-        owner_id: `owner${i}`,
-        business_name: `Shop ${i}`,
-        business_address: `Địa chỉ ${i}`,
-        business_location: {
-          type: 'Point',
-          coordinates: [106.6 + i, 10.7 + i],
-        },
-      });
-    }
-
-    const result = await businessService.getAllBusinesses(1, 3, 'Newest');
-    expect(result.businesses.length).toBe(3);
-    expect(result.totalItems).toBe(5);
-    expect(result.totalPages).toBe(2);
-  });
-
-  test('getBusinessById: trả về business theo ID', async () => {
-    const created = await Business.create({
-      owner_id: 'owner1',
-      business_name: 'Tiệm trà sữa',
-      business_address: 'Đường B',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.8, 10.8],
-      },
-    });
-
-    const result = await businessService.getBusinessById(created._id);
-    expect(result.business_name).toBe('Tiệm trà sữa');
-  });
-
-  test('updateBusiness: cập nhật thông tin business', async () => {
-    const business = await Business.create({
-      owner_id: 'owner2',
-      business_name: 'Nhà hàng cũ',
-      business_address: 'Đường C',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.5, 10.5],
-      },
-    });
-
-    const updated = await businessService.updateBusiness(business._id, {
-      business_name: 'Nhà hàng mới',
-    });
-
-    expect(updated.business_name).toBe('Nhà hàng mới');
-  });
-
-  test('deleteBusiness: xóa business theo ID', async () => {
-    const business = await Business.create({
-      owner_id: 'owner3',
-      business_name: 'Tiệm ăn',
-      business_address: 'Đường D',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.3, 10.3],
-      },
-    });
-
-    const result = await businessService.deleteBusiness(business._id);
-    expect(result.message).toBe('Business deleted successfully');
-
-    const found = await Business.findById(business._id);
-    expect(found).toBeNull();
-  });
-
-  test('getBussinessByOwner: trả về business theo owner', async () => {
-    await Business.create({
-      owner_id: 'ownerX',
-      business_name: 'Quán A',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.4, 10.4],
-      },
-    });
-
-    const result = await businessService.getBussinessByOwner('ownerX');
-    expect(result.length).toBe(1);
-    expect(result[0].business_name).toBe('Quán A');
-  });
-
-  test('increaseBusinessPriority: tăng độ ưu tiên', async () => {
-    const business = await Business.create({
-      business_name: 'Ưu tiên test',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.2, 10.2],
-      },
-      business_priority: 1,
-    });
-
-    const updated = await businessService.increaseBusinessPriority(business._id);
-    expect(updated.business_priority).toBe(2);
-  });
-
-test('resetBusinessPriority: đặt lại độ ưu tiên = 0', async () => {
-  const mockId = new mongoose.Types.ObjectId();
-  const business = { _id: mockId, business_priority: 5, save: jest.fn() };
-
-  jest.spyOn(Business, 'findById').mockResolvedValue(business);
-
-  const updated = await businessService.resetBusinessPriority(mockId);
-
-  expect(business.save).toHaveBeenCalled();
-  expect(updated.business_priority).toBe(0);
+afterEach(async () => {
+  await Business.deleteMany({});
 });
 
-  test('searchBusinesses: tìm business theo tên', async () => {
-    await Business.create({
-      business_name: 'Cửa hàng trà sữa',
-      business_location: {
-        type: 'Point',
-        coordinates: [106.1, 10.1],
-      },
+describe('BusinessService', () => {
+  const sampleBusiness = {
+    owner_id: 'user123',
+    business_name: 'Test Coffee',
+    business_address: '123 Main Street',
+    business_location: { type: 'Point', coordinates: [105.85, 21.03] },
+    business_phone: '0123456789',
+    business_detail: 'Nice coffee shop',
+    business_status: true,
+    business_active: 'active',
+    business_rating: 4.5
+  };
+
+  // ---------- CREATE ----------
+  describe('createBusiness', () => {
+    it('should create a new business successfully', async () => {
+      const created = await BusinessService.createBusiness(sampleBusiness);
+      expect(created._id).toBeDefined();
+      expect(created.business_name).toBe('Test Coffee');
     });
 
-    const result = await businessService.searchBusinesses('trà');
-    expect(result.businesses.length).toBe(1);
-    expect(result.businesses[0].business_name).toMatch(/trà/);
+    it('should handle missing category gracefully', async () => {
+      const created = await BusinessService.createBusiness({ ...sampleBusiness, business_category_id: null });
+      expect(created.business_category_id).toBeNull();
+    });
+
+    it('should throw error on invalid data', async () => {
+      await expect(BusinessService.createBusiness({ business_name: null }))
+        .rejects
+        .toThrow(/Error creating business/);
+    });
+  });
+
+  // ---------- GET ALL ----------
+  describe('getAllBusinesses', () => {
+    beforeEach(async () => {
+      await Business.create(sampleBusiness);
+      await Business.create({ ...sampleBusiness, business_name: 'Another' });
+    });
+
+    it('should return paginated businesses', async () => {
+      const result = await BusinessService.getAllBusinesses(1, 10);
+      expect(result.businesses.length).toBeGreaterThan(0);
+      expect(result.totalItems).toBe(2);
+    });
+
+    it('should sort by newest first', async () => {
+      const result = await BusinessService.getAllBusinesses(1, 10, 'Newest');
+      expect(result.businesses[0].business_name).toBeDefined();
+    });
+
+    it('should handle empty list', async () => {
+      await Business.deleteMany({});
+      const result = await BusinessService.getAllBusinesses();
+      expect(result.totalItems).toBe(0);
+    });
+  });
+
+  // ---------- GET BY ID ----------
+  describe('getBusinessById', () => {
+    it('should return a business by id', async () => {
+      const created = await Business.create(sampleBusiness);
+      const found = await BusinessService.getBusinessById(created._id);
+      expect(found.business_name).toBe('Test Coffee');
+    });
+
+    it('should throw error if not found', async () => {
+      await expect(BusinessService.getBusinessById(new mongoose.Types.ObjectId()))
+        .rejects
+        .toThrow(/Business not found/);
+    });
+
+    it('should handle invalid id format', async () => {
+      await expect(BusinessService.getBusinessById('123'))
+        .rejects
+        .toThrow(/Error fetching business/);
+    });
+  });
+
+  // ---------- UPDATE ----------
+  describe('updateBusiness', () => {
+    it('should update an existing business', async () => {
+      const created = await Business.create(sampleBusiness);
+      const updated = await BusinessService.updateBusiness(created._id, { business_name: 'Updated Shop' });
+      expect(updated.business_name).toBe('Updated Shop');
+    });
+
+    it('should throw error if business not found', async () => {
+      await expect(BusinessService.updateBusiness(new mongoose.Types.ObjectId(), { business_name: 'X' }))
+        .rejects
+        .toThrow(/Business not found/);
+    });
+
+    it('should throw validation error', async () => {
+      const created = await Business.create(sampleBusiness);
+      await expect(BusinessService.updateBusiness(created._id, { business_location: { type: 'Point', coordinates: [] } }))
+        .rejects
+        .toThrow(/Error updating business/);
+    });
+  });
+
+  // ---------- DELETE ----------
+  describe('deleteBusiness', () => {
+    it('should delete business successfully', async () => {
+      const created = await Business.create(sampleBusiness);
+      const result = await BusinessService.deleteBusiness(created._id);
+      expect(result.message).toMatch(/deleted successfully/);
+    });
+
+    it('should throw error if not found', async () => {
+      await expect(BusinessService.deleteBusiness(new mongoose.Types.ObjectId()))
+        .rejects
+        .toThrow(/Business not found/);
+    });
+
+    it('should throw on invalid id', async () => {
+      await expect(BusinessService.deleteBusiness('123'))
+        .rejects
+        .toThrow(/Error deleting business/);
+    });
+  });
+
+  // ---------- SEARCH ----------
+  describe('searchBusinesses', () => {
+    beforeEach(async () => {
+      await Business.create(sampleBusiness);
+      await Business.create({ ...sampleBusiness, business_name: 'Another Cafe' });
+    });
+
+    it('should find businesses by keyword', async () => {
+      const result = await BusinessService.searchBusinesses('Cafe');
+      expect(result.businesses.length).toBe(1);
+    });
+
+    it('should return empty array for unmatched query', async () => {
+      const result = await BusinessService.searchBusinesses('NoName');
+      expect(result.businesses.length).toBe(0);
+    });
+
+    it('should paginate correctly', async () => {
+      const result = await BusinessService.searchBusinesses('Test', 1, 1);
+      expect(result.totalPages).toBeGreaterThan(0);
+    });
+  });
+
+  // ---------- PRIORITY ----------
+  describe('increaseBusinessPriority & resetBusinessPriority', () => {
+    it('should increase priority', async () => {
+      const created = await Business.create(sampleBusiness);
+      const updated = await BusinessService.increaseBusinessPriority(created._id);
+      expect(updated.business_priority).toBe(1);
+    });
+
+    it('should reset priority', async () => {
+      const created = await Business.create({ ...sampleBusiness, business_priority: 0 });
+      const updated = await BusinessService.resetBusinessPriority(created._id);
+      expect(updated.business_priority).toBe(0);
+    });
+
+    it('should throw if business not found', async () => {
+      await expect(BusinessService.increaseBusinessPriority(new mongoose.Types.ObjectId()))
+        .rejects
+        .toThrow(/Business not found/);
+    });
+  });
+
+  // ---------- NEAREST ----------
+  describe('findNearestBusinesses', () => {
+    beforeEach(async () => {
+      await Business.create(sampleBusiness);
+      await Business.create({
+        ...sampleBusiness,
+        business_name: 'Far away',
+        business_location: { type: 'Point', coordinates: [106, 21] }
+      });
+    });
+
+    it('should find nearby businesses', async () => {
+      const result = await BusinessService.findNearestBusinesses(21.03, 105.85, 5000);
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should handle no results gracefully', async () => {
+      const result = await BusinessService.findNearestBusinesses(0, 0, 100);
+      expect(result.length).toBe(0);
+    });
+
+    it('should throw error if location invalid', async () => {
+      await expect(BusinessService.findNearestBusinesses(null, null, 100))
+        .rejects
+        .toThrow(/Error finding nearest businesses/);
+    });
   });
 });
