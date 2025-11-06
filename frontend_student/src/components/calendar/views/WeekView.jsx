@@ -1,5 +1,6 @@
 import React from "react";
-import{ levelColor } from "../../../utils/calendar-utils";
+import { levelColor } from "../../../utils/calendar-utils";
+import "../style/CalendarViews.css";
 const calculatePosition = (event) => {
   const start = new Date(event.start_time);
   const end = new Date(event.end_time);
@@ -33,7 +34,10 @@ const DayColumn = ({ tasks, date }) => {
             task.task_status === "đã huỷ"
               ? "orange"
               : levelColor[task.task_level] || "gray";
-          const daysDuration = calculateTaskDuration(task.start_time, task.end_time);
+          const daysDuration = calculateTaskDuration(
+            task.start_time,
+            task.end_time
+          );
           const isMultiDay = daysDuration > 1;
 
           return (
@@ -48,7 +52,9 @@ const DayColumn = ({ tasks, date }) => {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-                {isMultiDay && <span className="event-badge">({daysDuration}d)</span>}
+                {isMultiDay && (
+                  <span className="event-badge">({daysDuration}d)</span>
+                )}
               </div>
             </div>
           );
@@ -65,7 +71,8 @@ export default function WeekView({ tasks, currentDate }) {
     start.setDate(diff);
     return Array.from(
       { length: 7 },
-      (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+      (_, i) =>
+        new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
     );
   };
 
