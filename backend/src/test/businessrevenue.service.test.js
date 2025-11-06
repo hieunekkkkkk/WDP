@@ -5,12 +5,17 @@ const BusinessRevenueService = require('../services/businessRevenue.service');
 
 jest.mock('../entity/module/business_revenue.model');
 jest.mock('xlsx');
+
 beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
+
 describe('BusinessRevenueService', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  // =============================
+  // 🧩 CREATE REVENUE
+  // =============================
   describe('createRevenue', () => {
     it('should create and save a new revenue record', async () => {
       const mockSave = jest.fn().mockResolvedValue({
@@ -23,16 +28,17 @@ describe('BusinessRevenueService', () => {
         revenue_name: 'Test Revenue',
         revenue_amount: 1000
       }));
-const result = await BusinessRevenueService.createRevenue('123456789', {
-  revenue_name: 'Test Revenue',
-  revenue_description: 'Test description',
-  revenue_amount: 1000,
-});
 
-expect(result).toMatchObject({
-  revenue_name: 'Test Revenue',
-  revenue_amount: 1000,
-});
+      const result = await BusinessRevenueService.createRevenue('123456789', {
+        revenue_name: 'Test Revenue',
+        revenue_description: 'Test description',
+        revenue_amount: 1000,
+      });
+
+      expect(result).toMatchObject({
+        revenue_name: 'Test Revenue',
+        revenue_amount: 1000,
+      });
       expect(mockSave).toHaveBeenCalled();
     });
 
@@ -41,12 +47,35 @@ expect(result).toMatchObject({
         save: jest.fn().mockRejectedValue(new Error('Save failed'))
       }));
 
-      await expect(BusinessRevenueService.createRevenue('1', {
-        revenue_name: 'Error Test'
-      })).rejects.toThrow('Save failed');
+      await expect(
+        BusinessRevenueService.createRevenue('1', { revenue_name: 'Error Test' })
+      ).rejects.toThrow('Save failed');
+    });
+
+    it('should handle missing fields gracefully', async () => {
+      const mockSave = jest.fn().mockResolvedValue({
+        revenue_name: '',
+        revenue_amount: 0,
+        revenue_description: ''
+      });
+
+      BusinessRevenue.mockImplementation(() => ({
+        save: mockSave,
+        revenue_name: '',
+        revenue_amount: 0,
+        revenue_description: ''
+      }));
+
+      const result = await BusinessRevenueService.createRevenue('123', {});
+      expect(result).toBeDefined();
+      expect(result.revenue_amount).toBe(0);
+      expect(mockSave).toHaveBeenCalled();
     });
   });
 
+  // =============================
+  // 🧩 GET REVENUES
+  // =============================
   describe('getRevenues', () => {
     it('should return revenues sorted by date descending', async () => {
       const mockData = [{ revenue_name: 'A' }, { revenue_name: 'B' }];
@@ -58,8 +87,19 @@ expect(result).toMatchObject({
       expect(result).toEqual(mockData);
       expect(BusinessRevenue.find).toHaveBeenCalledWith({ business_id: 'biz123' });
     });
+
+    it('should throw error when DB fails', async () => {
+      BusinessRevenue.find.mockReturnValue({
+        sort: jest.fn().mockRejectedValue(new Error('DB error'))
+      });
+
+      await expect(BusinessRevenueService.getRevenues('biz123')).rejects.toThrow('DB error');
+    });
   });
 
+  // =============================
+  // 🧩 GET REVENUES IN RANGE
+  // =============================
   describe('getRevenuesInRange', () => {
     const validBizId = '507f191e810c19729de860ea';
 
@@ -90,8 +130,17 @@ expect(result).toMatchObject({
         BusinessRevenueService.getRevenuesInRange(validBizId, '2025-10-01', '2025-10-10')
       ).rejects.toThrow('Aggregate failed');
     });
+
+    it('should handle empty aggregation result', async () => {
+      BusinessRevenue.aggregate.mockResolvedValue([]);
+      const result = await BusinessRevenueService.getRevenuesInRange(validBizId, '2025-10-01', '2025-10-10');
+      expect(result).toEqual([]);
+    });
   });
 
+  // =============================
+  // 🧩 IMPORT REVENUES FROM EXCEL
+  // =============================
   describe('importRevenuesFromExcel', () => {
     it('should import data from Excel buffer', async () => {
       const mockBuffer = Buffer.from('fake_excel');
@@ -124,6 +173,17 @@ expect(result).toMatchObject({
       await expect(
         BusinessRevenueService.importRevenuesFromExcel('biz123', Buffer.from('data'))
       ).rejects.toThrow('Invalid file');
+    });
+
+    it('should handle empty Excel sheet gracefully', async () => {
+      const mockBuffer = Buffer.from('empty_excel');
+      const mockWorkbook = { SheetNames: ['Sheet1'], Sheets: { Sheet1: {} } };
+      xlsx.read.mockReturnValue(mockWorkbook);
+      xlsx.utils = { sheet_to_json: jest.fn().mockReturnValue([]) };
+      BusinessRevenue.insertMany.mockResolvedValue([]);
+
+      const result = await BusinessRevenueService.importRevenuesFromExcel('biz123', mockBuffer);
+      expect(result).toBe(0);
     });
   });
 });
