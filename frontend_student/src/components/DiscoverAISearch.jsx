@@ -30,9 +30,7 @@ function PersonalizedPage() {
   const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
 
-    const formattedText = `Yêu cầu: ${userMessage}, loại doanh nghiệp: ${type}, giá tối đa: ${
-      budget === "Tự chọn..." ? customBudget : budget.replace(/,/g, "")
-    }, đánh giá: ${rating} sao`;
+    const formattedText = `${userMessage}`;
 
     try {
       setIsLoadingPlaces(true);
@@ -98,11 +96,10 @@ function PersonalizedPage() {
                       <button
                         key={category.category_id}
                         onClick={() => setType(category.category_name)}
-                        className={`personalized-filter-button ${
-                          type === category.category_name
+                        className={`personalized-filter-button ${type === category.category_name
                             ? "personalized-active"
                             : ""
-                        }`}
+                          }`}
                       >
                         {category.category_name}
                       </button>
@@ -126,9 +123,8 @@ function PersonalizedPage() {
                       <button
                         key={option}
                         onClick={() => setBudget(option)}
-                        className={`personalized-filter-button ${
-                          budget === option ? "personalized-active" : ""
-                        }`}
+                        className={`personalized-filter-button ${budget === option ? "personalized-active" : ""
+                          }`}
                       >
                         {option}
                       </button>
@@ -159,9 +155,8 @@ function PersonalizedPage() {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span
                         key={star}
-                        className={`personalized-star-rating ${
-                          star <= rating ? "personalized-active" : ""
-                        }`}
+                        className={`personalized-star-rating ${star <= rating ? "personalized-active" : ""
+                          }`}
                         onClick={() => setRating(star)}
                       >
                         ★
@@ -233,9 +228,8 @@ function PersonalizedPage() {
                       </p>
                       <div className="discover-place-meta">
                         <span
-                          className={`discover-status ${
-                            place.business_status ? "open" : "closed"
-                          }`}
+                          className={`discover-status ${place.business_status ? "open" : "closed"
+                            }`}
                         >
                           {place.business_status
                             ? "Đang mở cửa"

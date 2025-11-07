@@ -16,19 +16,18 @@ class AiBotService {
         // Initialize Qdrant client
         this.qdrantClient = new QdrantClient({
             url: process.env.QDRANT_URL || 'http://localhost:6333',
-            // apiKey: process.env.QDRANT_API_KEY || undefined,
         });
 
         // Initialize Gemini embeddings
         this.embeddings = new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GEMINI_API_KEY,
-            modelName: 'embedding-001',
+            modelName: 'gemini-embedding-001',
         });
 
         // Initialize Gemini chat model
         this.chatModel = new ChatGoogleGenerativeAI({
             apiKey: process.env.GEMINI_API_KEY,
-            model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
             temperature: 0.7,
             maxOutputTokens: 2048,
         });
