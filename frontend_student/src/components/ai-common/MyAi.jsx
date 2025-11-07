@@ -238,15 +238,13 @@ export default function MyAi() {
 
     try {
       setLoading(true);
-      console.log(user.id);
-
       try {
         const botRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
         );
 
-        if (Array.isArray(botRes.data) && botRes.data.length > 0) {
-          setBot(botRes.data[0]);
+        if (botRes.data) {
+          setBot(botRes.data);
           return;
         }
 
@@ -257,7 +255,6 @@ export default function MyAi() {
         `${import.meta.env.VITE_BE_URL}/api/stack`
       );
       const raw = stackRes.data;
-      console.log(stackRes);
       const stacks = Array.isArray(raw) ? raw : raw.stacks || raw.data || [];
       const personal = pickStudentPersonalStack(stacks || []);
       setStack(personal || null);
