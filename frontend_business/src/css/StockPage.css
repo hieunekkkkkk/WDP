@@ -1,0 +1,171 @@
+/* === Bố cục trang Stock === */
+.stock-page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* === Thẻ Card === */
+.stock-table-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stock-table-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* === Header Bảng === */
+.stock-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.stock-table-title {
+  margin: 0;
+  font-size: 20px; /* Cỡ chữ cho tiêu đề */
+  font-weight: 600;
+}
+
+/* === Nút Thêm Sản Phẩm === */
+.stock-add-btn {
+  background-color: #283593;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stock-add-btn:hover {
+  background-color: #1a237e;
+}
+
+.stock-add-btn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.stock-add-btn:active {
+   transform: scale(0.98);
+}
+
+/* === Bảng Tồn Kho === */
+.stock-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stock-data-table th,
+.stock-data-table td {
+  padding: 16px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  vertical-align: middle; /* Căn giữa ảnh và chữ */
+}
+
+.stock-data-table th {
+  background: none;
+  color: #555;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.stock-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* === Cột Hành Động (Sửa/Xóa) === */
+.stock-action-buttons {
+  /* display: flex; */
+  gap: 8px;
+}
+
+.stock-action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.stock-action-btn.edit {
+  background-color: #ffc107;
+  color: black;
+}
+.stock-action-btn.edit:hover {
+  background-color: #e0a800;
+}
+
+.stock-action-btn.delete {
+  background-color: #dc3545;
+  color: white;
+  margin-left: 15px;
+}
+.stock-action-btn.delete:hover {
+  background-color: #c82333;
+}
+
+/* === Cụm Tăng/Giảm Tồn Kho === */
+.inline-stock-editor {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; 
+  gap: 8px;
+  max-width: 100px;
+  margin: 0; 
+}
+
+.inline-stock-editor span {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.inline-stock-btn {
+  background-color: #f1f3f5; 
+  border: 1px solid #ced4da;
+  color: #495057;
+  font-weight: bold;
+  border-radius: 50%; 
+  width: 24px;
+  height: 24px;
+  padding: 0; 
+  font-size: 16px;
+  line-height: 22px; 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inline-stock-btn:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.inline-stock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
