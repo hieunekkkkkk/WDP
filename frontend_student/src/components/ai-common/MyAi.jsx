@@ -235,21 +235,24 @@ export default function MyAi() {
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
+
     try {
       setLoading(true);
       console.log(user.id);
 
-      // 1) Kiểm tra user đã có bot hay chưa
-      //    BE cần hỗ trợ GET /api/aibot/owner/:userId
-      const botRes = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
-      );
-      if (Array.isArray(botRes.data) && botRes.data.length > 0) {
-        setBot(botRes.data[0]);
-        return;
-      }
+      try {
+        const botRes = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
+        );
 
-      // 2) Chưa có bot => chỉ hiển thị 1 gói duy nhất “Bot hỗ trợ cá nhân”
+        if (Array.isArray(botRes.data) && botRes.data.length > 0) {
+          setBot(botRes.data[0]);
+          return;
+        }
+
+      } catch (botErr) {
+        console.warn("Lỗi khi tìm bot (coi như chưa có bot):", botErr.message);
+      }
       const stackRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/stack`
       );
@@ -259,12 +262,12 @@ export default function MyAi() {
       const personal = pickStudentPersonalStack(stacks || []);
       setStack(personal || null);
     } catch (err) {
-      console.error("Lỗi tải My AI:", err);
+      console.error("Lỗi tải My AI (lỗi khi tải stack):", err);
       toast.error("Không thể tải My AI");
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, setBot, setStack]); // <-- Thêm setBot và setStack vào dependencies
 
   useEffect(() => {
     const p = new URLSearchParams(location.search);
