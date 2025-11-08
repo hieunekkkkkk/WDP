@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { io } from "socket.io-client";
-import { IoSend, IoAdd, IoClose } from "react-icons/io5";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSearchParams } from "react-router-dom";
+import axios from "axios";
+import io from "socket.io-client";
+import { IoAdd, IoSend, IoClose } from "react-icons/io5";
 import "../../css/MessagesPage.css";
-import { useCallback } from "react";
-
-const NOTI_STORAGE_KEY = "allNotifications";
 
 const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,8 +39,8 @@ const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
               key={biz._id}
               className="business-mess-chat-item"
               onClick={() => {
-                onSelectBusiness(biz); // Gọi hàm select
-                onClose(); // Đóng modal
+                onSelectBusiness(biz);
+                onClose();
               }}
             >
               <div className="business-mess-avatar-wrapper">
@@ -55,11 +52,6 @@ const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
               </div>
               <div className="business-mess-chat-info">
                 <p className="business-mess-chat-name">{biz.business_name}</p>
-                <p className="business-mess-chat-status">
-                  {biz.business_active === "active"
-                    ? "Đang hoạt động"
-                    : "Chưa kích hoạt"}
-                </p>
               </div>
             </div>
           ))}
@@ -72,319 +64,377 @@ const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
 const StudentMessagesPage = () => {
   const { user } = useUser();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [businessList, setBusinessList] = useState([]); // Danh sách cho Modal
-  const [conversations, setConversations] = useState([]); // Danh sách cho Sidebar
+  const [businessList, setBusinessList] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); // State cho modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentChatType, setCurrentChatType] = useState('human');
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
-
+  const currentChatIdRef = useRef(null);
+  const roomJoinedRef = useRef(false); // Track room join status
   const studentId = user?.id;
 
+  // Khởi tạo socket - CHỈ PHỤ THUỘC studentId
   useEffect(() => {
     if (!studentId) return;
 
     socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
       transports: ["websocket"],
     });
-    socketRef.current.emit("join", studentId);
+
+    socketRef.current.on("connect", () => {
+      console.log("✅ Student socket connected:", socketRef.current.id);
+
+      // Re-join room if we were in a chat
+      if (currentChatIdRef.current) {
+        console.log("🔄 Re-joining room after reconnect:", currentChatIdRef.current);
+        socketRef.current.emit("join_chat", currentChatIdRef.current);
+      }
+    });
 
     socketRef.current.on("receive_message", (msg) => {
-      if (msg.sender_id === selectedBusiness?.owner_id) {
-        setMessages((prev) => [
+      console.log("📩 Student received message:", msg);
+      console.log("🔍 Student ID:", studentId);
+      console.log("🔍 Current Chat ID:", currentChatIdRef.current);
+
+      // BỎ QUA tin nhắn của chính mình (đã có optimistic update)
+      if (msg.sender_id === studentId) {
+        console.log("⏭️ Skipping own message (already in UI):", msg.ts);
+        return;
+      }
+
+      // Cập nhật messages nếu thuộc chat hiện tại
+      setMessages((prev) => {
+        // Kiểm tra message thuộc chat nào
+        const belongsToCurrentChat = msg.chatId === currentChatIdRef.current;
+
+        console.log("🔍 Student checking message:", {
+          msgChatId: msg.chatId,
+          msgChatIdType: typeof msg.chatId,
+          currentChatId: currentChatIdRef.current,
+          currentChatIdType: typeof currentChatIdRef.current,
+          belongsToCurrentChat,
+          areEqual: msg.chatId === currentChatIdRef.current,
+          strictEqual: msg.chatId === currentChatIdRef.current
+        });
+
+        if (!belongsToCurrentChat) {
+          console.log("⏭️ Message doesn't belong to current chat");
+          return prev;
+        }
+
+        // Tránh duplicate
+        const exists = prev.some(m => m.id === msg.ts);
+        if (exists) {
+          console.log("⚠️ Message already exists:", msg.ts);
+          return prev;
+        }
+
+        // Tin nhắn từ người khác = received
+        const messageType = "received";
+
+        console.log("✅ Adding message:", {
+          ts: msg.ts,
+          sender_id: msg.sender_id,
+          studentId,
+          type: messageType
+        });
+
+        return [
           ...prev,
           {
-            id: Date.now(),
-            type: "received",
+            id: msg.ts,
             content: msg.message,
-            time: new Date(msg.ts).toLocaleString([], {
-              day: "2-digit",
-              month: "2-digit",
+            type: messageType,
+            time: new Date(msg.ts).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             }),
           },
-        ]);
-      }
+        ];
+      });
 
-      setConversations((prevConvos) => {
-        const convoIndex = prevConvos.findIndex(
-          (c) => c.business?.[0].owner_id === msg.sender_id
-        );
-
-        if (convoIndex === -1) {
-          const businessInfo = businessList.find(
-            (b) => b.owner_id === msg.sender_id
+      // Cập nhật conversation list
+      if (msg.sender_id === studentId || msg.receiver_id === studentId) {
+        setConversations((prevConvos) => {
+          const businessOwnerId = msg.sender_id === studentId ? msg.receiver_id : msg.sender_id;
+          const convoIndex = prevConvos.findIndex(
+            (c) => c.receiverId === businessOwnerId || c.senderId === businessOwnerId
           );
 
-          if (businessInfo) {
-            const newConvo = {
-              business: [businessInfo],
-              lastMessage: msg.message,
-              lastMessageSenderId: msg.sender_id,
-            };
-            return [newConvo, ...prevConvos];
-          }
-          return prevConvos;
-        }
+          if (convoIndex === -1) return prevConvos;
 
-        const updatedConvo = {
-          ...prevConvos[convoIndex],
-          lastMessage: msg.message,
-          lastMessageSenderId: msg.sender_id,
-        };
+          const updatedConvo = {
+            ...prevConvos[convoIndex],
+            lastMessage: msg.message,
+            lastMessageSenderId: msg.sender_id,
+          };
 
-        const newConvos = [
-          updatedConvo,
-          ...prevConvos.slice(0, convoIndex),
-          ...prevConvos.slice(convoIndex + 1),
-        ];
-        return newConvos;
-      });
+          return [
+            updatedConvo,
+            ...prevConvos.slice(0, convoIndex),
+            ...prevConvos.slice(convoIndex + 1),
+          ];
+        });
+      }
     });
-    return () => socketRef.current.disconnect();
-  }, [studentId, selectedBusiness, businessList]);
 
+    return () => socketRef.current?.disconnect();
+  }, [studentId]);  // Load danh sách businesses
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/business`
+          `${import.meta.env.VITE_BE_URL}/api/business?limit=100`
         );
-        setBusinessList(res.data.businesses || []);
+        const activeBusinesses = (res.data.businesses || []).filter(
+          (b) => b.business_active === "active"
+        );
+        setBusinessList(activeBusinesses);
       } catch (err) {
-        console.error("Error fetching business list:", err);
+        console.error("Error fetching businesses:", err);
       }
     };
     fetchBusinesses();
   }, []);
 
+  // Load conversations history
   useEffect(() => {
     if (!studentId) return;
 
-    const loadHistoriesAndDetails = async () => {
-      let histories = [];
+    const loadHistories = async () => {
       try {
-        const historyRes = await axios.get(
-          `${import.meta.env.VITE_BE_URL
-          }/api/conversation/user/${studentId}/histories`
+        const res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/user/${studentId}/histories`
         );
-        histories = historyRes.data || [];
+
+        const convos = await Promise.all(
+          res.data.map(async (conv) => {
+            const businessId = conv.senderId === studentId ? conv.receiverId : conv.senderId;
+
+            try {
+              const bizRes = await axios.get(
+                `${import.meta.env.VITE_BE_URL}/api/business/owner/${businessId}`
+              );
+              const business = bizRes.data;
+              const lastMsg = conv.conversation[conv.conversation.length - 1];
+
+              return {
+                chatId: conv.chatId,
+                senderId: conv.senderId,
+                receiverId: conv.receiverId,
+                type: conv.type,
+                business,
+                lastMessage: lastMsg?.message || "",
+                lastMessageSenderId: lastMsg?.sender_id || "",
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        setConversations(convos.filter(Boolean));
       } catch (err) {
-        console.error("Error fetching conversation histories:", err);
-        setConversations([]);
-        return;
+        console.error("Error loading histories:", err);
       }
-
-      if (histories.length === 0) {
-        setConversations([]);
-        return;
-      }
-
-      const conversationPromises = histories.map(async (history) => {
-        if (!history.conversation || history.conversation.length === 0) {
-          return null;
-        }
-
-        const ids = history.chatId.split("_");
-        if (ids.length < 4) return null;
-
-        const userId1 = ids[1];
-        const userId2 = ids[3];
-        const businessOwnerId =
-          "user_" + userId1 === studentId ? userId2 : userId1;
-
-        try {
-          const bizRes = await axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/business/owner/${"user_" + businessOwnerId
-            }`
-          );
-
-          const businessInfo = bizRes.data;
-
-          if (!businessInfo) return null;
-
-          const lastMessageObject =
-            history.conversation[history.conversation.length - 1];
-          return {
-            business: businessInfo,
-            lastMessage: lastMessageObject.message,
-            lastMessageSenderId: lastMessageObject.sender_id,
-          };
-        } catch (err) {
-          console.error(`Error fetching biz info for ${businessOwnerId}:`, err);
-          return null;
-        }
-      });
-
-      const processedConversations = (
-        await Promise.all(conversationPromises)
-      ).filter(Boolean);
-
-      setConversations(processedConversations);
     };
 
-    loadHistoriesAndDetails();
+    loadHistories();
   }, [studentId]);
+
+  // Chọn business và load conversation
   const handleSelectBusiness = useCallback(
     async (biz) => {
+      if (!studentId) return;
+
       setSelectedBusiness(biz);
       setMessages([]);
+      roomJoinedRef.current = false; // Reset room join status
+
+      const businessId = biz.owner_id;
 
       try {
-        const storedNotis = localStorage.getItem(NOTI_STORAGE_KEY);
-        if (storedNotis) {
-          let notifications = JSON.parse(storedNotis);
-          const updatedNotis = notifications.filter(
-            (noti) => noti.sender_id !== biz.owner_id
-          );
-
-          localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updatedNotis));
-
-          window.dispatchEvent(new CustomEvent("notificationsUpdated"));
-        }
-      } catch (err) {
-        console.error("Lỗi khi xóa thông báo:", err);
-      }
-      if (!studentId) return;
-      try {
-        const res = await axios.request({
-          method: "post",
-          url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
-          data: {
+        const res = await axios.post(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
+          {
             sender_id: studentId,
-            receiver_id: biz.owner_id,
-          },
-        });
-        const chatHistory = res.data.history || [];
-        const formattedHistory = chatHistory.map((msg) => ({
+            receiver_id: businessId,
+          }
+        );
+
+        const { chatId, type, history } = res.data;
+        setCurrentChatId(chatId);
+        currentChatIdRef.current = chatId; // Sync ref
+        setCurrentChatType(type);
+
+        console.log("🔗 Joining chat room:", chatId);
+
+        // Join room sau khi socket connected
+        if (socketRef.current) {
+          if (socketRef.current.connected) {
+            console.log("🔌 Student socket already connected, joining room immediately");
+            socketRef.current.emit("join_chat", chatId);
+            roomJoinedRef.current = true;
+            console.log("✅ Room join emitted");
+          } else {
+            console.log("⏳ Student socket not connected, waiting for connect event");
+            socketRef.current.once("connect", () => {
+              console.log("🔌 Student socket connected, now joining room");
+              socketRef.current.emit("join_chat", chatId);
+              roomJoinedRef.current = true;
+              console.log("✅ Room join emitted");
+            });
+          }
+        } else {
+          console.error("❌ Student socketRef.current is null!");
+        }
+
+        // Parse history - XÁC ĐỊNH sent/received DỰA VÀO sender_id
+        const parsedMessages = history.map((msg) => ({
           id: msg.ts,
-          type: msg.sender_id === studentId ? "sent" : "received",
           content: msg.message,
-          time: new Date(msg.ts).toLocaleString([], {
-            day: "2-digit",
-            month: "2-digit",
+          type: msg.sender_id === studentId ? "sent" : "received",
+          time: new Date(msg.ts).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
         }));
-        setMessages(formattedHistory);
+
+        setMessages(parsedMessages);
       } catch (err) {
-        console.error("Error fetching chat history:", err);
-        setMessages([]);
+        console.error("Error loading conversation:", err);
       }
     },
     [studentId]
   );
 
-  useEffect(() => {
-    const ownerIdFromUrl = searchParams.get("ownerId");
-
-    if (ownerIdFromUrl && businessList.length > 0 && studentId) {
-      const businessToSelect = businessList.find(
-        (b) => b.owner_id === ownerIdFromUrl
-      );
-
-      if (businessToSelect) {
-        handleSelectBusiness(businessToSelect);
-
-        setSearchParams({}, { replace: true });
-      }
-    }
-  }, [
-    businessList,
-    searchParams,
-    setSearchParams,
-    handleSelectBusiness,
-    studentId,
-  ]);
-
+  // Gửi tin nhắn
   const handleSendMessage = async () => {
-    if (!message.trim() || !selectedBusiness || !studentId) return;
+    if (!message.trim() || !currentChatId || !selectedBusiness) return;
 
+    // Đảm bảo đã join room
+    if (!roomJoinedRef.current && socketRef.current?.connected) {
+      console.log("⚠️ Not in room yet, joining now...");
+      socketRef.current.emit("join_chat", currentChatId);
+      roomJoinedRef.current = true;
+      // Đợi một chút để join hoàn tất
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const businessId = selectedBusiness.owner_id;
     const messageContent = message.trim();
-    const currentReceiverId = selectedBusiness.owner_id;
-    const currentChatId = `${studentId}_${currentReceiverId}`;
-    const currentSelectedBusiness = selectedBusiness;
+    const tempId = Date.now();
 
-    const newMsg = {
-      id: Date.now(),
-      type: "sent",
+    // 1. CẬP NHẬT UI NGAY LẬP TỨC (Optimistic Update)
+    const optimisticMessage = {
+      id: tempId,
       content: messageContent,
-      time: new Date().toLocaleString([], {
-        day: "2-digit",
-        month: "2-digit",
+      type: "sent",
+      time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
-    setMessages((prev) => [...prev, newMsg]);
+
+    setMessages((prev) => [...prev, optimisticMessage]);
     setMessage("");
 
-    setConversations((prevConvos) => {
-      const convoIndex = prevConvos.findIndex(
-        (c) => c.business?.[0].owner_id === currentReceiverId
-      );
-
-      if (convoIndex === -1) {
-        const newBizInfo = businessList.find(
-          (b) => b.owner_id === currentReceiverId
-        );
-        return [
-          {
-            business: [newBizInfo || currentSelectedBusiness],
-            lastMessage: messageContent,
-            lastMessageSenderId: studentId,
-          },
-          ...prevConvos,
-        ];
-      }
-
-      const updatedConvo = {
-        ...prevConvos[convoIndex],
-        lastMessage: messageContent,
-        lastMessageSenderId: studentId,
-      };
-      const newConvos = [
-        updatedConvo,
-        ...prevConvos.slice(0, convoIndex),
-        ...prevConvos.slice(convoIndex + 1),
-      ];
-      return newConvos;
-    });
-
-    let eventName = "send_message_socket";
-
+    // 2. LẤY TYPE MỚI NHẤT TỪ SERVER (Business có thể đã đổi type)
+    let latestType = currentChatType;
     try {
-      const botRes = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${currentReceiverId}`
+      const typeRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/conversation/${currentChatId}/type`
       );
+      latestType = typeRes.data.type;
+      console.log("📋 Latest chat type:", latestType);
 
-      const botData = botRes.data;
-
-      if (botData && botData.knowledge && botData.knowledge.length > 0) {
-        eventName = "send_message_bot";
-      } else {
-        eventName = "send_message_human";
+      // Cập nhật state nếu khác
+      if (latestType !== currentChatType) {
+        setCurrentChatType(latestType);
       }
-    } catch (botErr) {
-      console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
+    } catch {
+      console.warn("⚠️ Failed to get latest type, using cached:", currentChatType);
     }
 
-    socketRef.current.emit(eventName, {
-      chatId: currentChatId,
-      sender_id: studentId,
-      receiver_id: currentReceiverId,
-      message: messageContent,
-    });
+    // 3. GỬI TIN NHẮN LÊN SERVER
+    if (latestType === 'bot') {
+      // Bot mode: 
+      // BƯỚC 1: EMIT STUDENT MESSAGE TRƯỚC để Business nhận ngay
+      console.log("📤 Step 1: Emitting student message to Business...");
+      socketRef.current.emit("send_message", {
+        chatId: currentChatId,
+        sender_id: studentId,
+        receiver_id: businessId,
+        message: messageContent,
+        message_who: 'sender'
+      });
+
+      // BƯỚC 2: Gọi bot API sau khi đã emit
+      try {
+        console.log("🤖 Step 2: Calling bot API...");
+        const res = await axios.post(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/${currentChatId}/bot`,
+          {
+            sender_id: studentId,
+            receiver_id: businessId,
+            message: messageContent,
+          }
+        );
+
+        console.log("✅ Bot response received:", res.data);
+
+        // KHÔNG CẦN emit bot response nữa
+        // Backend đã tự động emit qua socket rồi
+        // Student và Business sẽ nhận qua receive_message listener
+        console.log("✅ Bot response will be emitted by backend via socket");
+
+      } catch (err) {
+        console.error("❌ Error calling bot API:", err);
+        // Không xóa optimistic message vì đã emit rồi
+      }
+    } else {
+      // Human mode: Gửi qua socket
+      console.log("💬 Sending human message via socket...");
+      console.log("📤 Message payload:", {
+        chatId: currentChatId,
+        sender_id: studentId,
+        receiver_id: businessId,
+        message: messageContent,
+        message_who: 'sender'
+      });
+
+      socketRef.current.emit("send_message", {
+        chatId: currentChatId,
+        sender_id: studentId,
+        receiver_id: businessId,
+        message: messageContent,
+        message_who: 'sender'
+      });
+
+      console.log("✅ Message emitted to socket");
+    }
   };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const ownerIdFromUrl = searchParams.get("ownerId");
+    if (ownerIdFromUrl && businessList.length > 0 && studentId) {
+      const biz = businessList.find((b) => b.owner_id === ownerIdFromUrl);
+      if (biz) {
+        handleSelectBusiness(biz);
+        setSearchParams({});
+      }
+    }
+  }, [businessList, searchParams, setSearchParams, handleSelectBusiness, studentId]);
 
   return (
     <>
@@ -410,24 +460,20 @@ const StudentMessagesPage = () => {
           <div className="business-mess-chat-list">
             {conversations.map((convo) => (
               <div
-                key={convo.business.owner_id}
-                className={`business-mess-chat-item ${
-                  selectedBusiness?.owner_id === convo.business?.[0].owner_id
-                    ? "active"
-                    : ""
-                }`}
+                key={convo.chatId}
+                className={`business-mess-chat-item ${currentChatId === convo.chatId ? "active" : ""}`}
                 onClick={() => handleSelectBusiness(convo.business?.[0])}
               >
                 <div className="business-mess-avatar-wrapper">
                   <img
-                    src={convo.business?.[0].business_image?.[0]}
+                    src={convo.business?.[0]?.business_image?.[0] || "/default-avatar.png"}
                     alt="avatar"
                     className="business-mess-avatar"
                   />
                 </div>
                 <div className="business-mess-chat-info">
                   <p className="business-mess-chat-name">
-                    {convo.business?.[0].business_name}
+                    {convo.business?.[0]?.business_name}
                   </p>
                   <p className="business-mess-chat-status">
                     {convo.lastMessageSenderId === studentId ? "Bạn: " : ""}
@@ -445,10 +491,7 @@ const StudentMessagesPage = () => {
               <div className="business-mess-header">
                 <div className="business-mess-header-left">
                   <img
-                    src={
-                      selectedBusiness.business_image?.[0] ||
-                      "/default-avatar.png"
-                    }
+                    src={selectedBusiness.business_image?.[0] || "/default-avatar.png"}
                     alt="avatar"
                     className="business-mess-avatar"
                   />
@@ -458,12 +501,12 @@ const StudentMessagesPage = () => {
                   </div>
                 </div>
               </div>
+
               <div className="business-mess-body">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`business-mess-row ${msg.type === "sent" ? "right" : "left"
-                      }`}
+                    className={`business-mess-row ${msg.type === "sent" ? "right" : "left"}`}
                   >
                     <div className="business-mess-message">{msg.content}</div>
                     <span className="business-mess-time">{msg.time}</span>
@@ -471,6 +514,7 @@ const StudentMessagesPage = () => {
                 ))}
                 <div ref={messagesEndRef} />
               </div>
+
               <div className="business-mess-input">
                 <input
                   type="text"

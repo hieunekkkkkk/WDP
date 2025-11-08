@@ -13,35 +13,53 @@ const formatTime = (dateStr) => {
   });
 };
 
+/**
+ * ChatBox Component - Popup chat mini cho Student
+ * 
+ * Hoạt động GIỐNG HỆT StudentMessagesPage:
+ * - Student chat với Business
+ * - Tin nhắn luôn được lưu vào Redis (qua socket)
+ * - Nếu type = 'bot': Bot tự động response (kể cả khi Business offline)
+ * - Nếu type = 'human': Chờ Business online mới response
+ * 
+ * Props:
+ * - businessName: Tên doanh nghiệp
+ * - businessOwnerId: ID của business owner
+ */
 const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [currentChatId, setCurrentChatId] = useState(null);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const currentChatIdRef = useRef(null);
+  const roomJoinedRef = useRef(false);
   const studentId = user?.id;
 
   const navigate = useNavigate();
 
+  // Effect 1: Load chat history và init chatId
   useEffect(() => {
     if (!studentId || !businessOwnerId) return;
 
     const loadHistory = async () => {
       try {
-        const res = await axios.request({
-          method: "post",
-          url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
-          data: {
+        const res = await axios.post(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
+          {
             sender_id: studentId,
             receiver_id: businessOwnerId,
-          },
-        });
+          }
+        );
 
-        const chatHistory = res.data.history || [];
+        const { chatId, history } = res.data;
+        setCurrentChatId(chatId);
+        currentChatIdRef.current = chatId;
 
-        const formattedHistory = chatHistory.map((msg) => ({
-          id: msg.ts, // Use timestamp as key
+        const formattedHistory = history.map((msg) => ({
+          id: msg.ts,
           type: msg.sender_id === studentId ? "sent" : "received",
           content: msg.message,
           time: formatTime(msg.ts),
@@ -50,39 +68,69 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
         setMessages(formattedHistory);
       } catch (err) {
         console.error("Error fetching chat history:", err);
-        setMessages([]); // Start with empty on error
+        setMessages([]);
       }
     };
 
     loadHistory();
-  }, [studentId, businessOwnerId]); // Reload if user or business changes
+  }, [studentId, businessOwnerId]);
 
   // Effect 2: Manage Socket.IO connection
   useEffect(() => {
-    if (!studentId || !businessOwnerId) return;
+    if (!studentId) return;
 
     // Connect to socket
     socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
       transports: ["websocket"],
     });
 
-    // Join room
-    socketRef.current.emit("join", studentId);
+    socketRef.current.on("connect", () => {
+      console.log("✅ ChatBox socket connected:", socketRef.current.id);
+
+      // Re-join room if reconnect
+      if (currentChatIdRef.current) {
+        console.log("🔄 ChatBox re-joining room:", currentChatIdRef.current);
+        socketRef.current.emit("join_chat", currentChatIdRef.current);
+        roomJoinedRef.current = true;
+      }
+    });
 
     // Listen for incoming messages
     socketRef.current.on("receive_message", (msg) => {
-      // Only add message if it's from the business we are currently chatting with
-      if (msg.sender_id === businessOwnerId) {
-        setMessages((prev) => [
+      console.log("📩 ChatBox received message:", msg);
+
+      // Skip own messages (optimistic update)
+      if (msg.sender_id === studentId) {
+        console.log("⏭️ ChatBox skipping own message");
+        return;
+      }
+
+      // Only add if belongs to current chat
+      const belongsToCurrentChat = msg.chatId === currentChatIdRef.current;
+      if (!belongsToCurrentChat) {
+        console.log("⏭️ ChatBox: message doesn't belong to current chat");
+        return;
+      }
+
+      // Check duplicate
+      setMessages((prev) => {
+        const exists = prev.some(m => m.id === msg.ts);
+        if (exists) {
+          console.log("⏭️ ChatBox: duplicate message");
+          return prev;
+        }
+
+        console.log("✅ ChatBox adding received message");
+        return [
           ...prev,
           {
-            id: Date.now(),
+            id: msg.ts,
             type: "received",
             content: msg.message,
             time: formatTime(msg.ts),
           },
-        ]);
-      }
+        ];
+      });
     });
 
     // Disconnect on component unmount
@@ -91,54 +139,95 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
         socketRef.current.disconnect();
       }
     };
-  }, [studentId, businessOwnerId]);
+  }, [studentId]);
+
+  // Effect 3: Join room when chatId is ready
+  useEffect(() => {
+    if (!currentChatId || !socketRef.current?.connected) return;
+
+    console.log("🔗 ChatBox joining room:", currentChatId);
+    socketRef.current.emit("join_chat", currentChatId);
+    roomJoinedRef.current = true;
+  }, [currentChatId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !studentId || !businessOwnerId) return;
+    if (!input.trim() || !studentId || !businessOwnerId || !currentChatId) return;
 
-    // --- Phần 1: Cập nhật UI (Giữ nguyên) ---
+    // Đảm bảo đã join room
+    if (!roomJoinedRef.current && socketRef.current?.connected) {
+      console.log("⚠️ ChatBox not in room yet, joining now...");
+      socketRef.current.emit("join_chat", currentChatId);
+      roomJoinedRef.current = true;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
     const messageContent = input.trim();
-    const currentReceiverId = businessOwnerId;
-    const currentChatId = `${studentId}_${currentReceiverId}`;
+    const tempId = Date.now();
 
-    const newMsg = {
-      id: Date.now(),
+    // 1. Optimistic UI update
+    const optimisticMessage = {
+      id: tempId,
       type: "sent",
       content: messageContent,
       time: formatTime(new Date()),
     };
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, optimisticMessage]);
     setInput("");
 
-    let eventName = "send_message_socket";
-
+    // 2. Lấy type mới nhất từ server (Business có thể đã đổi type)
+    let latestType = 'human';
     try {
-      const botRes = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${currentReceiverId}`
+      const typeRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/conversation/${currentChatId}/type`
       );
-
-      const botData = botRes.data;
-
-      if (botData && botData.knowledge && botData.knowledge.length > 0) {
-        eventName = "send_message_bot";
-      } else {
-        eventName = "send_message_human";
-      }
-    } catch (botErr) {
-      console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
+      latestType = typeRes.data.type;
+      console.log("📋 ChatBox latest chat type:", latestType);
+    } catch {
+      console.warn("⚠️ ChatBox failed to get latest type, using default: human");
     }
 
-    if (socketRef.current) {
-      socketRef.current.emit(eventName, {
+    // 3. Gửi tin nhắn (GIỐNG HỆT StudentMessagesPage)
+    if (latestType === 'bot') {
+      // Bot mode: EMIT student message TRƯỚC, sau đó gọi bot API
+      console.log("� ChatBox bot mode: Step 1 - Emitting student message...");
+      socketRef.current.emit("send_message", {
         chatId: currentChatId,
         sender_id: studentId,
-        receiver_id: currentReceiverId,
+        receiver_id: businessOwnerId,
         message: messageContent,
+        message_who: 'sender'
       });
+
+      // Gọi bot API
+      try {
+        console.log("🤖 ChatBox bot mode: Step 2 - Calling bot API...");
+        await axios.post(
+          `${import.meta.env.VITE_BE_URL}/api/conversation/${currentChatId}/bot`,
+          {
+            sender_id: studentId,
+            receiver_id: businessOwnerId,
+            message: messageContent,
+          }
+        );
+        console.log("✅ ChatBox bot API called successfully");
+      } catch (err) {
+        console.error("❌ ChatBox bot API error:", err);
+      }
+    } else {
+      // Human mode: Chỉ gửi qua socket
+      console.log("💬 ChatBox human mode: Sending message via socket...");
+      socketRef.current.emit("send_message", {
+        chatId: currentChatId,
+        sender_id: studentId,
+        receiver_id: businessOwnerId,
+        message: messageContent,
+        message_who: 'sender'
+      });
+      console.log("✅ ChatBox message emitted to socket");
     }
   };
 
@@ -171,9 +260,8 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
             <div
               key={msg.id}
               // Updated to use msg.type (sent/received)
-              className={`business-view-message ${
-                msg.type === "sent" ? "user" : "bot"
-              }`}
+              className={`business-view-message ${msg.type === "sent" ? "user" : "bot"
+                }`}
             >
               {/* Updated to use msg.content */}
               {msg.content}

@@ -1,4 +1,3 @@
-// services/conversationService.js
 const redis = require('../utils/redis');
 const aibotService = require('../services/aibot.service');
 const Chat = require('../entity/module/chat.model');
@@ -13,130 +12,195 @@ class ConversationService {
     async checkOrCreateConversation(sender_id, receiver_id) {
         const chatId = this.buildChatId(sender_id, receiver_id);
 
-        const existingChat = await Chat.findOne({ chatId });
+        // Tạo document trong MongoDB nếu chưa có
+        let existingChat = await Chat.findOne({ chatId });
         if (!existingChat) {
-            await Chat.create({ chatId, senderId: sender_id, receiverId: receiver_id });
+            existingChat = await Chat.create({
+                chatId,
+                senderId: sender_id,
+                receiverId: receiver_id,
+                type: 'human' // Mặc định là human
+            });
         }
 
-        const senderKey = `chat:${chatId}:sender:${sender_id}:messages`;
-        const receiverKey = `chat:${chatId}:receiver:${receiver_id}:messages`;
-        const historyKey = `chat:${chatId}:messages`;
+        // Lưu metadata vào Redis
+        const metaKey = `chat:${chatId}:meta`;
+        await redis.set(metaKey, {
+            senderId: sender_id,
+            receiverId: receiver_id,
+            chatId,
+            type: existingChat.type
+        }, EXPIRE_SEC);
 
-        const [sender_messages, receiver_messages, history] = await Promise.all([
-            redis.lrange(senderKey, 0, -1),
-            redis.lrange(receiverKey, 0, -1),
-            redis.lrange(historyKey, 0, -1)
-        ]);
+        // Lấy history từ Redis
+        const historyKey = `chat:${chatId}:messages`;
+        const history = await redis.lrange(historyKey, 0, -1);
 
         return {
             chatId,
-            sender_messages: sender_messages || [],
-            receiver_messages: receiver_messages || [],
-            history
+            type: existingChat.type,
+            history: history || []
         };
     }
 
-    async processSendMessage({ chatId, sender_id, receiver_id, message, type = 'bot' }) {
+    async getChatMetadata(chatId) {
+        const metaKey = `chat:${chatId}:meta`;
+        let meta = await redis.get(metaKey);
+
+        if (!meta) {
+            const chat = await Chat.findOne({ chatId });
+            if (!chat) {
+                throw new Error('Chat not found');
+            }
+
+            meta = {
+                senderId: chat.senderId,
+                receiverId: chat.receiverId,
+                chatId: chat.chatId,
+                type: chat.type
+            };
+
+            await redis.set(metaKey, meta, EXPIRE_SEC);
+        }
+
+        return meta;
+    }
+
+    // Cập nhật type của chat
+    async updateChatType(chatId, type) {
+        const chat = await Chat.findOneAndUpdate(
+            { chatId },
+            { type },
+            { new: true }
+        );
+
+        if (!chat) {
+            throw new Error('Chat not found');
+        }
+
+        // Cập nhật Redis
+        const metaKey = `chat:${chatId}:meta`;
+        const meta = await redis.get(metaKey);
+        if (meta) {
+            meta.type = type;
+            await redis.set(metaKey, meta, EXPIRE_SEC);
+        }
+
+        return chat;
+    }
+
+    async saveMessage({ chatId, sender_id, receiver_id, message, message_who }) {
         let sId = sender_id;
         let rId = receiver_id;
 
         if (!sId || !rId) {
-            const parts = chatId.split('_');
-            if (parts.length !== 2) {
-                throw new Error('Invalid chatId format. Expected "<sender>_<receiver>"');
-            }
-            if (!sId) sId = parts[0];
-            if (!rId) rId = parts[1];
+            const meta = await this.getChatMetadata(chatId);
+            if (!sId) sId = meta.senderId;
+            if (!rId) rId = meta.receiverId;
         }
 
-        const senderKey = `chat:${chatId}:sender:${sId}:messages`;
-        const receiverKey = `chat:${chatId}:receiver:${rId}:messages`;
         const historyKey = `chat:${chatId}:messages`;
 
-        const senderMsgObj = {
+        const msgObj = {
             sender_id: sId,
             receiver_id: rId,
             message,
-            ts: Date.now(),
-            type: 'sent'
+            message_who, // 'sender' hoặc 'receiver'
+            ts: Date.now()
         };
 
-        // Lưu tin nhắn sender + set TTL
         await Promise.all([
-            redis.rpush(senderKey, senderMsgObj),
-            redis.expire(senderKey, EXPIRE_SEC),
-            redis.rpush(historyKey, senderMsgObj),
+            redis.rpush(historyKey, msgObj),
             redis.expire(historyKey, EXPIRE_SEC)
         ]);
 
-        if (type === 'bot') {
-            const bot = await aibotService.getBotsByOwner(rId);
+        return msgObj;
+    }
+
+    // Xử lý bot response
+    async processBotResponse({ chatId, sender_id, receiver_id, message }) {
+        let sId = sender_id;
+        let rId = receiver_id;
+
+        if (!sId || !rId) {
+            const meta = await this.getChatMetadata(chatId);
+            if (!sId) sId = meta.senderId;
+            if (!rId) rId = meta.receiverId;
+        }
+
+        console.log("🤖 Processing bot response for chat:", chatId);
+        console.log("⚠️ Note: Student message should be emitted via socket first, not saved here");
+
+        // KHÔNG LƯU student message nữa (socket đã lưu rồi)
+        // Chỉ gọi bot để lấy response
+        try {
+            const bots = await aibotService.getBotsByOwner(rId);
+            console.log("🔍 Bot found:", bots ? "Yes" : "No");
+
             let botResponseText;
 
-            if (bot) {
-                const botResult = await aibotService.handleMessage(bot.id, message, chatId);
-                botResponseText = botResult.response;
+            if (bots && bots.knowledge && Array.isArray(bots.knowledge) && bots.knowledge.length > 0) {
+                console.log("🎯 Calling bot handleMessage...");
+                const botResult = await aibotService.handleMessage(bots.id, message, chatId);
+                botResponseText = botResult.response || botResult;
+                console.log("✅ Bot response received:", botResponseText);
             } else {
-                botResponseText = `No bot configured for owner ${rId}`;
+                console.warn("⚠️ Bot has no knowledge");
+                botResponseText = `Xin lỗi, doanh nghiệp chưa cấu hình bot tự động.`;
             }
 
-            const botMsgObj = {
+            // Lưu tin nhắn bot
+            const botMsg = await this.saveMessage({
+                chatId,
                 sender_id: rId,
                 receiver_id: sId,
                 message: botResponseText,
-                ts: Date.now(),
-                type: 'bot_response'
-            };
+                message_who: 'receiver'
+            });
 
-            // Lưu tin nhắn bot + set TTL
-            await Promise.all([
-                redis.rpush(receiverKey, botMsgObj),
-                redis.expire(receiverKey, EXPIRE_SEC),
-                redis.rpush(historyKey, botMsgObj),
-                redis.expire(historyKey, EXPIRE_SEC)
-            ]);
+            console.log("✅ Bot message saved:", botMsg);
 
             return {
                 chatId,
-                senderMessage: senderMsgObj,
-                receiverMessage: botMsgObj
+                botMessage: botMsg
             };
-        } else if (type === 'human') {
+        } catch (err) {
+            console.error("❌ Error processing bot response:", err);
+
+            // Trả về error message
+            const errorMsg = await this.saveMessage({
+                chatId,
+                sender_id: rId,
+                receiver_id: sId,
+                message: "Xin lỗi, bot đang gặp sự cố. Vui lòng thử lại sau.",
+                message_who: 'receiver'
+            });
+
             return {
                 chatId,
-                senderMessage: senderMsgObj,
-                receiverMessage: null
+                botMessage: errorMsg
             };
-        } else {
-            throw new Error('Unsupported message type. Expected "bot" or "human"');
         }
     }
 
     async getAllHistoriesByUserId(userId) {
-
         const chats = await Chat.find({
             $or: [{ senderId: userId }, { receiverId: userId }],
         }).lean();
 
         if (!chats.length) return [];
 
-        // Lặp qua từng chat để lấy history từ Redis
         const results = await Promise.all(
             chats.map(async (chat) => {
                 const historyKey = `chat:${chat.chatId}:messages`;
                 const messages = await redis.lrange(historyKey, 0, -1);
 
-                const parsedMessages = messages.map((msg) => {
-                    try {
-                        return typeof msg === "string" ? JSON.parse(msg) : msg;
-                    } catch {
-                        return msg;
-                    }
-                });
-
                 return {
                     chatId: chat.chatId,
-                    conversation: parsedMessages,
+                    senderId: chat.senderId,
+                    receiverId: chat.receiverId,
+                    type: chat.type,
+                    conversation: messages,
                 };
             })
         );
@@ -144,6 +208,101 @@ class ConversationService {
         return results;
     }
 
+    /**
+     * Lấy thông tin unread messages cho notification
+     * @param {string} userId - ID của user hiện tại
+     * @returns {Promise<Object>} { totalUnread, chats: [...] }
+     */
+    async getUnreadNotifications(userId) {
+        // Tìm tất cả chat của user
+        const chats = await Chat.find({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+        }).lean();
+
+        if (!chats.length) {
+            return { totalUnread: 0, chats: [] };
+        }
+
+        let totalUnread = 0;
+        const unreadChats = [];
+
+        await Promise.all(
+            chats.map(async (chat) => {
+                const historyKey = `chat:${chat.chatId}:messages`;
+                const messages = await redis.lrange(historyKey, 0, -1);
+
+                if (!messages || messages.length === 0) return;
+
+                // Lọc messages từ người khác gửi (chưa đọc)
+                const unreadMessages = messages.filter(msg => {
+                    return msg.sender_id !== userId;
+                });
+
+                if (unreadMessages.length > 0) {
+                    const lastUnreadMsg = unreadMessages[unreadMessages.length - 1];
+
+                    // Xác định sender info
+                    const senderId = lastUnreadMsg.sender_id;
+                    const isUserSender = chat.senderId === userId;
+                    const otherUserId = isUserSender ? chat.receiverId : chat.senderId;
+
+                    totalUnread += unreadMessages.length;
+
+                    unreadChats.push({
+                        chatId: chat.chatId,
+                        senderId: chat.senderId,
+                        receiverId: chat.receiverId,
+                        otherUserId, // ID của người chat với mình
+                        unreadCount: unreadMessages.length,
+                        lastMessage: {
+                            sender_id: lastUnreadMsg.sender_id,
+                            message: lastUnreadMsg.message,
+                            ts: lastUnreadMsg.ts
+                        }
+                    });
+                }
+            })
+        );
+
+        // Sort theo thời gian mới nhất
+        unreadChats.sort((a, b) => b.lastMessage.ts - a.lastMessage.ts);
+
+        return {
+            totalUnread,
+            chats: unreadChats
+        };
+    }
+
+    /**
+     * Đánh dấu messages của 1 chat là đã đọc
+     * @param {string} chatId 
+     * @param {string} userId - User đang đọc messages (xóa unread của user này)
+     */
+    async markChatAsRead(chatId, userId) {
+        // Logic: Khi user vào xem chat, tất cả messages từ người khác sẽ bị xóa khỏi Redis
+        // Điều này có nghĩa là messages đó đã được "đọc"
+        const historyKey = `chat:${chatId}:messages`;
+        const messages = await redis.lrange(historyKey, 0, -1);
+
+        if (!messages || messages.length === 0) return;
+
+        // Xóa toàn bộ messages từ người khác (tức là đánh dấu đã đọc)
+        // Giữ lại messages của chính mình
+        const updatedMessages = messages.filter(msg => {
+            return msg.sender_id === userId;
+        });
+
+        // Xóa list cũ
+        await redis.del(historyKey);
+
+        // Push lại chỉ messages của chính mình
+        if (updatedMessages.length > 0) {
+            await redis.rpush(historyKey, ...updatedMessages);
+            await redis.expire(historyKey, EXPIRE_SEC);
+        }
+
+        console.log(`✅ Chat ${chatId} marked as read for user ${userId}`);
+    }
 }
 
 module.exports = new ConversationService();

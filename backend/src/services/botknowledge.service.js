@@ -1,7 +1,7 @@
 require('dotenv').config();
 const botKnowledgeModel = require('../entity/module/botknowledge.model');
 const fileToText = require('../utils/fileToText');
-const { QdrantClient } = require('@qdrant/js-client-rest');
+const qdrantClientSingleton = require('../utils/qdrantClient');
 const { GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
 const { QdrantVectorStore } = require('@langchain/qdrant');
 const { Document } = require('langchain/document');
@@ -9,9 +9,7 @@ const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
 
 class BotKnowledgeService {
     constructor() {
-        this.qdrantClient = new QdrantClient({
-            url: process.env.QDRANT_URL || 'http://localhost:6333',
-        });
+        this.qdrantClient = qdrantClientSingleton.getClient();
         this.embeddings = new GoogleGenerativeAIEmbeddings({
             apiKey: process.env.GEMINI_API_KEY,
             modelName: 'gemini-embedding-001',

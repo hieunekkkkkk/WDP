@@ -1,7 +1,7 @@
 require('dotenv').config();
 const AiBot = require('../entity/module/aibot.model');
 const BotKnowledgeService = require('./botknowledge.service');
-const { QdrantClient } = require('@qdrant/js-client-rest');
+const qdrantClientSingleton = require('../utils/qdrantClient');
 const { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
 const { QdrantVectorStore } = require('@langchain/qdrant');
 const { Document } = require('langchain/document');
@@ -20,6 +20,9 @@ class AiBotService {
             temperature: 0.7,
             maxOutputTokens: 2048,
         });
+
+        // Dùng shared Qdrant client (không check availability ở đây nữa)
+        this.qdrantClient = qdrantClientSingleton.getClient();
     }
 
 
@@ -92,9 +95,29 @@ class AiBotService {
         const bot = await this.getBotById(botId);
         if (!bot) throw new Error('Bot not found');
 
-        // Lấy kiến thức liên quan
-        const relevantDocs = await BotKnowledgeService.searchKnowledge(botId, message, 4);
-        const context = relevantDocs.map((d, i) => `[${i + 1}] ${d.content}`).join('\n\n');
+        // Lấy kiến thức liên quan (với fallback)
+        let relevantDocs = [];
+        let context = '';
+
+        // Check Qdrant availability (async check thời gian thực)
+        const isQdrantReady = await qdrantClientSingleton.checkAvailability();
+
+        if (isQdrantReady) {
+            try {
+                console.log('🔍 Searching knowledge via Qdrant...');
+                relevantDocs = await BotKnowledgeService.searchKnowledge(botId, message, 4);
+                context = relevantDocs.map((d, i) => `[${i + 1}] ${d.content}`).join('\n\n');
+                console.log(`✅ Found ${relevantDocs.length} relevant docs from Qdrant`);
+            } catch (err) {
+                console.warn('⚠️ Qdrant search failed, using fallback:', err.message);
+                // Fallback: Dùng tất cả knowledge của bot
+                context = bot.knowledge.map((k, i) => `[${i + 1}] ${k.title}: ${k.content}`).join('\n\n');
+            }
+        } else {
+            // Fallback mode: Dùng tất cả knowledge
+            console.log('📝 Using all knowledge (Qdrant not available)');
+            context = bot.knowledge.map((k, i) => `[${i + 1}] ${k.title}: ${k.content}`).join('\n\n');
+        }
 
         // Load lịch sử hội thoại từ Redis
         let historyText = '';
@@ -140,6 +163,6 @@ Answer helpfully and naturally:
     }
 }
 
-   
+
 
 module.exports = new AiBotService();
