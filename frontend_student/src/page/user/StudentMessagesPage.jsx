@@ -109,7 +109,7 @@ const StudentMessagesPage = () => {
         const convoIndex = prevConvos.findIndex(
           (c) => c.business?.[0].owner_id === msg.sender_id
         );
-        
+
         if (convoIndex === -1) return prevConvos;
 
         const updatedConvo = {
@@ -150,8 +150,7 @@ const StudentMessagesPage = () => {
       let histories = [];
       try {
         const historyRes = await axios.get(
-          `${
-            import.meta.env.VITE_BE_URL
+          `${import.meta.env.VITE_BE_URL
           }/api/conversation/user/${studentId}/histories`
         );
         histories = historyRes.data || [];
@@ -181,8 +180,7 @@ const StudentMessagesPage = () => {
 
         try {
           const bizRes = await axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/business/owner/${
-              "user_" + businessOwnerId
+            `${import.meta.env.VITE_BE_URL}/api/business/owner/${"user_" + businessOwnerId
             }`
           );
 
@@ -267,7 +265,7 @@ const StudentMessagesPage = () => {
       return newConvos;
     });
 
-    let eventName = "send_message_socket"; 
+    let eventName = "send_message_socket";
 
     try {
       const botRes = await axios.get(
@@ -279,6 +277,7 @@ const StudentMessagesPage = () => {
       if (botData && botData.knowledge && botData.knowledge.length > 0) {
         eventName = "send_message_bot";
       } else {
+        eventName = "send_message_human";
       }
     } catch (botErr) {
       console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);
@@ -358,9 +357,8 @@ const StudentMessagesPage = () => {
             {conversations.map((convo) => (
               <div
                 key={convo.business.owner_id}
-                className={`business-mess-chat-item ${
-                  selectedBusiness?.owner_id === convo.business?.[0].owner_id ? "active" : ""
-                }`}
+                className={`business-mess-chat-item ${selectedBusiness?.owner_id === convo.business?.[0].owner_id ? "active" : ""
+                  }`}
                 onClick={() => handleSelectBusiness(convo.business?.[0])}
               >
                 <div className="business-mess-avatar-wrapper">
@@ -410,9 +408,8 @@ const StudentMessagesPage = () => {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`business-mess-row ${
-                      msg.type === "sent" ? "right" : "left"
-                    }`}
+                    className={`business-mess-row ${msg.type === "sent" ? "right" : "left"
+                      }`}
                   >
                     <div className="business-mess-message">{msg.content}</div>
                     <span className="business-mess-time">{msg.time}</span>

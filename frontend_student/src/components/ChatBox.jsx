@@ -126,6 +126,7 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
       if (botData && botData.knowledge && botData.knowledge.length > 0) {
         eventName = "send_message_bot"; 
       } else {
+        eventName = "send_message_human";
       }
     } catch (botErr) {
       console.error("Lỗi khi kiểm tra AIBot (có thể là 404):", botErr.message);

@@ -545,7 +545,7 @@ function AboutLandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      {processedTestimonials.length > 0 && (
+      {/* {processedTestimonials.length > 0 && (
         <section className="testimonials-section-about">
           <div className="testimonials-container-about">
             <motion.div
@@ -598,7 +598,7 @@ function AboutLandingPage() {
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
       {/* Review Submission Section */}
       <section className="review-form-section">
@@ -655,9 +655,8 @@ function AboutLandingPage() {
                     key={star}
                     type="button"
                     onClick={() => handleInputChange("rating", star)}
-                    className={`rating-star ${
-                      star <= newReview.rating ? "active" : ""
-                    }`}
+                    className={`rating-star ${star <= newReview.rating ? "active" : ""
+                      }`}
                   >
                     ★
                   </button>
@@ -678,9 +677,8 @@ function AboutLandingPage() {
 
             {submitMessage && (
               <div
-                className={`submit-message ${
-                  submitMessage.includes("Cảm ơn") ? "success" : "error"
-                }`}
+                className={`submit-message ${submitMessage.includes("Cảm ơn") ? "success" : "error"
+                  }`}
               >
                 {submitMessage}
               </div>

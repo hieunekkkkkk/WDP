@@ -70,12 +70,12 @@ class ConversationService {
         ]);
 
         if (type === 'bot') {
-            const bots = await aibotService.getBotsByOwner(rId);
-            const bot = (bots && bots.length) ? bots[0] : null;
+            const bot = await aibotService.getBotsByOwner(rId);
             let botResponseText;
 
             if (bot) {
-                botResponseText = await aibotService.testHandleMessage(bot, message);
+                const botResult = await aibotService.handleMessage(bot.id, message, chatId);
+                botResponseText = botResult.response;
             } else {
                 botResponseText = `No bot configured for owner ${rId}`;
             }
