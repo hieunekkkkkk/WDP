@@ -124,15 +124,7 @@ class FeedbackController {
         }
     }
 
-    async acceptFeedback(req, res) {
-        try {
-            const { response } = req.body;
-            const feedback = await feedbackService.updateFeedbackResponse(req.params.id, response);
-            res.status(200).json({ message: 'Feedback response updated successfully', data: feedback });
-        } catch (error) {
-            res.status(400).json({ message: error.message });
-        }
-    }
+   
 }
 
 
