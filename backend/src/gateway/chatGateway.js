@@ -1,7 +1,7 @@
 // services/conversationService.js
 const conversationController = require("../controllers/conversation.controller");
 // SỬA Ở ĐÂY: Import toàn bộ đối tượng và đặt tên là 'redis'
-const redis = require("../utils/redis"); 
+const redis = require("../utils/redis");
 
 let io;
 
@@ -23,7 +23,7 @@ const chatGateway = {
 
     // Code bên dưới không cần thay đổi, nhưng 'on.message'
     // đã được chuyển vào hàm callback ở trên.
-    
+
     // redisSubscriber.on("message", (channel, message) => {
     //   if (channel === "chat_messages") {
     //     const parsed = JSON.parse(message);
@@ -51,7 +51,12 @@ const chatGateway = {
             JSON.stringify(saved.senderMessage)
           );
           io.to(data.receiver_id).emit("receive_message", saved.senderMessage);
-
+          //ad noti
+          io.to(data.receiver_id).emit("new_notification", {
+            id: saved.senderMessage.ts,
+            sender_id: data.sender_id,
+            message: data.message.length > 30 ? data.message.substring(0, 30) + "..." : data.message
+          });
           socket.emit("message_sent", saved.senderMessage);
         } catch (err) {
           console.error("❌ Error send_message_socket:", err);
@@ -82,6 +87,12 @@ const chatGateway = {
           // Emit bot reply cho sender
           socket.emit("receive_message", result.receiverMessage);
           socket.emit("message_sent", result.senderMessage);
+          //add noti
+          socket.emit("new_notification", {
+            id: result.receiverMessage.ts,
+            sender_id: data.receiver_id,
+            message: result.receiverMessage.message.length > 30 ? result.receiverMessage.message.substring(0, 30) + "..." : result.receiverMessage.message
+          });
         } catch (err) {
           console.error("❌ Error send_message_bot:", err);
           socket.emit("error", { error: err.message });
