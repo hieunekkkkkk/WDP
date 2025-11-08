@@ -114,7 +114,7 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
     setMessages((prev) => [...prev, newMsg]);
     setInput("");
 
-    let eventName = "send_message_socket"; 
+    let eventName = "send_message_socket";
 
     try {
       const botRes = await axios.get(
@@ -124,7 +124,7 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
       const botData = botRes.data;
 
       if (botData && botData.knowledge && botData.knowledge.length > 0) {
-        eventName = "send_message_bot"; 
+        eventName = "send_message_bot";
       } else {
         eventName = "send_message_human";
       }
@@ -143,7 +143,7 @@ const ChatBox = ({ onClose, businessName, businessOwnerId }) => {
   };
 
   const handleOpenMessagesPage = () => {
-    navigate("/dashboard/messages");
+    navigate("/dashboard/messages?ownerId=" + businessOwnerId);
   };
 
   return (

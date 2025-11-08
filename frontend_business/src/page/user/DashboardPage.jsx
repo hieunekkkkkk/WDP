@@ -856,7 +856,7 @@ const DashboardPage = () => {
               onClick={() => setIsAddModalOpen(true)}
               disabled={!businessId}
             >
-              + Add revenue
+              Thêm doanh thu
             </button>
             <input
               type="file"
@@ -871,7 +871,7 @@ const DashboardPage = () => {
               onClick={() => document.getElementById('file-upload').click()}
               disabled={!businessId}
             >
-              Import Excel
+              Thêm bằng Excel
             </button>
           </div>
         </div>

@@ -1,15 +1,17 @@
 /* ==================== BIẾN VÀ THIẾT LẬP CƠ BẢN ==================== */
 :root {
-  --primary-color: #3b97d3;
-  --primary-hover: #2e7fb8;
-  --gray-border: #e0e0e0;
-  --gray-bg: #f8f9fa;
-  --text-dark: #111827;
-  --text-light: #495057;
+  --primary-color: #1ea7d9;
+  --primary-hover: #1890c0;
+  --gray-border: #e5e7eb;
+  --gray-bg: #f9fafb;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --text-lighter: #d1d5db;
   --event-purple: #8e44ad;
   --event-yellow: #f1c40f;
-  --success-color: #27ae60;
-  --danger-color: #e74c3c;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --white: #ffffff;
 }
 
 *,
@@ -32,14 +34,18 @@ body {
   background: var(--gray-bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Helvetica", "Arial", sans-serif;
-  padding: 0;
+  padding: 20px;
 }
 
 /* ==================== Container ==================== */
 .calendar-container {
-  background: #f5f8fc;
-  padding: 20px;
-  border-radius: 10px;
+  background: var(--white);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow: hidden;
 }
 
 /* ==================== Header ==================== */
@@ -291,7 +297,9 @@ body {
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0;
+  gap: 1px;
+  background: var(--gray-border);
+  padding: 1px;
   flex: 1;
   grid-auto-rows: 1fr;
 }
@@ -299,25 +307,28 @@ body {
 /* Base day cell - NO borders here (we'll add per-view where needed) */
 .calendar-day {
   min-height: 120px;
-  padding: 8px;
-  background: #ffffff;
+  padding: 12px;
+  background: var(--white);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
   overflow: visible;
+  border-radius: 8px;
 }
 
 .calendar-day-number {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   margin-bottom: 4px;
-  color: #333;
+  color: var(--text-dark);
   user-select: none;
-  align-self: flex-end;
+  align-self: flex-start;
   z-index: 5;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 /* Other month / today states */
@@ -325,7 +336,23 @@ body {
   background: #fafafa;
 }
 .calendar-day-other-month .calendar-day-number {
-  color: #bbb;
+  color: var(--text-lighter);
+}
+
+/* Month label watermark on first day */
+.calendar-month-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text-lighter);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.3;
+  letter-spacing: -1px;
+  z-index: 1;
 }
 
 .calendar-day-today {
@@ -333,20 +360,24 @@ body {
 }
 .calendar-day-today .calendar-day-number {
   background: var(--primary-color);
-  color: #fff;
+  color: var(--white);
   font-weight: 600;
   border-radius: 50%;
   width: 28px;
   height: 28px;
-  line-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   text-align: center;
   padding: 0;
-  align-self: flex-end;
+  align-self: flex-start;
 }
 
 /* Hover for day */
 .calendar-day:hover {
-  background: #f2f6ff;
+  background: #fafbfc;
+  box-shadow: inset 0 0 0 1px rgba(30, 167, 217, 0.15);
 }
 
 /* ==================== Month View - STABLE (use gap as sole grid-line) ==================== */

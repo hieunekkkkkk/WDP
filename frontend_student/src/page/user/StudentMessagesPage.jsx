@@ -3,7 +3,11 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import { IoSend, IoAdd, IoClose } from "react-icons/io5";
 import { useUser } from "@clerk/clerk-react";
+import { useSearchParams } from "react-router-dom";
 import "../../css/MessagesPage.css";
+import { useCallback } from "react";
+
+const NOTI_STORAGE_KEY = "allNotifications";
 
 const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,6 +71,7 @@ const NewChatModal = ({ isOpen, onClose, businessList, onSelectBusiness }) => {
 
 const StudentMessagesPage = () => {
   const { user } = useUser();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [businessList, setBusinessList] = useState([]); // Danh sách cho Modal
   const [conversations, setConversations] = useState([]); // Danh sách cho Sidebar
   const [selectedBusiness, setSelectedBusiness] = useState(null);
@@ -110,7 +115,21 @@ const StudentMessagesPage = () => {
           (c) => c.business?.[0].owner_id === msg.sender_id
         );
 
-        if (convoIndex === -1) return prevConvos;
+        if (convoIndex === -1) {
+          const businessInfo = businessList.find(
+            (b) => b.owner_id === msg.sender_id
+          );
+
+          if (businessInfo) {
+            const newConvo = {
+              business: [businessInfo],
+              lastMessage: msg.message,
+              lastMessageSenderId: msg.sender_id,
+            };
+            return [newConvo, ...prevConvos];
+          }
+          return prevConvos;
+        }
 
         const updatedConvo = {
           ...prevConvos[convoIndex],
@@ -127,7 +146,7 @@ const StudentMessagesPage = () => {
       });
     });
     return () => socketRef.current.disconnect();
-  }, [studentId, selectedBusiness]); // Thêm selectedBusiness
+  }, [studentId, selectedBusiness, businessList]);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -210,6 +229,78 @@ const StudentMessagesPage = () => {
 
     loadHistoriesAndDetails();
   }, [studentId]);
+  const handleSelectBusiness = useCallback(
+    async (biz) => {
+      setSelectedBusiness(biz);
+      setMessages([]);
+
+      try {
+        const storedNotis = localStorage.getItem(NOTI_STORAGE_KEY);
+        if (storedNotis) {
+          let notifications = JSON.parse(storedNotis);
+          const updatedNotis = notifications.filter(
+            (noti) => noti.sender_id !== biz.owner_id
+          );
+
+          localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updatedNotis));
+
+          window.dispatchEvent(new CustomEvent("notificationsUpdated"));
+        }
+      } catch (err) {
+        console.error("Lỗi khi xóa thông báo:", err);
+      }
+      if (!studentId) return;
+      try {
+        const res = await axios.request({
+          method: "post",
+          url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
+          data: {
+            sender_id: studentId,
+            receiver_id: biz.owner_id,
+          },
+        });
+        const chatHistory = res.data.history || [];
+        const formattedHistory = chatHistory.map((msg) => ({
+          id: msg.ts,
+          type: msg.sender_id === studentId ? "sent" : "received",
+          content: msg.message,
+          time: new Date(msg.ts).toLocaleString([], {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+        setMessages(formattedHistory);
+      } catch (err) {
+        console.error("Error fetching chat history:", err);
+        setMessages([]);
+      }
+    },
+    [studentId]
+  );
+
+  useEffect(() => {
+    const ownerIdFromUrl = searchParams.get("ownerId");
+
+    if (ownerIdFromUrl && businessList.length > 0 && studentId) {
+      const businessToSelect = businessList.find(
+        (b) => b.owner_id === ownerIdFromUrl
+      );
+
+      if (businessToSelect) {
+        handleSelectBusiness(businessToSelect);
+
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [
+    businessList,
+    searchParams,
+    setSearchParams,
+    handleSelectBusiness,
+    studentId,
+  ]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedBusiness || !studentId) return;
@@ -295,40 +386,6 @@ const StudentMessagesPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ... (handleSelectBusiness) ...
-  const handleSelectBusiness = async (biz) => {
-    setSelectedBusiness(biz);
-    setMessages([]);
-
-    if (!studentId) return;
-    try {
-      const res = await axios.request({
-        method: "post",
-        url: `${import.meta.env.VITE_BE_URL}/api/conversation/check`,
-        data: {
-          sender_id: studentId,
-          receiver_id: biz.owner_id,
-        },
-      });
-      const chatHistory = res.data.history || [];
-      const formattedHistory = chatHistory.map((msg) => ({
-        id: msg.ts,
-        type: msg.sender_id === studentId ? "sent" : "received",
-        content: msg.message,
-        time: new Date(msg.ts).toLocaleString([], {
-          day: "2-digit",
-          month: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      }));
-      setMessages(formattedHistory);
-    } catch (err) {
-      console.error("Error fetching chat history:", err);
-      setMessages([]);
-    }
-  };
-
   return (
     <>
       <NewChatModal
@@ -350,15 +407,15 @@ const StudentMessagesPage = () => {
             </button>
           </div>
 
-          {/* ====================================================== */}
-          {/* PHẦN JSX ĐƯỢC CẬP NHẬT ĐỂ DÙNG `conversations`   */}
-          {/* ====================================================== */}
           <div className="business-mess-chat-list">
             {conversations.map((convo) => (
               <div
                 key={convo.business.owner_id}
-                className={`business-mess-chat-item ${selectedBusiness?.owner_id === convo.business?.[0].owner_id ? "active" : ""
-                  }`}
+                className={`business-mess-chat-item ${
+                  selectedBusiness?.owner_id === convo.business?.[0].owner_id
+                    ? "active"
+                    : ""
+                }`}
                 onClick={() => handleSelectBusiness(convo.business?.[0])}
               >
                 <div className="business-mess-avatar-wrapper">
@@ -380,9 +437,6 @@ const StudentMessagesPage = () => {
               </div>
             ))}
           </div>
-          {/* ====================================================== */}
-          {/* HẾT PHẦN JSX CẬP NHẬT                             */}
-          {/* ====================================================== */}
         </div>
 
         <div className="business-mess-window">

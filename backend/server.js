@@ -2,7 +2,6 @@ require('dotenv').config({ path: '.env.dev' });
 const http = require('http');
 const app = require('./app');
 const chatGateway = require('./src/gateway/chatGateway');
-
 const logger = require('./src/log/logger');
 const PORT = process.env.PORT || 8080;
 

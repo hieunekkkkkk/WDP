@@ -233,38 +233,38 @@ export default function MyAi() {
   const [stack, setStack] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Tải bot của user hoặc hiển thị đúng 1 gói “Bot hỗ trợ cá nhân” nếu chưa có bot
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
+
     try {
       setLoading(true);
+      try {
+        const botRes = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
+        );
 
-      // 1) Kiểm tra user đã có bot hay chưa
-      //    BE cần hỗ trợ GET /api/aibot/owner/:userId
-      const botRes = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
-      );
-      if (Array.isArray(botRes.data) && botRes.data.length > 0) {
-        setBot(botRes.data[0]);
-        return;
+        if (botRes.data) {
+          setBot(botRes.data);
+          return;
+        }
+
+      } catch (botErr) {
+        console.warn("Lỗi khi tìm bot (coi như chưa có bot):", botErr.message);
       }
-
-      // 2) Chưa có bot => chỉ hiển thị 1 gói duy nhất “Bot hỗ trợ cá nhân”
       const stackRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/stack`
       );
       const raw = stackRes.data;
-      console.log(stackRes);
       const stacks = Array.isArray(raw) ? raw : raw.stacks || raw.data || [];
       const personal = pickStudentPersonalStack(stacks || []);
       setStack(personal || null);
     } catch (err) {
-      console.error("Lỗi tải My AI:", err);
+      console.error("Lỗi tải My AI (lỗi khi tải stack):", err);
       toast.error("Không thể tải My AI");
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, setBot, setStack]); // <-- Thêm setBot và setStack vào dependencies
 
   useEffect(() => {
     const p = new URLSearchParams(location.search);
@@ -373,7 +373,8 @@ export default function MyAi() {
   );
 
   const handleNavigateToKnowledge = useCallback(() => {
-    if (bot?._id) navigate(`/dashboard/bot-knowledge/${bot._id}`);
+    const id = bot?._id || bot?.id;
+    if (id) navigate(`/dashboard/bot-knowledge/${id}`);
   }, [bot, navigate]);
 
   // Render

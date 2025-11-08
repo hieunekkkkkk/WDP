@@ -150,6 +150,9 @@
 .manage-business-actions.action-ban:hover {
   color: red;
 }
+.manage-business-actions.delete:hover {
+  color: red;
+}
 .manage-business-actions.enter:hover {
   color: #ff6b35;
 }
