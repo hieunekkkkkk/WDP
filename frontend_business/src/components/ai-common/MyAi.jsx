@@ -140,8 +140,6 @@ export default function MyAi() {
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
-        console.log(stackRes);
-
         const data = stackRes.data;
         const stackList = Array.isArray(data) ? data : data.stacks || [];
         const filteredStacks = stackList.filter(

@@ -35,14 +35,6 @@ function DiscoverPage() {
   const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
     useState([]);
 
-  const handleNextService = useCallback(() => {
-    setDirection(1);
-    const totalServicePages = Math.ceil(categories.length / 4);
-    setCurrentServicePage((prev) =>
-      prev === totalServicePages - 1 ? 0 : prev + 1
-    );
-  }, [categories.length]);
-
   useEffect(() => {
     if (query) {
       fetchSearchResults(query);
@@ -194,11 +186,6 @@ function DiscoverPage() {
       FaDumbbell: <FaDumbbell />,
       PiStudent: <PiStudent />,
       FaHouse: <FaHouse />,
-      // Coffee: <FaCoffee />,
-      // "Hàng ăn": <MdFoodBank />,
-      // "Nhà trọ": <RiHotelLine />,
-      // "Khu vui chơi": <PiPark />,
-      // "Nguyên vật liệu": <GiMaterialsScience />,
     };
 
     return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
@@ -224,68 +211,10 @@ function DiscoverPage() {
     );
   }
 
-  const showServiceNav = categories.length > 4;
-
-  const ServiceCard = ({ category, businesses, onSeeMore, index }) => {
-    const categoryBusinesses = businesses.filter(
-      (b) => b.business_category_id?._id === category._id
-    );
-
-    const backgroundImages = ["/1.png", "/2.png", "/3.png", "/1.png", "/2.png"];
-
-    const gradients = [
-      "linear-gradient(135deg, rgba(255,107,53,0.8) 0%, rgba(255,107,53,0.6) 100%)",
-      "linear-gradient(135deg, rgba(103,92,231,0.8) 0%, rgba(103,92,231,0.6) 100%)",
-      "linear-gradient(135deg, rgba(52,168,83,0.8) 0%, rgba(52,168,83,0.6) 100%)",
-      "linear-gradient(135deg, rgba(233,30,99,0.8) 0%, rgba(233,30,99,0.6) 100%)",
-    ];
-
-    const handleSeeMore = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onSeeMore(category.category_name, category._id);
-    };
-
-    const handleCardClick = (e) => {
-      e.preventDefault();
-      onSeeMore(category.category_name, category._id);
-    };
-
-    return (
-      <div
-        className="service-card-new"
-        onClick={handleCardClick}
-        style={{ cursor: "pointer" }}
-      >
-        <div className="service-background">
-          <img
-            src={backgroundImages[index % backgroundImages.length] || "/1.png"}
-            alt={category.category_name}
-            loading="lazy"
-            onError={(e) => {
-              e.target.src = "/1.png";
-            }}
-          />
-          <div
-            className="service-gradient"
-            style={{ backgroundImage: gradients[index % gradients.length] }}
-          ></div>
-        </div>
-        <div className="service-content-new">
-          <h3>{category.category_name}</h3>
-          <p>{categoryBusinesses.length} địa điểm</p>
-          <button className="service-btn-new" onClick={handleSeeMore}>
-            Khám phá →
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   const PlaceCard = React.memo(({ business, onClick }) => {
     const businessName = business.business_name || "Tên không có";
     const businessAddress = business.business_address || "Địa chỉ không có";
-    const businessRating = business.business_rating || 0;
 
     const handleClick = useCallback(() => {
       onClick(business._id);
