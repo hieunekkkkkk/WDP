@@ -4,12 +4,10 @@ const Payment = require("../entity/module/payment.model");
 const Stack = require("../entity/module/stack.model");
 const payOS = require("../utils/payos");
 
-
 class PaymentService {
   async createPayment(stack_id, user_id, type) {
     if (!stack_id) throw new Error("Stack ID is required");
 
-    // Ensure type defaults to "student" if not provided
     type = type || "student";
 
     const stack = await Stack.findById(stack_id);
@@ -47,7 +45,7 @@ class PaymentService {
     return {
       error: 0,
       message: "Payment created",
-      url: response.checkoutUrl,
+      url: response.checkoutUrl || response.data?.checkoutUrl,
       payment_id: payment._id,
       transaction_id: transactionId,
     };

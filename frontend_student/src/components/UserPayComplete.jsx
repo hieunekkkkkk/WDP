@@ -4,7 +4,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { getCurrentUserRole } from "../utils/useCurrentUserRole";
-import "./UserPayComplete.css";
+import "../css/UserPayComplete.css";
 
 /**
  * Trang này là đích BE redirect sau PayOS callback:
