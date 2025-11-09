@@ -1,10 +1,9 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const Payment = require("../entity/module/payment.model");
 const Stack = require("../entity/module/stack.model");
 const payOS = require("../utils/payos");
-require("dotenv").config({
-  path: process.env.NODE_ENV === "production" ? ".env.prod" : ".env.dev",
-});
+
 
 class PaymentService {
   async createPayment(stack_id, user_id, type = "student") {
