@@ -159,7 +159,7 @@ const BusinessFeedback = ({ businessId }) => {
         setNewFeedback('');
         setSelectedRating(5);
         setShowWriteReview(false);
-        fetchFeedbacks(); // Refresh feedbacks
+        fetchFeedbacks(); 
         toast.success('Đánh giá đã được gửi thành công!');
       }
     } catch (err) {

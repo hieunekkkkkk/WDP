@@ -229,20 +229,24 @@ class ConversationService {
         await Promise.all(
             chats.map(async (chat) => {
                 const historyKey = `chat:${chat.chatId}:messages`;
-                const messages = await redis.lrange(historyKey, 0, -1);
+                const lastReadKey = `chat:${chat.chatId}:lastread:${userId}`;
 
+                const messages = await redis.lrange(historyKey, 0, -1);
                 if (!messages || messages.length === 0) return;
 
-                // Lọc messages từ người khác gửi (chưa đọc)
+                // Lấy timestamp của tin nhắn cuối cùng mà user đã đọc
+                const lastReadTs = await redis.get(lastReadKey);
+                const lastReadTimestamp = lastReadTs ? parseInt(lastReadTs) : 0;
+
+                // Lọc messages từ người khác GỬI SAU thời điểm đã đọc
                 const unreadMessages = messages.filter(msg => {
-                    return msg.sender_id !== userId;
+                    return msg.sender_id !== userId && msg.ts > lastReadTimestamp;
                 });
 
                 if (unreadMessages.length > 0) {
                     const lastUnreadMsg = unreadMessages[unreadMessages.length - 1];
 
                     // Xác định sender info
-                    const senderId = lastUnreadMsg.sender_id;
                     const isUserSender = chat.senderId === userId;
                     const otherUserId = isUserSender ? chat.receiverId : chat.senderId;
 
@@ -276,32 +280,25 @@ class ConversationService {
     /**
      * Đánh dấu messages của 1 chat là đã đọc
      * @param {string} chatId 
-     * @param {string} userId - User đang đọc messages (xóa unread của user này)
+     * @param {string} userId - User đang đọc messages
      */
     async markChatAsRead(chatId, userId) {
-        // Logic: Khi user vào xem chat, tất cả messages từ người khác sẽ bị xóa khỏi Redis
-        // Điều này có nghĩa là messages đó đã được "đọc"
+        // Logic mới: Lưu timestamp của tin nhắn cuối cùng trong chat
+        // Không xóa messages trong Redis
         const historyKey = `chat:${chatId}:messages`;
         const messages = await redis.lrange(historyKey, 0, -1);
 
         if (!messages || messages.length === 0) return;
 
-        // Xóa toàn bộ messages từ người khác (tức là đánh dấu đã đọc)
-        // Giữ lại messages của chính mình
-        const updatedMessages = messages.filter(msg => {
-            return msg.sender_id === userId;
-        });
+        // Lấy timestamp của tin nhắn cuối cùng
+        const lastMessage = messages[messages.length - 1];
+        const lastTimestamp = lastMessage.ts;
 
-        // Xóa list cũ
-        await redis.del(historyKey);
+        // Lưu timestamp này vào Redis
+        const lastReadKey = `chat:${chatId}:lastread:${userId}`;
+        await redis.set(lastReadKey, lastTimestamp.toString(), EXPIRE_SEC);
 
-        // Push lại chỉ messages của chính mình
-        if (updatedMessages.length > 0) {
-            await redis.rpush(historyKey, ...updatedMessages);
-            await redis.expire(historyKey, EXPIRE_SEC);
-        }
-
-        console.log(`✅ Chat ${chatId} marked as read for user ${userId}`);
+        console.log(`✅ Chat ${chatId} marked as read for user ${userId} at timestamp ${lastTimestamp}`);
     }
 }
 
