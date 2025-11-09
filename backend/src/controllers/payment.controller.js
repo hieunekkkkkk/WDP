@@ -6,9 +6,9 @@ require("dotenv").config({
 class PaymentController {
   async createPayment(req, res) {
     try {
-      const { stack_id, user_id } = req.body;
+      const { stack_id, user_id, type } = req.body;
 
-      const type = "student";
+      
       const result = await paymentService.createPayment(
         stack_id,
         user_id,

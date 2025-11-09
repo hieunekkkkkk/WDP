@@ -6,7 +6,7 @@ const payOS = require("../utils/payos");
 
 
 class PaymentService {
-  async createPayment(stack_id, user_id, type = "student") {
+  async createPayment(stack_id, user_id, type) {
     if (!stack_id) throw new Error("Stack ID is required");
 
     const stack = await Stack.findById(stack_id);
@@ -28,9 +28,6 @@ class PaymentService {
     await payment.save();
 
     const description = "Thanh toan AI Stack";
-    if (description.length > 25) {
-      throw new Error("Mô tả thanh toán quá dài");
-    }
 
     const body = {
       orderCode: transactionId,

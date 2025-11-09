@@ -163,7 +163,9 @@ function ManageTransactionPage() {
         });
 
         if (response.ok) {
-          toast.success("Xóa giao dịch thành công");
+          toast.success('Đã xóa giao dịch thành công!', {
+            autoClose: 3000,
+          });
           // Cập nhật state bằng cách lọc ra
           setPayments((prevPayments) =>
             prevPayments.filter((payment) => payment._id !== paymentId)
@@ -226,9 +228,9 @@ function ManageTransactionPage() {
     )
       .toString()
       .padStart(2, "0")}/${date.getUTCFullYear()} ${date
-      .getUTCHours()
-      .toString()
-      .padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`;
+        .getUTCHours()
+        .toString()
+        .padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`;
   };
 
   // Tạo dữ liệu thống kê cho charts
@@ -680,19 +682,18 @@ function ManageTransactionPage() {
                     </td>
                     <td data-label="Trạng thái">
                       <span
-                        className={`status ${
-                          payment.payment_status === "completed"
-                            ? "status-open"
-                            : payment.payment_status === "pending"
+                        className={`status ${payment.payment_status === "completed"
+                          ? "status-open"
+                          : payment.payment_status === "pending"
                             ? "status-busy"
                             : "status-closed"
-                        }`}
+                          }`}
                       >
                         {payment.payment_status === "completed"
                           ? "Hoàn thành"
                           : payment.payment_status === "pending"
-                          ? "Đang xử lý"
-                          : "Thất bại"}
+                            ? "Đang xử lý"
+                            : "Thất bại"}
                       </span>
                     </td>
                     <td data-label="Hành động" className="delete-button">
