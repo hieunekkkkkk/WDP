@@ -2,7 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { askGemini } from "../../utils/geminiClient.js";
 
 // --- CONSTANTS VÀ UTILS ---
-const getStorageKey = (docTitle) => `aiChatHistory_${docTitle}`;
+const getStorageKey = (docTitle, industry) =>
+  `aiChatHistory_${industry}_${docTitle}`;
 
 const initialWelcomeMessage = (docTitle) => ({
   id: Date.now(),
@@ -60,16 +61,18 @@ const Message = React.memo(({ msg }) => (
 Message.displayName = "Message";
 
 // Main AI Chat Modal
-export default function AiChatModal({ isOpen, onClose, docTitle }) {
+export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
   const messagesEndRef = useRef(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const industry = docData?.industry;
+
   // --- THAY ĐỔI 1: TẢI LỊCH SỬ TỪ LOCALSTORAGE (thay vì reset) ---
   const [messages, setMessages] = useState(() => {
-    if (!docTitle) return []; // Không có docTitle thì không load
+    if (!docTitle || !industry) return []; // Không có docTitle hoặc industry thì không load
 
-    const key = getStorageKey(docTitle);
+    const key = getStorageKey(docTitle, industry);
     const savedHistory = localStorage.getItem(key);
 
     if (savedHistory) {
@@ -92,11 +95,11 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
 
   // --- THAY ĐỔI 2: LƯU LỊCH SỬ MỖI KHI CÓ TIN NHẮN MỚI ---
   useEffect(() => {
-    if (messages.length > 1) {
-      const key = getStorageKey(docTitle);
+    if (messages.length > 1 && industry) {
+      const key = getStorageKey(docTitle, industry);
       localStorage.setItem(key, JSON.stringify(messages));
     }
-  }, [messages, docTitle]);
+  }, [messages, docTitle, industry]);
 
   // --- THAY ĐỔI 3: LOẠI BỎ useEffect TỰ ĐỘNG RESET KHI MỞ MODAL (đã xóa) ---
   // (Đoạn useEffect cũ đã bị xóa)
@@ -106,9 +109,11 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Xử lý khi docTitle thay đổi (khi người dùng mở chat cho tài liệu khác)
+  // Xử lý khi docTitle hoặc industry thay đổi (khi người dùng mở chat cho tài liệu khác)
   useEffect(() => {
-    const key = getStorageKey(docTitle);
+    if (!docTitle || !industry) return;
+
+    const key = getStorageKey(docTitle, industry);
     const savedHistory = localStorage.getItem(key);
 
     if (savedHistory) {
@@ -126,17 +131,17 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
         console.error("Lỗi khi tải lịch sử chat:", e);
       }
     }
-    // Nếu không có lịch sử cho docTitle mới, set tin nhắn chào mừng
+    // Nếu không có lịch sử cho docTitle và industry mới, set tin nhắn chào mừng
     setMessages([initialWelcomeMessage(docTitle)]);
-  }, [docTitle]);
+  }, [docTitle, industry]);
 
   // --- THAY ĐỔI 4: CHỨC NĂNG XÓA CHAT THỦ CÔNG ---
   const handleClearChat = useCallback(() => {
     const isConfirmed = window.confirm(
       "Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện này không?"
     );
-    if (isConfirmed) {
-      const key = getStorageKey(docTitle);
+    if (isConfirmed && industry) {
+      const key = getStorageKey(docTitle, industry);
       localStorage.removeItem(key); // Xóa khỏi localStorage
       setMessages([
         // Reset state về tin nhắn chào mừng
@@ -148,7 +153,7 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
       ]);
       setInput("");
     }
-  }, [docTitle]);
+  }, [docTitle, industry]);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || loading) return;

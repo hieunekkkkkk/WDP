@@ -1,9 +1,10 @@
 /* eslint-disable no-unused-vars */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { getCurrentUserRole } from "../utils/useCurrentUserRole";
+import "../css/UserPayComplete.css";
 
 /**
  * Trang này là đích BE redirect sau PayOS callback:
@@ -16,6 +17,20 @@ import { getCurrentUserRole } from "../utils/useCurrentUserRole";
 const UserPayComplete = () => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [verifyStep, setVerifyStep] = useState("Đang kiểm tra thanh toán...");
+
+  // Check URL params immediately
+  useEffect(() => {
+    const status = searchParams.get("status");
+    const orderCode = searchParams.get("orderCode");
+
+    // If cancelled or failed status in URL, redirect immediately
+    if (status === "CANCELLED" || status === "FAILED") {
+      navigate("/my-ai?payment=failed", { replace: true });
+      return;
+    }
+  }, [searchParams, navigate]);
 
   // Đảm bảo user có 1 bot (nếu chưa thì tạo)
   const ensureStudentBot = async (userId) => {
@@ -69,21 +84,40 @@ const UserPayComplete = () => {
 
     const fetchPaymentWithRetry = async (userId, attempts = 3) => {
       const be = import.meta.env.VITE_BE_URL;
+      const orderCode = searchParams.get("orderCode");
+
       for (let i = 0; i < attempts; i++) {
         try {
-          console.log(` Checking payment (attempt ${i + 1}/${attempts})...`);
+          setVerifyStep(`Đang xác thực thanh toán (${i + 1}/${attempts})...`);
           const resp = await axios.get(`${be}/api/payment/userid/${userId}`);
           const payments = resp.data?.data || [];
-          const completedPayment = payments.find(
-            (p) => p.payment_status === "completed"
+
+          // Find the most recent payment for this orderCode
+          const currentPayment = payments.find(
+            (p) => p.transaction_id === orderCode
           );
 
-          if (completedPayment) {
+          if (!currentPayment) {
+            console.log(" Payment not found, retrying...");
+            await wait(1500);
+            continue;
+          }
+
+          // Check payment status
+          if (currentPayment.payment_status === "completed") {
             console.log(" Payment completed!");
             return true;
           }
 
-          console.log(" Not completed yet, retrying...");
+          if (
+            currentPayment.payment_status === "cancelled" ||
+            currentPayment.payment_status === "failed"
+          ) {
+            console.log(" Payment was cancelled or failed");
+            return false;
+          }
+
+          console.log(" Payment pending, retrying...");
           await wait(1500);
         } catch (err) {
           console.error(" Lỗi khi kiểm tra thanh toán:", err);
@@ -102,30 +136,32 @@ const UserPayComplete = () => {
 
         if (!isPaid) {
           console.log(" Thanh toán chưa thành công sau retry");
-          navigate("/my-ai?payment=failed", { replace: true });
+          navigate("/dashboard/my-ai?payment=failed", { replace: true });
           return;
         }
 
         await wait(1500);
 
-        console.log(" Tạo bot & knowledge nếu chưa có...");
+        setVerifyStep("Đang thiết lập trợ lý AI của bạn...");
         const bot = await ensureStudentBot(user.id);
         await ensureDefaultKnowledge(bot._id || bot.id);
 
         console.log(" DONE — chuyển trang");
-        navigate("/my-ai?payment=success", { replace: true });
+        navigate("/dashboard/my-ai?payment=success", { replace: true });
       } catch (err) {
         console.error(" Lỗi xác minh thanh toán sau retry:", err);
-        navigate("/my-ai?payment=error", { replace: true });
+        navigate("/dashboard/my-ai?payment=error", { replace: true });
       }
     };
 
     verifyAndProvision();
-  }, [user?.id, navigate]);
+  }, [user?.id, navigate, searchParams]);
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h2>Đang xác nhận thanh toán...</h2>
+    <div className="payment-verify-container">
+      <div className="payment-verify-spinner" />
+      <h2 className="payment-verify-title">Đang xử lý thanh toán</h2>
+      <p className="payment-verify-text">{verifyStep}</p>
     </div>
   );
 };

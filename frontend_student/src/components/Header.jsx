@@ -16,7 +16,7 @@ const Header = () => {
   const { role } = useUserRole();
   const { user } = useUser();
 
-  const [isMenuOpen,] = useState(false);
+  const [isMenuOpen] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountRef = useRef(null);
 
@@ -33,7 +33,9 @@ const Header = () => {
 
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/conversation/user/${user.id}/unread-notifications`
+        `${import.meta.env.VITE_BE_URL}/api/conversation/user/${
+          user.id
+        }/unread-notifications`
       );
 
       const { totalUnread, chats } = res.data;
@@ -60,7 +62,9 @@ const Header = () => {
           // Fetch business info
           try {
             const businessRes = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/business/owner/${businessOwnerId}`
+              `${
+                import.meta.env.VITE_BE_URL
+              }/api/business/owner/${businessOwnerId}`
             );
 
             const businessData = businessRes.data?.[0];
@@ -197,7 +201,9 @@ const Header = () => {
       await Promise.all(
         notifications.map((noti) =>
           axios.post(
-            `${import.meta.env.VITE_BE_URL}/api/conversation/${noti.chatId}/mark-read`,
+            `${import.meta.env.VITE_BE_URL}/api/conversation/${
+              noti.chatId
+            }/mark-read`,
             { userId: user.id }
           )
         )
@@ -219,36 +225,41 @@ const Header = () => {
     <nav className="header-nav">
       <Link
         to="/admin/users"
-        className={`header-nav-link ${isActive("/admin/users", true) ? "active" : ""
-          }`}
+        className={`header-nav-link ${
+          isActive("/admin/users", true) ? "active" : ""
+        }`}
       >
         Người dùng
       </Link>
       <Link
         to="/admin/businesses"
-        className={`header-nav-link ${isActive("/admin/businesses", true) ? "active" : ""
-          }`}
+        className={`header-nav-link ${
+          isActive("/admin/businesses", true) ? "active" : ""
+        }`}
       >
         Doanh nghiệp
       </Link>
       <Link
         to="/admin/transactions"
-        className={`header-nav-link ${isActive("/admin/transactions", true) ? "active" : ""
-          }`}
+        className={`header-nav-link ${
+          isActive("/admin/transactions", true) ? "active" : ""
+        }`}
       >
         Giao dịch
       </Link>
       <Link
         to="/admin/feedback"
-        className={`header-nav-link ${isActive("/admin/feedback", true) ? "active" : ""
-          }`}
+        className={`header-nav-link ${
+          isActive("/admin/feedback", true) ? "active" : ""
+        }`}
       >
         Doanh nghiệp phản hồi
       </Link>
       <Link
         to="/admin/aibots"
-        className={`header-nav-link ${isActive("/admin/aibots", true) ? "active" : ""
-          }`}
+        className={`header-nav-link ${
+          isActive("/admin/aibots", true) ? "active" : ""
+        }`}
       >
         AI Bot
       </Link>
@@ -267,15 +278,17 @@ const Header = () => {
           </Link>
           <Link
             to="/discover"
-            className={`header-nav-link ${isActive("/discover") ? "active" : ""
-              }`}
+            className={`header-nav-link ${
+              isActive("/discover") ? "active" : ""
+            }`}
           >
             Kết nối doanh nghiệp
           </Link>
           <Link
             to="/dashboard"
-            className={`header-nav-link ${isActive("/dashboard") ? "active" : ""
-              }`}
+            className={`header-nav-link ${
+              isActive("/dashboard") ? "active" : ""
+            }`}
           >
             Hỗ trợ học tập
           </Link>
@@ -326,7 +339,7 @@ const Header = () => {
         <div className="header-left">
           <Link to="/">
             <img
-              src="/Logo_FPT_Education.png"
+              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696181/2021-FPTU-Long_iiws6l.jpg"
               alt="FPT Education Logo"
               className="header-logo"
             />

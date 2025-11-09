@@ -17,22 +17,20 @@ function ManageUserPage() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [sortStatus, setSortStatus] = useState("All");
+  const [sortRole, setSortRole] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [updatingUserId, setUpdatingUserId] = useState(null); // <-- THÊM STATE LOADING
 
   const limit = 5;
 
   useEffect(() => {
-    fetchUsers(currentPage);
-  }, [currentPage]);
+    fetchUsers();
+  }, []);
 
-  const fetchUsers = async (page) => {
+  const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`, {
-        params: { page, limit },
-      });
-      setUsers(res.data.users);
-      setTotalPages(res.data.totalPages);
+      const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user`);
+      setUsers(res.data.users || res.data);
     } catch (err) {
       console.error(err);
       toast.error("Không thể tải danh sách người dùng");
@@ -44,8 +42,20 @@ function ManageUserPage() {
       (user.fullName.toLowerCase().includes(search.toLowerCase()) ||
         user.clerkId.toLowerCase().includes(search.toLowerCase())) &&
       (sortStatus === "All" ||
-        (user.publicMetadata.locked ?? false) === (sortStatus === "true"))
+        (user.publicMetadata.locked ?? false) === (sortStatus === "true")) &&
+      (sortRole === "All" || user.publicMetadata.role === sortRole)
   );
+
+  const totalPages = Math.ceil(filteredUsers.length / limit);
+
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * limit,
+    currentPage * limit
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, sortStatus, sortRole]);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -53,7 +63,14 @@ function ManageUserPage() {
     }
   };
 
+  // --- HÀM LOCK/UNLOCK ĐÃ ĐƯỢC CẬP NHẬT ---
   const updateUserLock = async (userId, lock) => {
+    // 1. Kiểm tra xem có đang xử lý ai không, nếu có thì dừng
+    if (updatingUserId) return; 
+    
+    // 2. Đặt trạng thái loading cho user này
+    setUpdatingUserId(userId);
+
     const loadingId = toast.loading(
       lock ? "Đang khóa người dùng…" : "Đang mở khóa người dùng…"
     );
@@ -66,12 +83,15 @@ function ManageUserPage() {
 
       toast.dismiss(loadingId);
       toast.success(lock ? "Đã khóa người dùng" : "Đã mở khóa người dùng");
-      fetchUsers(currentPage);
+      fetchUsers();
     } catch (error) {
       toast.dismiss(loadingId);
       toast.error(
         lock ? "Không thể khóa người dùng" : "Không thể mở khóa người dùng"
       );
+    } finally {
+      // 3. Xóa trạng thái loading bất kể thành công hay thất bại
+      setUpdatingUserId(null); 
     }
   };
 
@@ -79,16 +99,10 @@ function ManageUserPage() {
     const loadingId = toast.loading("Đang đồng bộ người dùng từ Clerk…");
     try {
       await axios.post(`${import.meta.env.VITE_BE_URL}/api/sync-clerk-users`);
-
       toast.dismiss(loadingId);
       toast.success("Đồng bộ người dùng thành công");
-
-      // Tải lại danh sách người dùng, về trang 1
-      if (currentPage !== 1) {
-        setCurrentPage(1); // Sẽ tự động trigger useEffect
-      } else {
-        fetchUsers(1); // Trigger thủ công nếu đang ở trang 1
-      }
+      setCurrentPage(1);
+      fetchUsers();
     } catch (error) {
       toast.dismiss(loadingId);
       console.error("Lỗi khi đồng bộ:", error);
@@ -125,12 +139,26 @@ function ManageUserPage() {
             <FaSyncAlt />
             Đồng bộ
           </button>
+
+          <div className="manage-user-sort-select">
+            <select
+              value={sortRole}
+              onChange={(e) => setSortRole(e.target.value)}
+            >
+              <option value="All">Tất cả vai trò</option>
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+              <option value="business">Business</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+
           <div className="manage-user-sort-select">
             <select
               value={sortStatus}
               onChange={(e) => setSortStatus(e.target.value)}
             >
-              <option value="All">Tất cả</option>
+              <option value="All">Tất cả trạng thái</option>
               <option value="false">Hoạt động</option>
               <option value="true">Bị Khóa</option>
             </select>
@@ -152,7 +180,7 @@ function ManageUserPage() {
             <tbody>
               <AnimatePresence mode="wait">
                 {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+                  paginatedUsers.map((user) => (
                     <motion.tr
                       key={user.clerkId}
                       initial={{ opacity: 0, y: 10 }}
@@ -187,21 +215,53 @@ function ManageUserPage() {
                           </span>
                         )}
                       </td>
+                      
+                      {/* --- CẬP NHẬT JSX CHO NÚT --- */}
                       <td>
                         {user.role !== "admin" &&
                           (user.publicMetadata.locked ? (
                             <FaRegCircleCheck
-                              className="manage-user-actions action-active"
-                              onClick={() => updateUserLock(user.clerkId, false)}
+                              // Thêm class 'disable' nếu đang loading
+                              className={`manage-user-actions ${
+                                updatingUserId === user.clerkId
+                                  ? "disable"
+                                  : "action-active"
+                              }`}
+                              onClick={() =>
+                                updateUserLock(user.clerkId, false)
+                              }
                               title="Kích hoạt người dùng"
+                              // Thêm style cho con trỏ
+                              style={{
+                                cursor:
+                                  updatingUserId === user.clerkId
+                                    ? "wait"
+                                    : "pointer",
+                              }}
                             ></FaRegCircleCheck>
                           ) : (
                             <IoBanSharp
-                              className="manage-user-actions action-inactive"
-                              onClick={() => updateUserLock(user.clerkId, true)}
+                              // Thêm class 'disable' nếu đang loading
+                              className={`manage-user-actions ${
+                                updatingUserId === user.clerkId
+                                  ? "disable"
+                                  : "action-inactive"
+                              }`}
+                              onClick={() =>
+                                updateUserLock(user.clerkId, true)
+                              }
                               title="Vô hiệu hóa người dùng"
+                              // Thêm style cho con trỏ
+                              style={{
+                                cursor:
+                                  updatingUserId === user.clerkId
+                                    ? "wait"
+                                    : "pointer",
+                              }}
                             ></IoBanSharp>
                           ))}
+                        
+                        {/* Nút admin (luôn bị vô hiệu hóa) */}
                         {user.role == "admin" &&
                           (user.publicMetadata.locked ? (
                             <FaRegCircleCheck
@@ -252,7 +312,7 @@ function ManageUserPage() {
           <button
             className="nav-btn"
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || totalPages === 0}
           >
             &gt;
           </button>

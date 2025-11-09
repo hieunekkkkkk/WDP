@@ -8,7 +8,6 @@ class PaymentController {
     try {
       const { stack_id, user_id, type } = req.body;
 
-      
       const result = await paymentService.createPayment(
         stack_id,
         user_id,
@@ -25,20 +24,42 @@ class PaymentController {
     try {
       const { orderCode, status } = req.query;
       const type = req.params.type;
+
+      // Handle cancelled payments
+      if (status === "CANCELLED") {
+        if (type === "business") {
+          return res.redirect(
+            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=failed`
+          );
+        }
+        return res.redirect(
+          `${process.env.FRONTEND_STUDENT_URL}/dashboard/my-ai?payment=failed`
+        );
+      }
+
+      // Process the payment callback
       const result = await paymentService.handlePaymentCallback(
         orderCode,
         status
       );
+
       if (result) {
         if (type === "business") {
           return res.redirect(
-            `${process.env.FRONTEND_BUSINESS_URL}/payment-complete`
+            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/payment-complete?orderCode=${orderCode}`
           );
         }
-        res.redirect(`${process.env.FRONTEND_STUDENT_URL}/payment-complete`);
+        return res.redirect(
+          `${process.env.FRONTEND_STUDENT_URL}/dashboard/payment-complete?orderCode=${orderCode}`
+        );
       }
     } catch (err) {
-      res.status(500).json({ error: 1, message: err.message });
+      console.error("Payment callback error:", err);
+      const errorUrl =
+        type === "business"
+          ? `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=error`
+          : `${process.env.FRONTEND_STUDENT_URL}/dashboard/my-ai?payment=error`;
+      return res.redirect(errorUrl);
     }
   }
 

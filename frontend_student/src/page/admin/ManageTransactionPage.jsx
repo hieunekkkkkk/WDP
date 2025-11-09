@@ -8,6 +8,7 @@ import Chart from "chart.js/auto";
 import Header from "../../components/Header";
 import { FaTrash, FaXmark } from "react-icons/fa6";
 import LoadingScreen from "../../components/LoadingScreen";
+import axios from "axios"; // Added axios
 
 function ManageTransactionPage() {
   const [payments, setPayments] = useState([]);
@@ -27,6 +28,10 @@ function ManageTransactionPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [userNames, setUserNames] = useState({});
+
+  // States for the new delete modal
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [paymentToDeleteId, setPaymentToDeleteId] = useState(null);
 
   const monthlyChartRef = useRef(null);
   const categoryChartRef = useRef(null);
@@ -126,70 +131,50 @@ function ManageTransactionPage() {
     }
   };
 
-  const ConfirmToast = ({ closeToast, onConfirm }) => (
-    <div className="confirm-toast">
-      <p>Bạn có chắc muốn xóa giao dịch này?</p>
-      <div className="confirm-toast-buttons">
-        <button
-          className="confirm-btn ok"
-          onClick={() => {
-            onConfirm();
-            closeToast();
-          }}
-        >
-          Xóa
-        </button>
-        <button className="confirm-btn cancel" onClick={closeToast}>
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
+  // --- Removed old ConfirmToast component ---
 
-  // Xóa giao dịch
-  const handleDeletePayment = (paymentId) => {
-    // 1. Định nghĩa logic xóa
-    const executeDelete = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        const baseURL = import.meta.env.VITE_BE_URL;
+  // --- New Delete Logic (copied and adapted from ManageFeedbackPage) ---
 
-        const response = await fetch(`${baseURL}/api/payment/${paymentId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          toast.success('Đã xóa giao dịch thành công!', {
-            autoClose: 3000,
-          });
-          // Cập nhật state bằng cách lọc ra
-          setPayments((prevPayments) =>
-            prevPayments.filter((payment) => payment._id !== paymentId)
-          );
-          // Cân nhắc: gọi lại fetchAllData() nếu bạn muốn cập nhật
-          // tổng số trang (pagination) sau khi xóa.
-        } else {
-          throw new Error("Xóa giao dịch thất bại");
-        }
-      } catch (error) {
-        console.error("Error deleting payment:", error);
-        toast.error("Không thể xóa giao dịch");
-      }
-    };
-
-    // 2. Thay thế window.confirm bằng toast
-    toast.warn(<ConfirmToast onConfirm={executeDelete} />, {
-      closeOnClick: false, // Ngăn toast tự đóng khi click
-      autoClose: false, // Ngăn toast tự đóng sau thời gian
-      position: "top-center",
-      theme: "colored",
-      draggable: false,
-    });
+  const confirmDeletePayment = (id) => {
+    setPaymentToDeleteId(id);
+    setDeleteConfirmOpen(true);
   };
+
+  const handleDeletePayment = async () => {
+    if (!paymentToDeleteId) return;
+
+    // Đóng modal xác nhận ngay lập tức
+    setDeleteConfirmOpen(false);
+
+    try {
+      const token = localStorage.getItem("accessToken"); // Get token
+      const promise = axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/payment/${paymentToDeleteId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add authorization header
+          },
+        }
+      );
+
+      await toast.promise(promise, {
+        pending: "Đang xóa giao dịch...",
+        success: "Đã xóa giao dịch thành công!",
+        error: "Không thể xóa giao dịch. Vui lòng thử lại.",
+      });
+
+      // Cập nhật state sau khi promise thành công
+      setPayments((prev) => prev.filter((p) => p._id !== paymentToDeleteId));
+      // Reset ID
+      setPaymentToDeleteId(null);
+    } catch (err) {
+      // Lỗi đã được toast.promise xử lý, chỉ cần log
+      console.error("Lỗi khi xóa giao dịch:", err);
+    } finally {
+      setPaymentToDeleteId(null);
+    }
+  };
+  // --- End of New Delete Logic ---
 
   // Filter payments (only search, no sorting)
   const getFilteredPayments = () => {
@@ -698,7 +683,7 @@ function ManageTransactionPage() {
                     </td>
                     <td data-label="Hành động" className="delete-button">
                       <FaTrash
-                        onClick={() => handleDeletePayment(payment._id)}
+                        onClick={() => confirmDeletePayment(payment._id)} // <-- Updated onClick
                       />
                     </td>
                   </tr>
@@ -802,6 +787,73 @@ function ManageTransactionPage() {
           </div>
         </div>
       </div>
+
+      {/* --- New Delete Confirmation Modal --- */}
+      {deleteConfirmOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setDeleteConfirmOpen(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#fff",
+              padding: "30px",
+              borderRadius: "10px",
+              maxWidth: "350px",
+              width: "90%",
+              textAlign: "center",
+            }}
+          >
+            <h3>Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa giao dịch này không?</p>
+            <div style={{ marginTop: "20px" }}>
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                style={{
+                  marginRight: "10px",
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  background: "#ccc",
+                  border: "none",
+                  borderRadius: "5px",
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeletePayment}
+                style={{
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  background: "red",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                }}
+              >
+                Xóa
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import LoadingScreen from '../../components/LoadingScreen';
-import DiscoverAISearch from '../../components/DiscoverAISearch';
-import '../../css/DiscoverPage.css';
-import { FaXmark } from 'react-icons/fa6';
-import { PuffLoader } from 'react-spinners';
-import { LuUtensils } from 'react-icons/lu';
-import { FiCoffee } from 'react-icons/fi';
-import { IoGameControllerOutline } from 'react-icons/io5';
-import { LuShoppingBag } from 'react-icons/lu';
-import { FaDumbbell } from 'react-icons/fa6';
-import { PiStudent } from 'react-icons/pi';
-import { FaHouse } from 'react-icons/fa6';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingScreen from "../../components/LoadingScreen";
+import DiscoverAISearch from "../../components/DiscoverAISearch";
+import "../../css/DiscoverPage.css";
+import { FaXmark } from "react-icons/fa6";
+import { PuffLoader } from "react-spinners";
+import { LuUtensils } from "react-icons/lu";
+import { FiCoffee } from "react-icons/fi";
+import { IoGameControllerOutline } from "react-icons/io5";
+import { LuShoppingBag } from "react-icons/lu";
+import { FaDumbbell } from "react-icons/fa6";
+import { PiStudent } from "react-icons/pi";
+import { FaHouse } from "react-icons/fa6";
 
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
@@ -23,77 +23,17 @@ function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [loadingFilter, setLoadingFilter] = useState(false);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [currentServicePage, setCurrentServicePage] = useState(0);
   const [direction, setDirection] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const query = searchParams.get('query') || '';
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const query = searchParams.get("query") || "";
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
     useState([]);
-
-  const checkAndResetExpiredPriorities = async (businessList) => {
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    const businessesToResetIds = [];
-
-    // Tìm các business cần reset
-    businessList.forEach((business) => {
-      // Đảm bảo business.updated_at tồn tại trước khi dùng getTime()
-      const updatedAtTime = business.updated_at
-        ? new Date(business.updated_at).getTime()
-        : 0;
-      if (business.business_priority > 0 && updatedAtTime < oneHourAgo) {
-        businessesToResetIds.push(business._id);
-      }
-    });
-
-    if (businessesToResetIds.length === 0) {
-      return businessList; // Không có gì cần reset
-    }
-
-    console.log(
-      `[DiscoverPage] Found ${businessesToResetIds.length} businesses to reset priority.`
-    );
-
-    // Gọi API reset cho từng business
-    const resetPromises = businessesToResetIds.map((id) =>
-      axios
-        .post(
-          `${import.meta.env.VITE_BE_URL}/api/business/${id}/reset-priority`
-        )
-        .then((response) => ({ id, success: true, data: response.data }))
-        .catch((error) => {
-          console.error(
-            `[DiscoverPage] Failed to reset priority for ${id}:`,
-            error.response?.data || error.message
-          );
-          return { id, success: false };
-        })
-    );
-
-    // Chờ tất cả API calls hoàn thành
-    await Promise.allSettled(resetPromises);
-
-    // Cập nhật trạng thái priority local để UI hiển thị đúng ngay
-    const updatedBusinessList = businessList.map((business) => {
-      if (businessesToResetIds.includes(business._id)) {
-        return {
-          ...business,
-          business_priority: 0,
-          updated_at: new Date().toISOString(),
-        };
-      }
-      return business;
-    });
-
-    console.log(
-      '[DiscoverPage] Finished attempting resets. Updated list locally.'
-    );
-    return updatedBusinessList;
-  };
 
   const handleNextService = useCallback(() => {
     setDirection(1);
@@ -121,15 +61,15 @@ function DiscoverPage() {
       );
 
       const filteredBusinesses = res.data.businesses.filter(
-        (b) => b.business_active === 'active'
+        (b) => b.business_active === "active"
       );
 
       setFilteredBusinesses(filteredBusinesses || []);
       setSearchQuery(query);
       setIsSearching(true);
     } catch (err) {
-      console.error('Search failed:', err);
-      setError('Không thể tìm kiếm dữ liệu. Vui lòng thử lại sau.');
+      console.error("Search failed:", err);
+      setError("Không thể tìm kiếm dữ liệu. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
@@ -140,16 +80,15 @@ function DiscoverPage() {
       setLoading(true);
       const [catRes, busRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BE_URL}/api/category`),
-        axios.get(`${import.meta.env.VITE_BE_URL}/api/business?limit=100`),
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/business?limit=20`),
       ]);
 
-      let activeBusinesses = busRes.data.businesses.filter(
-        (b) => b.business_active === 'active'
+      const activeBusinesses = busRes.data.businesses.filter(
+        (b) => b.business_active === "active"
       );
 
-      let businessesWithRatings = await Promise.all(
+      const businessesWithRatings = await Promise.all(
         activeBusinesses.map(async (b) => {
-          let rating = 0;
           try {
             const res = await axios.get(
               `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
@@ -161,7 +100,8 @@ function DiscoverPage() {
                 (sum, fb) => sum + (fb.feedback_rating || 0),
                 0
               );
-              rating = feedbacks.length > 0 ? total / feedbacks.length : 0;
+              const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
+              return { ...b, business_rating: avg };
             }
           } catch (err) {
             console.error(
@@ -169,43 +109,16 @@ function DiscoverPage() {
               err
             );
           }
-          return {
-            ...b,
-            business_rating: 0,
-            business_priority: b.business_priority ?? 0,
-            updated_at: b.updated_at ?? new Date(0).toISOString(),
-          };
+          return { ...b, business_rating: 0 };
         })
       );
-
-      // Gọi hàm kiểm tra và reset priority, cập nhật lại danh sách local
-      businessesWithRatings = await checkAndResetExpiredPriorities(
-        businessesWithRatings
-      );
-      // --- KẾT THÚC DÒNG CODE MỚI ---
-
-      // Sắp xếp danh sách (logic sort gốc của bạn)
-      businessesWithRatings.sort((a, b) => {
-        // Ưu tiên theo business_priority giảm dần
-        if (b.business_priority !== a.business_priority) {
-          return b.business_priority - a.business_priority;
-        }
-        // Nếu priority bằng nhau VÀ > 0, ưu tiên theo updated_at mới nhất
-        if (a.business_priority > 0) {
-          const dateA = new Date(a.updated_at).getTime();
-          const dateB = new Date(b.updated_at).getTime();
-          return dateB - dateA;
-        }
-        // Các trường hợp khác giữ nguyên thứ tự
-        return 0;
-      });
 
       setCategories(catRes.data.categories || []);
       setBusinesses(businessesWithRatings);
       setFilteredBusinessesByCategory(businessesWithRatings);
     } catch (err) {
-      console.error('Fetch failed:', err);
-      setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+      console.error("Fetch failed:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
@@ -213,74 +126,23 @@ function DiscoverPage() {
 
   const fetchBusinessesByCategory = async (categoryId) => {
     try {
-      setLoadingFilter(true);
       const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/business?limit=100`
+        `${import.meta.env.VITE_BE_URL}/api/business`
       );
       let activeBusinesses = res.data.businesses.filter(
-        (b) => b.business_active === 'active'
+        (b) => b.business_active === "active"
       );
 
-      if (categoryId !== 'all') {
+      if (categoryId !== "all") {
         activeBusinesses = activeBusinesses.filter(
           (b) => b.business_category_id?._id === categoryId
         );
       }
 
-      // Lấy rating và đảm bảo có priority/updated_at
-      let businessesWithRatings = await Promise.all(
-        activeBusinesses.map(async (b) => {
-          let rating = 0;
-          try {
-            const res = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
-            );
-
-            if (res.data?.success && Array.isArray(res.data.data)) {
-              const feedbacks = res.data.data;
-              const total = feedbacks.reduce(
-                (sum, fb) => sum + (fb.feedback_rating || 0),
-                0
-              );
-              rating = feedbacks.length > 0 ? total / feedbacks.length : 0;
-            }
-          } catch (err) {
-            console.error(
-              `Error fetching feedback for ${b.business_name}:`,
-              err
-            );
-          }
-          return {
-            ...b,
-            business_rating: 0,
-            business_priority: b.business_priority ?? 0,
-            updated_at: b.updated_at ?? new Date(0).toISOString(),
-          };
-        })
-      );
-
-      // Gọi hàm kiểm tra và reset priority, cập nhật lại danh sách local
-      businessesWithRatings = await checkAndResetExpiredPriorities(
-        businessesWithRatings
-      );
-
-      // Sắp xếp lại danh sách sau khi đã lọc và reset
-      businessesWithRatings.sort((a, b) => {
-        if (b.business_priority !== a.business_priority) {
-          return b.business_priority - a.business_priority;
-        }
-        if (a.business_priority > 0) {
-          const dateA = new Date(a.updated_at).getTime();
-          const dateB = new Date(b.updated_at).getTime();
-          return dateB - dateA;
-        }
-        return 0;
-      });
-
-      setFilteredBusinessesByCategory(businessesWithRatings);
+      setFilteredBusinessesByCategory(activeBusinesses);
     } catch (err) {
-      console.error('Fetch businesses failed:', err);
-      setError('Không thể tải dữ liệu doanh nghiệp. Vui lòng thử lại sau.');
+      console.error("Fetch businesses failed:", err);
+      setError("Không thể tải dữ liệu doanh nghiệp. Vui lòng thử lại sau.");
     } finally {
       setLoadingFilter(false);
     }
@@ -288,10 +150,10 @@ function DiscoverPage() {
 
   const handleSeeMore = (categoryName, categoryId) => {
     const slug = categoryName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/\s+/g, '-');
+      .replace(/\s+/g, "-");
 
     navigate(`/discover/${slug}`, {
       state: {
@@ -307,7 +169,7 @@ function DiscoverPage() {
 
   const handleCategoryClick = useCallback(
     (categoryId) => {
-      const newCategory = categoryId === selectedCategory ? 'all' : categoryId;
+      const newCategory = categoryId === selectedCategory ? "all" : categoryId;
 
       setSelectedCategory(newCategory);
       setLoadingFilter(true);
@@ -318,7 +180,7 @@ function DiscoverPage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim() !== '') {
+    if (searchQuery.trim() !== "") {
       navigate(`/discover?query=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -332,6 +194,11 @@ function DiscoverPage() {
       FaDumbbell: <FaDumbbell />,
       PiStudent: <PiStudent />,
       FaHouse: <FaHouse />,
+      // Coffee: <FaCoffee />,
+      // "Hàng ăn": <MdFoodBank />,
+      // "Nhà trọ": <RiHotelLine />,
+      // "Khu vui chơi": <PiPark />,
+      // "Nguyên vật liệu": <GiMaterialsScience />,
     };
 
     return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
@@ -364,13 +231,13 @@ function DiscoverPage() {
       (b) => b.business_category_id?._id === category._id
     );
 
-    const backgroundImages = ['/1.png', '/2.png', '/3.png', '/1.png', '/2.png'];
+    const backgroundImages = ["/1.png", "/2.png", "/3.png", "/1.png", "/2.png"];
 
     const gradients = [
-      'linear-gradient(135deg, rgba(255,107,53,0.8) 0%, rgba(255,107,53,0.6) 100%)',
-      'linear-gradient(135deg, rgba(103,92,231,0.8) 0%, rgba(103,92,231,0.6) 100%)',
-      'linear-gradient(135deg, rgba(52,168,83,0.8) 0%, rgba(52,168,83,0.6) 100%)',
-      'linear-gradient(135deg, rgba(233,30,99,0.8) 0%, rgba(233,30,99,0.6) 100%)',
+      "linear-gradient(135deg, rgba(255,107,53,0.8) 0%, rgba(255,107,53,0.6) 100%)",
+      "linear-gradient(135deg, rgba(103,92,231,0.8) 0%, rgba(103,92,231,0.6) 100%)",
+      "linear-gradient(135deg, rgba(52,168,83,0.8) 0%, rgba(52,168,83,0.6) 100%)",
+      "linear-gradient(135deg, rgba(233,30,99,0.8) 0%, rgba(233,30,99,0.6) 100%)",
     ];
 
     const handleSeeMore = (e) => {
@@ -388,15 +255,15 @@ function DiscoverPage() {
       <div
         className="service-card-new"
         onClick={handleCardClick}
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: "pointer" }}
       >
         <div className="service-background">
           <img
-            src={backgroundImages[index % backgroundImages.length] || '/1.png'}
+            src={backgroundImages[index % backgroundImages.length] || "/1.png"}
             alt={category.category_name}
             loading="lazy"
             onError={(e) => {
-              e.target.src = '/1.png';
+              e.target.src = "/1.png";
             }}
           />
           <div
@@ -416,15 +283,15 @@ function DiscoverPage() {
   };
 
   const PlaceCard = React.memo(({ business, onClick }) => {
-    const businessName = business.business_name || 'Tên không có';
-    const businessAddress = business.business_address || 'Địa chỉ không có';
+    const businessName = business.business_name || "Tên không có";
+    const businessAddress = business.business_address || "Địa chỉ không có";
     const businessRating = business.business_rating || 0;
 
     const handleClick = useCallback(() => {
       onClick(business._id);
     }, [business._id, onClick]);
 
-    let imageUrl = '/1.png';
+    let imageUrl = "/1.png";
     if (
       business.business_image &&
       Array.isArray(business.business_image) &&
@@ -441,7 +308,7 @@ function DiscoverPage() {
             alt={businessName}
             loading="lazy"
             onError={(e) => {
-              e.target.src = '/1.png';
+              e.target.src = "/1.png";
             }}
           />
           <div className="place-overlay">
@@ -449,10 +316,7 @@ function DiscoverPage() {
               <h3>{businessName}</h3>
               <p>{businessAddress}</p>
               <div className="rating-overlay">
-                ⭐{' '}
-                {typeof business.business_rating === 'number'
-                  ? business.business_rating.toFixed(1)
-                  : '0.0'}
+                ⭐ {business.business_rating?.toFixed(1) || "0.0"}
               </div>
             </div>
           </div>
@@ -460,14 +324,17 @@ function DiscoverPage() {
       </div>
     );
   });
-  PlaceCard.displayName = 'PlaceCard';
 
   return (
     <>
       <Header />
       <section className="hero-section-landing">
         <div className="hero-background">
-          <img src="/1.png" alt="Mountains" className="hero-bg-image" />
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Mountains"
+            className="hero-bg-image"
+          />
           <div className="hero-overlay"></div>
         </div>
         <div className="hero-content">
@@ -495,9 +362,9 @@ function DiscoverPage() {
             <p>Đã đăng theo danh mục</p>
             <div className="pills-container">
               <button
-                onClick={() => handleCategoryClick('all')}
+                onClick={() => handleCategoryClick("all")}
                 className={`category-pill ${
-                  selectedCategory === 'all' ? 'active' : ''
+                  selectedCategory === "all" ? "active" : ""
                 }`}
               >
                 <span className="pill-icon">🏠</span>
@@ -506,9 +373,11 @@ function DiscoverPage() {
               {categories.map((category) => (
                 <button
                   key={category._id}
-                  onClick={() => handleCategoryClick(category._id)}
+                  onClick={() =>
+                    handleSeeMore(category.category_name, category._id)
+                  }
                   className={`category-pill ${
-                    selectedCategory === category._id ? 'active' : ''
+                    selectedCategory === category._id ? "active" : ""
                   }`}
                 >
                   <span className="pill-icon">
@@ -530,19 +399,19 @@ function DiscoverPage() {
               {loadingFilter ? (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '20vh',
-                    flexDirection: 'column',
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "20vh",
+                    flexDirection: "column",
                   }}
                 >
                   <PuffLoader size={90} />
                   <p
                     style={{
-                      marginTop: '16px',
-                      fontSize: '18px',
-                      color: '#333',
+                      marginTop: "16px",
+                      fontSize: "18px",
+                      color: "#333",
                     }}
                   ></p>
                 </div>
@@ -555,26 +424,12 @@ function DiscoverPage() {
                       onClick={handleBusinessClick}
                     />
                   ))}
-                  {filteredBusinessesByCategory.length === 0 &&
-                    !loading &&
-                    !loadingFilter && (
-                      <p
-                        style={{
-                          gridColumn: '1 / -1',
-                          textAlign: 'center',
-                          color: '#888',
-                        }}
-                      >
-                        Không tìm thấy địa điểm phù hợp.
-                      </p>
-                    )}
                 </div>
               )}
             </section>
           </div>
         )}
       </div>
-
       <div className="discover-page">
         <div className="container">
           {searchQuery && (
@@ -585,10 +440,10 @@ function DiscoverPage() {
                   className="clear-search-icon"
                   title="Bỏ tìm kiếm"
                   onClick={() => {
-                    setSearchQuery('');
+                    setSearchQuery("");
                     setFilteredBusinesses([]);
                     setIsSearching(false);
-                    navigate('/discover', { replace: true });
+                    navigate("/discover", { replace: true });
                   }}
                 >
                   <FaXmark />
@@ -600,15 +455,15 @@ function DiscoverPage() {
                     key={business._id}
                     className="discover-place-card"
                     onClick={() => handleBusinessClick(business._id)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   >
                     <div className="discover-place-image">
                       <img
-                        src={business.business_image?.[0] || '/placeholder.jpg'}
+                        src={business.business_image?.[0] || "/placeholder.jpg"}
                         alt={business.business_name}
                         loading="lazy"
                         onError={(e) => {
-                          e.target.src = '/1.png';
+                          e.target.src = "/1.png";
                         }}
                       />
                     </div>
@@ -620,12 +475,12 @@ function DiscoverPage() {
                       <div className="discover-place-meta">
                         <span
                           className={`discover-status ${
-                            business.business_status ? 'open' : 'closed'
+                            business.business_status ? "open" : "closed"
                           }`}
                         >
                           {business.business_status
-                            ? 'Đang mở cửa'
-                            : 'Đã đóng cửa'}
+                            ? "Đang mở cửa"
+                            : "Đã đóng cửa"}
                         </span>
                         <span className="discover-rating">
                           ⭐ {business.business_rating || 0}
@@ -634,17 +489,6 @@ function DiscoverPage() {
                     </div>
                   </div>
                 ))}
-                {filteredBusinesses.length === 0 && !loading && (
-                  <p
-                    style={{
-                      gridColumn: '1 / -1',
-                      textAlign: 'center',
-                      color: '#888',
-                    }}
-                  >
-                    Không tìm thấy kết quả tìm kiếm nào.
-                  </p>
-                )}
               </div>
             </section>
           )}
@@ -664,17 +508,17 @@ function DiscoverPage() {
                         key={business._id}
                         className="discover-place-card"
                         onClick={() => handleBusinessClick(business._id)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         <div className="discover-place-image">
                           <img
                             src={
-                              business.business_image?.[0] || '/placeholder.jpg'
+                              business.business_image?.[0] || "/placeholder.jpg"
                             }
                             alt={business.business_name}
                             loading="lazy"
                             onError={(e) => {
-                              e.target.src = '/1.png';
+                              e.target.src = "/1.png";
                             }}
                           />
                         </div>
@@ -686,12 +530,12 @@ function DiscoverPage() {
                           <div className="discover-place-meta">
                             <span
                               className={`discover-status ${
-                                business.business_status ? 'open' : 'closed'
+                                business.business_status ? "open" : "closed"
                               }`}
                             >
                               {business.business_status
-                                ? 'Đang mở cửa'
-                                : 'Đã đóng cửa'}
+                                ? "Đang mở cửa"
+                                : "Đã đóng cửa"}
                             </span>
                             <span className="discover-rating">
                               ⭐ {business.business_rating || 0}
@@ -713,11 +557,11 @@ function DiscoverPage() {
             ))}
 
           {!searchQuery && categories.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-              <h2 style={{ color: '#666', marginBottom: '20px' }}>
+            <div style={{ textAlign: "center", padding: "80px 20px" }}>
+              <h2 style={{ color: "#666", marginBottom: "20px" }}>
                 Chưa có danh mục nào
               </h2>
-              <p style={{ color: '#999' }}>
+              <p style={{ color: "#999" }}>
                 Vui lòng quay lại sau để khám phá các địa điểm thú vị!
               </p>
             </div>
