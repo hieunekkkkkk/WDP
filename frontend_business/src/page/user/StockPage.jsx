@@ -9,7 +9,7 @@ import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import '../../css/StockPage.css';
 import '../../css/DashboardPage.css';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = import.meta.env.VITE_BE_URL;
 
 const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({

@@ -8,7 +8,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlusCircle } from 'react-icons/fa';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = import.meta.env.VITE_BE_URL;
 
 const formatDateForAPI = (date) => {
   const year = date.getFullYear();
