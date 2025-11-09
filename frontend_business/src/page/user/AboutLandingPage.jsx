@@ -1,6 +1,6 @@
-// AboutLandingPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,7 +11,6 @@ import "../../css/AboutLandingPage.css";
 import {
   FaStar,
   FaQuoteLeft,
-  FaHeart,
   FaThumbsDown,
   FaPaperPlane,
   FaBuilding,
@@ -19,7 +18,17 @@ import {
   FaHandshake,
   FaAward,
   FaThumbsUp,
+  FaUser,
 } from "react-icons/fa";
+
+// Fallback id generator for older browsers
+const genId = () => {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return String(Date.now()) + Math.random().toString(16).slice(2);
+  }
+};
 
 function AboutLandingPage() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -32,143 +41,38 @@ function AboutLandingPage() {
   });
   const [currentTestimonialPage, setCurrentTestimonialPage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [newReview, setNewReview] = useState({
-    name: "",
-    email: "",
-    rating: 5,
-    comment: "",
-  });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
 
   const navigate = useNavigate();
+  const { user, isSignedIn } = useUser();
 
-  // --------------------------
-  // Helper: realistic Vietnamese names & sample comments
-  // --------------------------
-  const VN_FIRST_NAMES = [
-    "Nguyễn",
-    "Trần",
-    "Lê",
-    "Phạm",
-    "Hoàng",
-    "Vũ",
-    "Đỗ",
-    "Phan",
-    "Võ",
-    "Bùi",
-    "Đặng",
-    "Lý",
-    "Hồ",
-    "Dương",
-    "Ngô",
-    "Lâm",
-    "Hà",
-    "Trịnh",
-    "Mai",
-    "Trương",
-  ];
-
-  const VN_MIDDLE_NAMES = [
-    "Văn",
-    "Thị",
-    "Ngọc",
-    "Quang",
-    "Minh",
-    "Tuấn",
-    "Hữu",
-    "Thanh",
-    "Thế",
-    "Thùy",
-    "Hoàng",
-    "Anh",
-    "Kim",
-    "Bảo",
-    "Phương",
-    "Thúy",
-  ];
-
-  const VN_LAST_NAMES = [
-    "An",
-    "Bình",
-    "Cường",
-    "Dũng",
-    "Hạnh",
-    "Hiếu",
-    "Huy",
-    "Khanh",
-    "Khánh",
-    "Lan",
-    "Long",
-    "Nam",
-    "Nguyên",
-    "Phúc",
-    "Quỳnh",
-    "Sơn",
-    "Thảo",
-    "Tiến",
-    "Tuệ",
-    "Vy",
-    "Vân",
-  ];
-
-  const SAMPLE_COMMENTS = [
-    "Ứng dụng rất hữu ích, giúp mình tìm được quán cà phê gần trường nhanh chóng.",
-    "Giao diện dễ dùng, thông tin mô tả đầy đủ. Mong team phát triển thêm tính năng tìm việc.",
-    "Hỗ trợ nhanh và hữu ích. Chúc dự án ngày càng phát triển!",
-    "Rất tiện lợi cho sinh viên mới vào khu vực, recommend cho mọi người.",
-    "Tính năng đánh giá minh bạch, mình thấy đáng tin cậy.",
-    "Cần thêm bộ lọc theo giá cả nhưng nhìn chung trải nghiệm tốt.",
-    "Đã sử dụng nhiều lần, hàng quán cập nhật thường xuyên.",
-    "Ứng dụng nhẹ, chạy mượt trên điện thoại của mình.",
-    "Mong có thêm chương trình khuyến mãi cho sinh viên.",
-    "Tìm kiếm chính xác, kết quả trả về nhanh.",
-    "Nhân viên hỗ trợ nhiệt tình, giải quyết vấn đề kịp thời.",
-    "Thiết kế đẹp, màu sắc hài hoà, dễ chịu khi dùng lâu.",
-    "Tuyệt vời! Giúp mình tiết kiệm thời gian khám phá địa phương.",
-    "Đánh giá khách quan, phù hợp cho du học sinh và sinh viên.",
-    "Nội dung doanh nghiệp rõ ràng, có ảnh minh hoạ rất hữu dụng.",
-  ];
-
-  const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  function generateFullName() {
-    const first = randomFrom(VN_FIRST_NAMES);
-    const middle = Math.random() < 0.6 ? randomFrom(VN_MIDDLE_NAMES) : "";
-    const last = randomFrom(VN_LAST_NAMES);
-    // ensure proper spacing
-    return [first, middle, last].filter(Boolean).join(" ");
-  }
-
-  function generateRandomDateWithinMonths(months = 12) {
-    const now = new Date();
-    const past = new Date();
-    past.setMonth(now.getMonth() - months);
-    const t = past.getTime() + Math.random() * (now.getTime() - past.getTime());
-    return new Date(t).toISOString();
-  }
-
-  // generate N mock feedback objects consistent with API shape used later
-  function generateMockFeedbacks(n = 30) {
-    const arr = [];
-    for (let i = 0; i < n; i++) {
-      const name = generateFullName();
-      const comment = randomFrom(SAMPLE_COMMENTS);
-      arr.push({
-        _id: `mock-${i}-${Date.now()}`,
-        user_id: name,
-        feedback_comment: comment,
-        feedback_date: generateRandomDateWithinMonths(12),
-        feedback_like: Math.floor(Math.random() * 50),
-        feedback_dislike: Math.floor(Math.random() * 8),
-      });
+  // Get display name from feedback safely
+  const getUserDisplayName = (feedback) => {
+    if (
+      feedback?.user_name &&
+      typeof feedback.user_name === "string" &&
+      feedback.user_name.trim()
+    ) {
+      return feedback.user_name.trim();
     }
-    return arr;
-  }
+    if (
+      feedback?.fullName &&
+      typeof feedback.fullName === "string" &&
+      feedback.fullName.trim()
+    ) {
+      return feedback.fullName.trim();
+    }
+    if (feedback?.firstName || feedback?.lastName) {
+      const fn = feedback.firstName || "";
+      const ln = feedback.lastName || "";
+      const full = `${fn} ${ln}`.trim();
+      if (full) return full;
+    }
+    return "Người dùng ẩn danh";
+  };
 
-  // --------------------------
-  // Load initial data
-  // --------------------------
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,7 +82,6 @@ function AboutLandingPage() {
     try {
       setLoading(true);
       const baseURL = import.meta.env.VITE_BE_URL || "";
-
       const results = await Promise.allSettled([
         axios.get(`${baseURL}/api/feedback`),
         axios.get(`${baseURL}/api/business?limit=100`),
@@ -186,28 +89,16 @@ function AboutLandingPage() {
 
       let feedbackData = [];
       if (results[0].status === "fulfilled") {
-        feedbackData = results[0].value.data?.data || [];
+        feedbackData = results[0].value.data?.data?.filter(Boolean) || [];
       }
-
-      // If API returned too few feedbacks, generate mock ones to reach ~30
-      const MIN_FEEDBACK_COUNT = 30;
-      if (!feedbackData || feedbackData.length < MIN_FEEDBACK_COUNT) {
-        const produced = generateMockFeedbacks(
-          MIN_FEEDBACK_COUNT - (feedbackData?.length || 0)
-        );
-        // keep real ones first (if any), then append mock
-        feedbackData = [...(feedbackData || []), ...produced];
-      }
-
       setFeedbacks(feedbackData);
 
-      // compute stats from feedbacks (likes/dislikes)
       const totalLikes = feedbackData.reduce(
-        (sum, f) => sum + (f.feedback_like || 0),
+        (sum, f) => sum + (f?.feedback_like || 0),
         0
       );
       const totalDislikes = feedbackData.reduce(
-        (sum, f) => sum + (f.feedback_dislike || 0),
+        (sum, f) => sum + (f?.feedback_dislike || 0),
         0
       );
       const satisfactionRate =
@@ -221,176 +112,164 @@ function AboutLandingPage() {
         satisfactionRate,
       }));
 
-      // Process businesses for stats
       if (results[1].status === "fulfilled") {
         const businessData = results[1].value.data?.businesses || [];
-        const activeBusinesses = businessData.filter(
-          (b) => b.business_active === "active"
+        const active = businessData.filter(
+          (b) => b?.business_active === "active"
         );
-
         setStats((prev) => ({
           ...prev,
-          totalBusinesses: activeBusinesses.length,
-          totalUsers: Math.floor(activeBusinesses.length * 2.5), // Estimate users
+          totalBusinesses: active.length,
+          totalUsers: Math.floor(active.length * 2.5),
         }));
       }
 
-      // Mock partner data (replace with real API)
       setPartners([
         {
           id: 1,
           name: "FPT UNIVERSITY",
-          logo: "/fpt.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696181/fpt_rcqy1m.jpg",
           type: "Đại học đối tác",
         },
         {
           id: 2,
           name: "HÒA LẠC TECH PARK",
-          logo: "/holaTeck.png",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696183/holaTeck_ij9xxp.png",
           type: "Khu công nghệ",
         },
         {
           id: 3,
           name: "VNPT TECHNOLOGY",
-          logo: "/vnptTech.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696187/vnptTech_pe2kbj.jpg",
           type: "Đối tác công nghệ",
         },
         {
           id: 4,
           name: "VIETTEL DIGITAL",
-          logo: "/viettel.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696185/viettel_uhr0nc.jpg",
           type: "Đối tác số",
         },
         {
           id: 5,
           name: "CMC CORPORATION",
-          logo: "/cmcGlobal.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/cmcGlobal_zqfvnk.jpg",
           type: "Đối tác phần mềm",
         },
         {
           id: 6,
           name: "HÒA LẠC CHAMBER",
-          logo: "/HolaChambel.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/HolaChambel_lswunt.jpg",
           type: "Hiệp hội doanh nghiệp",
         },
         {
           id: 7,
           name: "FPT TELECOM",
-          logo: "/fpt-telecom-1176.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/fpt-telecom-1176_vintuq.jpg",
           type: "Hiệp hội doanh nghiệp",
         },
         {
           id: 8,
           name: "VTI TECHLONOGY",
-          logo: "/vti-offices-hanoi-7.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696188/vti-offices-hanoi-7_se9q2g.jpg",
           type: "Đối tác phần mềm",
         },
       ]);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      // fallback to mock if API fails entirely
-      const fallback = generateMockFeedbacks(30);
-      setFeedbacks(fallback);
-      setStats((prev) => ({
-        ...prev,
-        totalFeedbacks: fallback.length,
-      }));
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setFeedbacks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------
-  // Process testimonials from feedback (use up to 30)
-  // --------------------------
   const processedTestimonials = useMemo(() => {
     return feedbacks
       .filter(
-        (feedback) =>
-          feedback.feedback_comment && feedback.feedback_comment.trim() !== ""
+        (f) => f && f.feedback_comment && String(f.feedback_comment).trim()
       )
-      .slice(0, 30) // take up to 30 testimonials
-      .map((feedback) => ({
-        id: feedback._id,
-        text: feedback.feedback_comment,
-        // prefer user_id (if it's a name), else try to construct from profile
-        author:
-          typeof feedback.user_id === "string" && feedback.user_id.trim() !== ""
-            ? feedback.user_id
-            : feedback.user_name || "Người dùng ẩn danh",
-        date: new Date(feedback.feedback_date || Date.now()).toLocaleDateString(
+      .slice(0, 30)
+      .map((f) => ({
+        id: f._id || genId(),
+        text: f.feedback_comment,
+        author: getUserDisplayName(f),
+        date: new Date(f.feedback_date || Date.now()).toLocaleDateString(
           "vi-VN"
         ),
-        rating: Math.min(5, Math.max(1, Math.floor(Math.random() * 2) + 4)), // 4-5 stars
-        likes: feedback.feedback_like || 0,
-        dislikes: feedback.feedback_dislike || 0,
+        rating: f.feedback_rating || 5,
+        likes: f.feedback_like || 0,
+        dislikes: f.feedback_dislike || 0,
       }));
   }, [feedbacks]);
 
-  // Testimonial navigation (3 per page)
   const visibleTestimonials = useMemo(() => {
-    const startIndex = currentTestimonialPage * 3;
-    return processedTestimonials.slice(startIndex, startIndex + 3);
+    const start = currentTestimonialPage * 3;
+    return processedTestimonials.slice(start, start + 3);
   }, [processedTestimonials, currentTestimonialPage]);
 
-  const handleNextTestimonial = useCallback(() => {
+  const handleNext = useCallback(() => {
     const totalPages = Math.max(1, Math.ceil(processedTestimonials.length / 3));
-    setCurrentTestimonialPage((prev) => (prev + 1) % totalPages);
+    setCurrentTestimonialPage((p) => (p + 1) % totalPages);
   }, [processedTestimonials.length]);
 
-  const handlePrevTestimonial = useCallback(() => {
+  const handlePrev = useCallback(() => {
     const totalPages = Math.max(1, Math.ceil(processedTestimonials.length / 3));
-    setCurrentTestimonialPage((prev) =>
-      prev === 0 ? totalPages - 1 : prev - 1
-    );
+    setCurrentTestimonialPage((p) => (p === 0 ? totalPages - 1 : p - 1));
   }, [processedTestimonials.length]);
 
-  // Handle review submission
   const handleSubmitReview = async (e) => {
     e.preventDefault();
+    if (!isSignedIn) {
+      alert("Vui lòng đăng nhập trước khi gửi đánh giá.");
+      return;
+    }
+    if (!newReview.comment.trim()) {
+      return setSubmitMessage("⚠️ Vui lòng nhập nhận xét.");
+    }
+
     setSubmitLoading(true);
-
     try {
-      // Simulate API call (replace with real endpoint)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      setSubmitMessage(
-        "Cảm ơn bạn đã gửi đánh giá! Chúng tôi sẽ xem xét và phản hồi sớm."
-      );
-      setNewReview({ name: "", email: "", rating: 5, comment: "" });
-
-      // Clear message after 5 seconds
-      setTimeout(() => setSubmitMessage(""), 5000);
+      const baseURL = import.meta.env.VITE_BE_URL || "";
+      const payload = {
+        user_id: user.id,
+        user_name: user.fullName || user.username || "Người dùng",
+        email: user.emailAddresses?.[0]?.emailAddress || "",
+        feedback_comment: newReview.comment,
+        feedback_rating: newReview.rating,
+        feedback_type: "business",
+      };
+      await axios.post(`${baseURL}/api/feedback`, payload);
+      setSubmitMessage("🎉 Cảm ơn bạn đã gửi đánh giá!");
+      setNewReview({ rating: 5, comment: "" });
+      setTimeout(() => setSubmitMessage(""), 4000);
+      await loadData();
     } catch (error) {
-      setSubmitMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
+      console.error("Submit error:", error);
+      setSubmitMessage("⚠️ Có lỗi xảy ra. Vui lòng thử lại sau.");
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setNewReview((prev) => ({ ...prev, [field]: value }));
-  };
-
-  if (loading) {
+  if (loading)
     return (
       <>
         <Header />
         <LoadingScreen />
       </>
     );
-  }
 
   return (
     <div className="about-landing-page">
       <Header />
 
-      {/* Hero Section - About */}
+      {/* Hero Section */}
       <section className="hero-section-about">
         <div className="hero-background-about">
-          <img src="/1.png" alt="Background" />
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Background"
+          />
         </div>
-
         <div className="hero-content-about">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -398,8 +277,7 @@ function AboutLandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h1 className="hero-title">
-              LocalAssistant
-              <span className="highlight">Hola Platform</span>
+              LocalAssistant<span className="highlight">Hola Platform</span>
             </h1>
             <p className="hero-subtitle">
               Kết nối sinh viên với doanh nghiệp địa phương tại Hòa Lạc - Nền
@@ -420,57 +298,44 @@ function AboutLandingPage() {
       {/* Stats Section */}
       <section className="stats-section-about">
         <div className="stats-grid-about">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="stat-item-about"
-          >
-            <div className="stat-icon-about blue">
-              <FaBuilding />
-            </div>
-            <div className="stat-number">{stats.totalBusinesses}+</div>
-            <p className="stat-label">Doanh nghiệp đối tác</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="stat-item-about"
-          >
-            <div className="stat-icon-about green">
-              <FaUsers />
-            </div>
-            <div className="stat-number">{stats.totalUsers}+</div>
-            <p className="stat-label">Người dùng hoạt động</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="stat-item-about"
-          >
-            <div className="stat-icon-about yellow">
-              <FaAward />
-            </div>
-            <div className="stat-number">{stats.satisfactionRate}%</div>
-            <p className="stat-label">Hài lòng</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="stat-item-about"
-          >
-            <div className="stat-icon-about purple">
-              <FaHandshake />
-            </div>
-            <div className="stat-number">{stats.totalFeedbacks}+</div>
-            <p className="stat-label">Đánh giá & phản hồi</p>
-          </motion.div>
+          {[
+            {
+              icon: <FaBuilding />,
+              color: "blue",
+              number: stats.totalBusinesses + "+",
+              label: "Doanh nghiệp đối tác",
+            },
+            {
+              icon: <FaUsers />,
+              color: "green",
+              number: stats.totalUsers + "+",
+              label: "Người dùng hoạt động",
+            },
+            {
+              icon: <FaAward />,
+              color: "yellow",
+              number: stats.satisfactionRate + "%",
+              label: "Hài lòng",
+            },
+            {
+              icon: <FaHandshake />,
+              color: "purple",
+              number: stats.totalFeedbacks + "+",
+              label: "Đánh giá & phản hồi",
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: idx * 0.1 }}
+              className="stat-item-about"
+            >
+              <div className={`stat-icon-about ${item.color}`}>{item.icon}</div>
+              <div className="stat-number">{item.number}</div>
+              <p className="stat-label">{item.label}</p>
+            </motion.div>
+          ))}
         </div>
       </section>
 
@@ -531,7 +396,10 @@ function AboutLandingPage() {
               transition={{ duration: 0.8 }}
               className="about-image"
             >
-              <img src="/2.png" alt="About Us" />
+              <img
+                src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/3_rfwafk.jpg"
+                alt="About Us"
+              />
               <div className="vision-badge">
                 <h4>Tầm nhìn 2030</h4>
                 <p>
@@ -545,7 +413,7 @@ function AboutLandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      {/* {processedTestimonials.length > 0 && (
+      {processedTestimonials.length > 0 && (
         <section className="testimonials-section-about">
           <div className="testimonials-container-about">
             <motion.div
@@ -555,7 +423,9 @@ function AboutLandingPage() {
               className="section-header"
             >
               <h2 className="section-title">Người dùng nói gì về chúng tôi</h2>
-              <p className="section-subtitle"></p>
+              <p className="section-subtitle">
+                Trải nghiệm thực tế từ cộng đồng người dùng LocalAssistant Hola
+              </p>
             </motion.div>
 
             <div className="testimonials-wrapper">
@@ -568,11 +438,8 @@ function AboutLandingPage() {
                   transition={{ duration: 0.5 }}
                   className="testimonials-grid-about"
                 >
-                  {visibleTestimonials.map((testimonial) => (
-                    <TestimonialCard
-                      key={testimonial.id}
-                      testimonial={testimonial}
-                    />
+                  {visibleTestimonials.map((t) => (
+                    <TestimonialCard key={t.id} testimonial={t} />
                   ))}
                 </motion.div>
               </AnimatePresence>
@@ -580,14 +447,14 @@ function AboutLandingPage() {
               {processedTestimonials.length > 3 && (
                 <div className="testimonial-nav">
                   <button
-                    onClick={handlePrevTestimonial}
+                    onClick={handlePrev}
                     className="testimonial-nav-btn"
                     aria-label="Xem đánh giá trước"
                   >
                     ←
                   </button>
                   <button
-                    onClick={handleNextTestimonial}
+                    onClick={handleNext}
                     className="testimonial-nav-btn"
                     aria-label="Xem đánh giá tiếp theo"
                   >
@@ -598,9 +465,9 @@ function AboutLandingPage() {
             </div>
           </div>
         </section>
-      )} */}
+      )}
 
-      {/* Review Submission Section */}
+      {/* Review Form */}
       <section className="review-form-section">
         <div className="review-form-container">
           <motion.div
@@ -622,31 +489,6 @@ function AboutLandingPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="review-form"
           >
-            <div className="form-row">
-              <div className="form-group">
-                <label>Họ tên *</label>
-                <input
-                  type="text"
-                  required
-                  value={newReview.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="form-input"
-                  placeholder="Nhập họ tên của bạn"
-                />
-              </div>
-              <div className="form-group">
-                <label>Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={newReview.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="form-input"
-                  placeholder="Nhập email của bạn"
-                />
-              </div>
-            </div>
-
             <div className="form-group">
               <label>Đánh giá *</label>
               <div className="rating-input">
@@ -654,9 +496,12 @@ function AboutLandingPage() {
                   <button
                     key={star}
                     type="button"
-                    onClick={() => handleInputChange("rating", star)}
-                    className={`rating-star ${star <= newReview.rating ? "active" : ""
-                      }`}
+                    onClick={() =>
+                      setNewReview((p) => ({ ...p, rating: star }))
+                    }
+                    className={`rating-star ${
+                      star <= newReview.rating ? "active" : ""
+                    }`}
                   >
                     ★
                   </button>
@@ -669,16 +514,19 @@ function AboutLandingPage() {
               <textarea
                 required
                 value={newReview.comment}
-                onChange={(e) => handleInputChange("comment", e.target.value)}
+                onChange={(e) =>
+                  setNewReview((p) => ({ ...p, comment: e.target.value }))
+                }
                 className="form-input form-textarea"
                 placeholder="Chia sẻ trải nghiệm của bạn với LocalAssistant Hola..."
-              />
+              ></textarea>
             </div>
 
             {submitMessage && (
               <div
-                className={`submit-message ${submitMessage.includes("Cảm ơn") ? "success" : "error"
-                  }`}
+                className={`submit-message ${
+                  submitMessage.includes("Cảm ơn") ? "success" : "error"
+                }`}
               >
                 {submitMessage}
               </div>
@@ -718,28 +566,24 @@ function AboutLandingPage() {
           </motion.div>
 
           <div className="partners-grid">
-            {partners.map((partner, index) => (
+            {partners.map((p, i) => (
               <motion.div
-                key={partner.id}
+                key={p.id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
                 className="partner-card"
               >
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="partner-logo"
-                />
-                <h3 className="partner-name">{partner.name}</h3>
-                <p className="partner-type">{partner.type}</p>
+                <img src={p.logo} alt={p.name} className="partner-logo" />
+                <h3 className="partner-name">{p.name}</h3>
+                <p className="partner-type">{p.type}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Contact CTA Section */}
+      {/* Contact CTA */}
       <section className="contact-cta-section">
         <div className="contact-cta-content">
           <motion.div
@@ -775,7 +619,7 @@ function AboutLandingPage() {
   );
 }
 
-// Testimonial Card Component
+// Testimonial Card
 const TestimonialCard = React.memo(({ testimonial }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -800,16 +644,21 @@ const TestimonialCard = React.memo(({ testimonial }) => (
 
     <div className="testimonial-footer">
       <div className="testimonial-author">
-        <h4>{testimonial.author}</h4>
-        <p>{testimonial.date}</p>
+        <div className="author-avatar">
+          <FaUser />
+        </div>
+        <div className="author-info">
+          <h4 className="author-name">{testimonial.author}</h4>
+          <p className="author-date">{testimonial.date}</p>
+        </div>
       </div>
 
       <div className="testimonial-reactions">
         <div className="testimonial-reaction likes">
-          <FaThumbsUp /> {testimonial.likes}
+          <FaThumbsUp /> <span>{testimonial.likes}</span>
         </div>
         <div className="testimonial-reaction dislikes">
-          <FaThumbsDown /> {testimonial.dislikes}
+          <FaThumbsDown /> <span>{testimonial.dislikes}</span>
         </div>
       </div>
     </div>

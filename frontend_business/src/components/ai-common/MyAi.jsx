@@ -202,6 +202,7 @@ export default function MyAi() {
         const paymentData = {
           user_id: user.id,
           stack_id: selectedStack._id,
+          type: "business",
         };
 
         const res = await axios.post(paymentUrl, paymentData);

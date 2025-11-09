@@ -258,7 +258,11 @@ function DiscoverPage() {
       <Header />
       <section className="hero-section-landing">
         <div className="hero-background">
-          <img src="/1.png" alt="Mountains" className="hero-bg-image" />
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Mountains"
+            className="hero-bg-image"
+          />
           <div className="hero-overlay"></div>
         </div>
         <div className="hero-content">

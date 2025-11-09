@@ -59,14 +59,31 @@ const AppRoutes = () => {
           <Route path="messages" element={<StudentMessagesPage />} />
           <Route
             path="/dashboard/bot-knowledge/:botId"
-            element={<KnowledgePage />}
+            element={
+            <>
+              <SignedIn>
+                <KnowledgePage />
+              </SignedIn>
+              <SignedOut>
+                <LoginPage />
+              </SignedOut>
+            </>
+          }
           />
           <Route path="/dashboard/calendar" element={<MyCalendar />} />
           <Route path="/dashboard/tasks" element={<TaskCalendar />} />
           <Route path="/dashboard/task-history" element={<HistoryCalendar />} />
           <Route path="/dashboard/analytics" element={<AnalyticsDashboard />} />
-          <Route path="ai-available" element={<AiSupportDocument />} />
-          <Route path="my-ai" element={<MyAi />} />
+          <Route
+            path="/dashboard/ai-available"
+            element={<AiSupportDocument />}
+          />
+          <Route
+            path="/dashboard/payment-complete"
+            element={<UserPayComplete />}
+          />
+
+          <Route path="/dashboard/my-ai" element={<MyAi />} />
         </Route>
 
         <Route
