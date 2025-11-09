@@ -136,7 +136,7 @@ const UserPayComplete = () => {
 
         if (!isPaid) {
           console.log(" Thanh toán chưa thành công sau retry");
-          navigate("/my-ai?payment=failed", { replace: true });
+          navigate("/dashboard/my-ai?payment=failed", { replace: true });
           return;
         }
 
@@ -147,10 +147,10 @@ const UserPayComplete = () => {
         await ensureDefaultKnowledge(bot._id || bot.id);
 
         console.log(" DONE — chuyển trang");
-        navigate("/my-ai?payment=success", { replace: true });
+        navigate("/dashboard/my-ai?payment=success", { replace: true });
       } catch (err) {
         console.error(" Lỗi xác minh thanh toán sau retry:", err);
-        navigate("/my-ai?payment=error", { replace: true });
+        navigate("/dashboard/my-ai?payment=error", { replace: true });
       }
     };
 

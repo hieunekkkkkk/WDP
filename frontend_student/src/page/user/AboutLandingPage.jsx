@@ -128,49 +128,49 @@ function AboutLandingPage() {
         {
           id: 1,
           name: "FPT UNIVERSITY",
-          logo: "/fpt.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696181/fpt_rcqy1m.jpg",
           type: "Đại học đối tác",
         },
         {
           id: 2,
           name: "HÒA LẠC TECH PARK",
-          logo: "/holaTeck.png",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696183/holaTeck_ij9xxp.png",
           type: "Khu công nghệ",
         },
         {
           id: 3,
           name: "VNPT TECHNOLOGY",
-          logo: "/vnptTech.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696187/vnptTech_pe2kbj.jpg",
           type: "Đối tác công nghệ",
         },
         {
           id: 4,
           name: "VIETTEL DIGITAL",
-          logo: "/viettel.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696185/viettel_uhr0nc.jpg",
           type: "Đối tác số",
         },
         {
           id: 5,
           name: "CMC CORPORATION",
-          logo: "/cmcGlobal.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/cmcGlobal_zqfvnk.jpg",
           type: "Đối tác phần mềm",
         },
         {
           id: 6,
           name: "HÒA LẠC CHAMBER",
-          logo: "/HolaChambel.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/HolaChambel_lswunt.jpg",
           type: "Hiệp hội doanh nghiệp",
         },
         {
           id: 7,
           name: "FPT TELECOM",
-          logo: "/fpt-telecom-1176.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/fpt-telecom-1176_vintuq.jpg",
           type: "Hiệp hội doanh nghiệp",
         },
         {
           id: 8,
           name: "VTI TECHLONOGY",
-          logo: "/vti-offices-hanoi-7.jpg",
+          logo: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696188/vti-offices-hanoi-7_se9q2g.jpg",
           type: "Đối tác phần mềm",
         },
       ]);
@@ -265,7 +265,10 @@ function AboutLandingPage() {
       {/* Hero Section */}
       <section className="hero-section-about">
         <div className="hero-background-about">
-          <img src="/1.png" alt="Background" />
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Background"
+          />
         </div>
         <div className="hero-content-about">
           <motion.div
@@ -393,7 +396,10 @@ function AboutLandingPage() {
               transition={{ duration: 0.8 }}
               className="about-image"
             >
-              <img src="/2.png" alt="About Us" />
+              <img
+                src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696182/3_rfwafk.jpg"
+                alt="About Us"
+              />
               <div className="vision-badge">
                 <h4>Tầm nhìn 2030</h4>
                 <p>

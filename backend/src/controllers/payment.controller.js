@@ -29,11 +29,11 @@ class PaymentController {
       if (status === "CANCELLED") {
         if (type === "business") {
           return res.redirect(
-            `${process.env.FRONTEND_BUSINESS_URL}/my-ai?payment=failed`
+            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=failed`
           );
         }
         return res.redirect(
-          `${process.env.FRONTEND_STUDENT_URL}/my-ai?payment=failed`
+          `${process.env.FRONTEND_STUDENT_URL}/dashboard/my-ai?payment=failed`
         );
       }
 
@@ -46,19 +46,19 @@ class PaymentController {
       if (result) {
         if (type === "business") {
           return res.redirect(
-            `${process.env.FRONTEND_BUSINESS_URL}/payment-complete`
+            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/payment-complete?orderCode=${orderCode}`
           );
         }
         return res.redirect(
-          `${process.env.FRONTEND_STUDENT_URL}/payment-complete`
+          `${process.env.FRONTEND_STUDENT_URL}/dashboard/payment-complete?orderCode=${orderCode}`
         );
       }
     } catch (err) {
-      // In case of error, redirect to frontend with error status
+      console.error("Payment callback error:", err);
       const errorUrl =
         type === "business"
-          ? `${process.env.FRONTEND_BUSINESS_URL}/my-ai?payment=error`
-          : `${process.env.FRONTEND_STUDENT_URL}/my-ai?payment=error`;
+          ? `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=error`
+          : `${process.env.FRONTEND_STUDENT_URL}/dashboard/my-ai?payment=error`;
       return res.redirect(errorUrl);
     }
   }
