@@ -16,7 +16,7 @@ function FilterSidebar({ filters, handleFilterChange, fetchLocation }) {
         fetchLocation();
       }
     }, 500),
-    [handleFilterChange]
+    [handleFilterChange, fetchLocation] // <-- ĐÃ SỬA: Thêm fetchLocation vào dependency
   );
 
   const onDistanceChange = (e) => {
@@ -40,13 +40,37 @@ function FilterSidebar({ filters, handleFilterChange, fetchLocation }) {
     };
     handleFilterChange('rating', updatedRating);
   };
+  
+  // --- THÊM MỚI: Hàm xử lý công tắc Vị trí ---
+  const handleLocationToggle = () => {
+    handleFilterChange('searchByLocation', !filters.searchByLocation);
+  };
 
   return (
     <div className="sidebar">
       <p className="filter-section-header">Hãy lựa chọn yêu cầu của bạn:</p>
 
+      {/* ----- KHỐI VỊ TRÍ ĐÃ ĐƯỢC CẬP NHẬT ----- */}
       <div className="filter-section">
-        <h4>Vị trí (≤ {localDistance} km)</h4>
+        <h4>
+          Vị trí
+          {/* Hiển thị text động dựa trên công tắc */}
+          {filters.searchByLocation
+            ? ` (≤ ${localDistance} km)`
+            : ' (Mọi nơi)'}
+        </h4>
+
+        {/* Công tắc mới */}
+        <label className="filter-checkbox-group" style={{marginBottom: '10px'}}>
+          <input
+            type="checkbox"
+            checked={filters.searchByLocation}
+            onChange={handleLocationToggle}
+          />
+          Tìm theo vị trí
+        </label>
+
+        {/* Thanh trượt */}
         <input
           type="range"
           min="0"
@@ -54,11 +78,17 @@ function FilterSidebar({ filters, handleFilterChange, fetchLocation }) {
           step="1"
           value={localDistance}
           onChange={onDistanceChange}
+          disabled={!filters.searchByLocation} // <-- THÊM MỚI: Vô hiệu hóa khi tắt
         />
         <div style={{ fontSize: '0.9rem', color: '#555', marginTop: '4px' }}>
-          0 – {localDistance} km
+          {/* Hiển thị text động dựa trên công tắc */}
+          {filters.searchByLocation
+            ? `0 – ${localDistance} km`
+            : 'Tìm kiếm mọi nơi'}
         </div>
       </div>
+      {/* ----- KẾT THÚC CẬP NHẬT KHỐI VỊ TRÍ ----- */}
+
       <div className="filter-section">
         <h4>Giá tiền</h4>
         <div className="filter-checkbox-group">
