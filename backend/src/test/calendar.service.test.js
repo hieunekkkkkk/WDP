@@ -30,6 +30,8 @@ describe("CalendarService", () => {
     task_type: "học tập",
     task_mode: "hàng ngày",
     task_day: "Monday",
+    task_status: "chưa làm",
+    task_level: "bình thường"
   };
 
   // -------------------- CREATE --------------------
@@ -69,6 +71,14 @@ describe("CalendarService", () => {
       expect(result.length).toBe(1);
       expect(result[0].task_name).toBe("Làm bài tập");
     });
+
+    // ✅ NEW: multiple tasks
+    it("should return multiple tasks correctly", async () => {
+      await Calendar.create(sampleTask);
+      await Calendar.create({ ...sampleTask, task_name: "Học tiếng Anh" });
+      const result = await CalendarService.getAllTasks();
+      expect(result.length).toBe(2);
+    });
   });
 
   // -------------------- GET BY ID --------------------
@@ -83,6 +93,11 @@ describe("CalendarService", () => {
       const fakeId = new mongoose.Types.ObjectId();
       const result = await CalendarService.getTaskById(fakeId);
       expect(result).toBeNull();
+    });
+
+    // ✅ NEW: invalid ID format
+    it("should throw error for invalid ID format", async () => {
+      await expect(CalendarService.getTaskById("invalid-id")).rejects.toThrow();
     });
   });
 
@@ -104,6 +119,8 @@ describe("CalendarService", () => {
       await expect(CalendarService.updateTask(task._id, { task_mode: "hàng ngày", task_day: undefined }))
         .rejects.toThrow("Task hàng ngày phải có task_day");
     });
+
+  
   });
 
   // -------------------- DELETE --------------------
@@ -119,6 +136,11 @@ describe("CalendarService", () => {
       const result = await CalendarService.deleteTask(fakeId);
       expect(result).toBeNull();
     });
+
+    // ✅ NEW: invalid ID format
+    it("should throw if invalid ID format", async () => {
+      await expect(CalendarService.deleteTask("invalid-id")).rejects.toThrow();
+    });
   });
 
   // -------------------- FILTER BY CREATOR --------------------
@@ -132,6 +154,14 @@ describe("CalendarService", () => {
     it("should return empty array when no match", async () => {
       const result = await CalendarService.getByCreatorId("unknown");
       expect(result).toEqual([]);
+    });
+
+    // ✅ NEW: multiple creator test
+    it("should return only tasks of the given creator", async () => {
+      await Calendar.create(sampleTask);
+      await Calendar.create({ ...sampleTask, creator_id: "user999" });
+      const result = await CalendarService.getByCreatorId("user123");
+      expect(result.length).toBe(1);
     });
   });
 
@@ -147,6 +177,14 @@ describe("CalendarService", () => {
       const result = await CalendarService.getByMode("không tồn tại");
       expect(result).toEqual([]);
     });
+
+    // ✅ NEW: multiple mode tasks
+    it("should return correct tasks for multiple modes", async () => {
+      await Calendar.create(sampleTask);
+      await Calendar.create({ ...sampleTask, task_mode: "dài hạn" });
+      const daily = await CalendarService.getByMode("hàng ngày");
+      expect(daily.length).toBe(1);
+    });
   });
 
   // -------------------- FILTER BY TYPE --------------------
@@ -154,6 +192,19 @@ describe("CalendarService", () => {
     it("should return tasks by type", async () => {
       await Calendar.create(sampleTask);
       const result = await CalendarService.getByType("học tập");
+      expect(result.length).toBe(1);
+    });
+
+    it("should return empty if type not found", async () => {
+      const result = await CalendarService.getByType("giải trí");
+      expect(result).toEqual([]);
+    });
+
+    // ✅ NEW
+    it("should handle multiple task types", async () => {
+      await Calendar.create(sampleTask);
+      await Calendar.create({ ...sampleTask, task_type: "thể thao" });
+      const result = await CalendarService.getByType("thể thao");
       expect(result.length).toBe(1);
     });
   });
@@ -165,6 +216,19 @@ describe("CalendarService", () => {
       const result = await CalendarService.filterByStatus("chưa làm");
       expect(result.length).toBe(1);
     });
+
+    it("should return empty if no matching status", async () => {
+      const result = await CalendarService.filterByStatus("đã hủy");
+      expect(result).toEqual([]);
+    });
+
+    // ✅ NEW
+    it("should handle mixed statuses", async () => {
+      await Calendar.create(sampleTask);
+      await Calendar.create({ ...sampleTask, task_status: "đã hoàn thành" });
+      const result = await CalendarService.filterByStatus("đã hoàn thành");
+      expect(result.length).toBe(1);
+    });
   });
 
   // -------------------- FILTER BY LEVEL --------------------
@@ -174,6 +238,13 @@ describe("CalendarService", () => {
       const result = await CalendarService.filterByLevel("bình thường");
       expect(result.length).toBe(1);
     });
+
+    it("should return empty if no match", async () => {
+      const result = await CalendarService.filterByLevel("cao");
+      expect(result).toEqual([]);
+    });
+
+
   });
 
   // -------------------- CHECK OVERLAP --------------------
@@ -191,6 +262,17 @@ describe("CalendarService", () => {
     it("should throw if missing creator_id", async () => {
       await expect(CalendarService.checkOverlap({})).rejects.toThrow("creator_id is required");
     });
+
+    // ✅ NEW
+    it("should return empty if no overlapping tasks", async () => {
+      await Calendar.create(sampleTask);
+      const overlaps = await CalendarService.checkOverlap({
+        creator_id: "user123",
+        start_time: new Date("2025-11-06T11:00:00Z"),
+        end_time: new Date("2025-11-06T12:00:00Z"),
+      });
+      expect(overlaps.length).toBe(0);
+    });
   });
 
   // -------------------- ANALYTICS --------------------
@@ -207,5 +289,7 @@ describe("CalendarService", () => {
       const result = await CalendarService.getAnalyticsData("user999", 2025, 11);
       expect(result.kpi.totalTasks).toBe(0);
     });
+
+   
   });
 });

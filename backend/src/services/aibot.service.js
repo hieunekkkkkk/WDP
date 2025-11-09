@@ -9,6 +9,7 @@ const { PromptTemplate } = require('@langchain/core/prompts');
 const { StringOutputParser } = require('@langchain/core/output_parsers');
 const { RunnableSequence } = require('@langchain/core/runnables');
 
+
 class AiBotService {
     constructor() {
         // Initialize Qdrant client

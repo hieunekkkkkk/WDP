@@ -189,7 +189,8 @@ class BusinessService {
         try {
             const business = await Business.findByIdAndUpdate(
                 id,
-                { $set: { business_priority: 0, updated_at: Date.now() } }
+                { $set: { business_priority: 0, updated_at: Date.now() } },
+                 { new: true, runValidators: true } 
             );
 
             if (!business) {

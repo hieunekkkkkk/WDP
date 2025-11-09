@@ -6,6 +6,8 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const Business = require('../entity/module/business.model');
 const BusinessService = require('../services/business.service');
 
+mongoose.model('category', new mongoose.Schema({ name: String }));
+
 let mongoServer;
 
 beforeAll(async () => {
@@ -215,4 +217,154 @@ describe('BusinessService', () => {
         .toThrow(/Error finding nearest businesses/);
     });
   });
+    describe('getBussinessByOwner', () => {
+    it('should return businesses for a specific owner', async () => {
+      const business = await Business.create({
+        owner_id: 'owner123',
+        business_name: 'Test Business',
+        business_location: { type: 'Point', coordinates: [0, 0] },
+        business_status: true
+      });
+      const result = await BusinessService.getBussinessByOwner('owner123');
+      expect(result.length).toBe(1);
+      expect(result[0].owner_id).toBe('owner123');
+    });
+
+    it('should return empty array if owner has no businesses', async () => {
+      const result = await BusinessService.getBussinessByOwner('owner999');
+      expect(result.length).toBe(0);
+    });
+
+    it('should handle invalid ownerId gracefully', async () => {
+      await expect(BusinessService.getBussinessByOwner(null)).resolves.toEqual([]);
+    });
+  });
+
+  // ======================================
+  // getAllBusinessesWithRating
+  // ======================================
+  describe('getAllBusinessesWithRating', () => {
+    it('should return businesses sorted by rating descending', async () => {
+      await Business.create([
+        { owner_id: '1', business_name: 'A', business_rating: 3, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true },
+        { owner_id: '2', business_name: 'B', business_rating: 5, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true },
+        { owner_id: '3', business_name: 'C', business_rating: 4, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true }
+      ]);
+      const { businesses } = await BusinessService.getAllBusinessesWithRating(1, 10);
+      expect(businesses[0].business_rating).toBe(5);
+      expect(businesses[1].business_rating).toBe(4);
+      expect(businesses[2].business_rating).toBe(3);
+    });
+
+    it('should return empty array if no businesses exist', async () => {
+      const { businesses } = await BusinessService.getAllBusinessesWithRating(1, 10);
+      expect(businesses.length).toBe(0);
+    });
+
+    it('should apply pagination correctly', async () => {
+      for (let i = 0; i < 15; i++) {
+        await Business.create({ owner_id: `${i}`, business_name: `Business ${i}`, business_rating: i % 5, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true });
+      }
+      const { businesses, totalPages } = await BusinessService.getAllBusinessesWithRating(2, 10);
+      expect(businesses.length).toBe(5);
+      expect(totalPages).toBe(2);
+    });
+  });
+
+  // ======================================
+  // getBusinessByCategory
+  // ======================================
+  describe('getBusinessByCategory', () => {
+    it('should return businesses for a specific category', async () => {
+      const categoryId = new mongoose.Types.ObjectId();
+      await Business.create([
+        { owner_id: '1', business_name: 'A', business_category_id: categoryId, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true },
+        { owner_id: '2', business_name: 'B', business_category_id: categoryId, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true }
+      ]);
+      const { businesses, totalItems } = await BusinessService.getBusinessByCategory(categoryId, 1, 10);
+      expect(businesses.length).toBe(2);
+      expect(totalItems).toBe(2);
+    });
+
+    it('should return empty array if no businesses match category', async () => {
+      const { businesses, totalItems } = await BusinessService.getBusinessByCategory(new mongoose.Types.ObjectId(), 1, 10);
+      expect(businesses.length).toBe(0);
+      expect(totalItems).toBe(0);
+    });
+
+    it('should apply pagination correctly', async () => {
+      const categoryId = new mongoose.Types.ObjectId();
+      for (let i = 0; i < 12; i++) {
+        await Business.create({ owner_id: `${i}`, business_name: `Biz ${i}`, business_category_id: categoryId, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true });
+      }
+      const { businesses, totalPages } = await BusinessService.getBusinessByCategory(categoryId, 2, 5);
+      expect(businesses.length).toBe(5);
+      expect(totalPages).toBe(3);
+    });
+  });
+
+  // ======================================
+  // increaseBusinessPriority
+  // ======================================
+  describe('increaseBusinessPriority', () => {
+    it('should increase priority by 1', async () => {
+      const business = await Business.create({ owner_id: '1', business_name: 'Test', business_priority: 0, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true });
+      const updated = await BusinessService.increaseBusinessPriority(business._id);
+      expect(updated.business_priority).toBe(1);
+    });
+
+    it('should throw error if business not found', async () => {
+      await expect(BusinessService.increaseBusinessPriority(new mongoose.Types.ObjectId())).rejects.toThrow('Business not found');
+    });
+
+    it('should update updated_at field', async () => {
+      const business = await Business.create({ owner_id: '1', business_name: 'Test', business_priority: 2, business_location: { type: 'Point', coordinates: [0,0] }, business_status: true });
+      const updated = await BusinessService.increaseBusinessPriority(business._id);
+      expect(updated.updated_at.getTime()).toBeGreaterThan(business.updated_at.getTime());
+    });
+  });
+
+  // ======================================
+  // resetBusinessPriority
+  // ======================================
+  describe('resetBusinessPriority', () => {
+  it('should reset priority to 0', async () => {
+    const business = await Business.create({
+      owner_id: '1',
+      business_name: 'Test',
+      business_priority: 5,
+      business_location: { type: 'Point', coordinates: [0,0] },
+      business_status: true
+    });
+
+    // Thêm delay 1ms để updated_at khác
+    await new Promise(res => setTimeout(res, 1));
+
+    const updated = await BusinessService.resetBusinessPriority(business._id);
+    expect(updated.business_priority).toBe(0);
+  });
+
+  it('should throw error if business not found', async () => {
+    await expect(
+      BusinessService.resetBusinessPriority(new mongoose.Types.ObjectId())
+    ).rejects.toThrow('Business not found');
+  });
+
+  it('should update updated_at field', async () => {
+    const business = await Business.create({
+      owner_id: '1',
+      business_name: 'Test',
+      business_priority: 3,
+      business_location: { type: 'Point', coordinates: [0,0] },
+      business_status: true
+    });
+
+    // Delay 1ms trước khi update để tránh timestamp trùng
+    await new Promise(res => setTimeout(res, 1));
+
+    const updated = await BusinessService.resetBusinessPriority(business._id);
+    expect(updated.updated_at.getTime()).toBeGreaterThan(business.updated_at.getTime());
+  });
+});
+
 });

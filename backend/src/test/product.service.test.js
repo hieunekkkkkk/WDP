@@ -40,6 +40,31 @@ describe("ProductService", () => {
         .rejects
         .toThrow("Error creating product: DB Error");
     });
+it("⚠️ Nên báo lỗi nếu business_id không hợp lệ", async () => {
+  const mockData = { business_id: "invalid_id", product_name: "Tea" };
+
+  // Mock Product.save() để throw error như MongoDB/Mongoose thật
+  Product.mockImplementation(() => ({
+    save: jest.fn().mockRejectedValue(
+      new Error("input must be a 24 character hex string, 12 byte Uint8Array, or an integer")
+    ),
+  }));
+
+  // Dùng regex để test message chứa "ObjectId" hoặc "hex string"
+  await expect(ProductService.createProduct(mockData))
+    .rejects
+    .toThrow(/ObjectId|hex string/);
+});
+
+    it("✅ Nên tạo product nếu business_id rỗng (null)", async () => {
+      const mockData = { business_id: null, product_name: "Tea" };
+      const mockSaved = { _id: "2", ...mockData };
+      Product.mockImplementation(() => ({
+        save: jest.fn().mockResolvedValue(mockSaved),
+      }));
+      const result = await ProductService.createProduct(mockData);
+      expect(result).toEqual(mockSaved);
+    });
   });
 
   // === getAllProducts ===
@@ -72,6 +97,31 @@ describe("ProductService", () => {
         .rejects
         .toThrow("Error fetching products: Connection lost");
     });
+
+    it("✅ Nên trả về mảng rỗng nếu không có products", async () => {
+      Product.find.mockReturnValue({
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockResolvedValue([]),
+      });
+      Product.countDocuments.mockResolvedValue(0);
+      const result = await ProductService.getAllProducts();
+      expect(result.products).toEqual([]);
+      expect(result.totalItems).toBe(0);
+    });
+
+    it("⚠️ Nên trả về phân trang chính xác khi limit > totalItems", async () => {
+      Product.find.mockReturnValue({
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockResolvedValue([{ _id: "1" }]),
+      });
+      Product.countDocuments.mockResolvedValue(1);
+      const result = await ProductService.getAllProducts(2, 5);
+      expect(result.totalPages).toBe(1);
+      expect(result.currentPage).toBe(2);
+      expect(result.products).toHaveLength(1);
+    });
   });
 
   // === getProductById ===
@@ -95,6 +145,15 @@ describe("ProductService", () => {
       await expect(ProductService.getProductById("notfound"))
         .rejects
         .toThrow("Product not found");
+    });
+
+    it("⚠️ Nên báo lỗi khi id không hợp lệ", async () => {
+      Product.findById.mockImplementation(() => {
+        throw new Error("Cast to ObjectId failed");
+      });
+      await expect(ProductService.getProductById("invalid_id"))
+        .rejects
+        .toThrow("Cast to ObjectId failed");
     });
   });
 
@@ -125,6 +184,16 @@ describe("ProductService", () => {
         .rejects
         .toThrow("Product not found");
     });
+
+    it("⚠️ Nên báo lỗi khi update thất bại do DB", async () => {
+      Product.findByIdAndUpdate.mockImplementation(() => {
+        throw new Error("DB Error");
+      });
+
+      await expect(ProductService.updateProduct("1", {}))
+        .rejects
+        .toThrow("Error updating product: DB Error");
+    });
   });
 
   // === deleteProduct ===
@@ -143,6 +212,26 @@ describe("ProductService", () => {
       await expect(ProductService.deleteProduct("1"))
         .rejects
         .toThrow("Product not found");
+    });
+
+    it("⚠️ Nên báo lỗi khi DB lỗi", async () => {
+      Product.findByIdAndDelete.mockImplementation(() => {
+        throw new Error("DB Error");
+      });
+
+      await expect(ProductService.deleteProduct("1"))
+        .rejects
+        .toThrow("Error deleting product: DB Error");
+    });
+
+    it("⚠️ Nên báo lỗi khi id không hợp lệ", async () => {
+      Product.findByIdAndDelete.mockImplementation(() => {
+        throw new Error("Cast to ObjectId failed");
+      });
+
+      await expect(ProductService.deleteProduct("invalid_id"))
+        .rejects
+        .toThrow("Cast to ObjectId failed");
     });
   });
 });
