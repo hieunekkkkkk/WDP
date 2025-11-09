@@ -512,7 +512,10 @@ export default function AiSupportDocument() {
   };
 
   const openChat = (doc) => {
-    setSelectedDoc(doc);
+    setSelectedDoc({
+      ...doc,
+      industry: doc.industry,
+    });
     setChatOpen(true);
   };
 
@@ -680,6 +683,7 @@ export default function AiSupportDocument() {
         isOpen={chatOpen}
         onClose={() => setChatOpen(false)}
         docTitle={selectedDoc?.title || "Tài liệu"}
+        docData={selectedDoc}
       />
     </>
   );

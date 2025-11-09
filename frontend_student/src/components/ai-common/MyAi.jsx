@@ -67,7 +67,7 @@ const SuggestionButton = React.memo(({ text, onClick }) => (
 ));
 
 // Khi chưa có bot => hiển thị đúng 1 gói cho sinh viên
-const NoBotView = ({ stack, onActivate }) => (
+const NoBotView = ({ stack, onActivate, isLoading }) => (
   <div className="myai-container">
     <div className="myai-blur-content">
       <div className="myai-center">
@@ -93,7 +93,9 @@ const NoBotView = ({ stack, onActivate }) => (
             <div className="stack-feature">✓ Trợ giúp bài tập</div>
             <div className="stack-feature">✓ Giải đáp 24/7</div>
             <div className="stack-feature">✓ Gợi ý ôn tập</div>
-            <div className="stack-feature">✓ Tạo đề cương</div>
+            <div className="stack-feature">
+              ✓ Phản hồi chuẩn theo kiến thức{" "}
+            </div>
           </div>
           <p className="stack-description">
             {stack.stack_detail || "Trợ lý AI cho học tập"}
@@ -105,8 +107,16 @@ const NoBotView = ({ stack, onActivate }) => (
           <button
             className="stack-activate-btn"
             onClick={() => onActivate(stack)}
+            disabled={isLoading}
           >
-            🎓 Kích hoạt ngay
+            {isLoading ? (
+              <>
+                <div className="loading-spinner small" />
+                <span>Đang xử lý...</span>
+              </>
+            ) : (
+              <span>🎓 Kích hoạt ngay</span>
+            )}
           </button>
         </div>
       )}
@@ -232,6 +242,7 @@ export default function MyAi() {
   const [bot, setBot] = useState(null);
   const [stack, setStack] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -247,7 +258,6 @@ export default function MyAi() {
           setBot(botRes.data);
           return;
         }
-
       } catch (botErr) {
         console.warn("Lỗi khi tìm bot (coi như chưa có bot):", botErr.message);
       }
@@ -282,6 +292,7 @@ export default function MyAi() {
   const handleActivateStack = useCallback(
     async (selectedStack) => {
       try {
+        setPaymentLoading(true);
         // 1) Log bắt đầu function
         console.log("[MyAi] handleActivateStack called with:", selectedStack);
 
@@ -382,7 +393,13 @@ export default function MyAi() {
 
   // Chưa có bot -> chỉ thấy đúng 1 gói
   if (!bot) {
-    return <NoBotView stack={stack} onActivate={handleActivateStack} />;
+    return (
+      <NoBotView
+        stack={stack}
+        onActivate={handleActivateStack}
+        isLoading={paymentLoading}
+      />
+    );
   }
 
   // Đã có bot -> giao diện My AI
