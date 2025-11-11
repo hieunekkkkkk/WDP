@@ -1,4 +1,15 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { askGemini } from "../../utils/geminiClient.js";
+
+// --- CONSTANTS VÀ UTILS ---
+const getStorageKey = (docTitle, industry) =>
+  `aiChatHistory_${industry}_${docTitle}`;
+
+const initialWelcomeMessage = (docTitle) => ({
+  id: Date.now(),
+  sender: "ai",
+  text: `Xin chào! Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
+});
 
 // Icon Components
 const CloseIcon = () => (
@@ -25,65 +36,156 @@ const SendIcon = () => (
   </svg>
 );
 
+const TrashIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
 // Message Component
 const Message = React.memo(({ msg }) => (
   <div className={`ai-chat-message ${msg.sender}`}>
     <div className="ai-chat-bubble">{msg.text}</div>
   </div>
 ));
-
 Message.displayName = "Message";
 
-// AI Chat Modal Component
-export default function AiChatModal({ isOpen, onClose, docTitle }) {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "ai",
-      text: `Xin chào! Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
-    },
-  ]);
-  const [input, setInput] = useState("");
+// Main AI Chat Modal
+export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
   const messagesEndRef = useRef(null);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Auto-scroll to bottom when new messages arrive
+  const industry = docData?.industry;
+
+  // --- THAY ĐỔI 1: TẢI LỊCH SỬ TỪ LOCALSTORAGE (thay vì reset) ---
+  const [messages, setMessages] = useState(() => {
+    if (!docTitle || !industry) return []; // Không có docTitle hoặc industry thì không load
+
+    const key = getStorageKey(docTitle, industry);
+    const savedHistory = localStorage.getItem(key);
+
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory);
+        if (
+          parsedHistory &&
+          Array.isArray(parsedHistory) &&
+          parsedHistory.length > 0
+        ) {
+          return parsedHistory;
+        }
+      } catch (e) {
+        console.error("Lỗi khi tải lịch sử chat:", e);
+      }
+    }
+    // Trả về tin nhắn chào mừng mặc định nếu không có lịch sử
+    return [initialWelcomeMessage(docTitle)];
+  });
+
+  // --- THAY ĐỔI 2: LƯU LỊCH SỬ MỖI KHI CÓ TIN NHẮN MỚI ---
+  useEffect(() => {
+    if (messages.length > 1 && industry) {
+      const key = getStorageKey(docTitle, industry);
+      localStorage.setItem(key, JSON.stringify(messages));
+    }
+  }, [messages, docTitle, industry]);
+
+  // --- THAY ĐỔI 3: LOẠI BỎ useEffect TỰ ĐỘNG RESET KHI MỞ MODAL (đã xóa) ---
+  // (Đoạn useEffect cũ đã bị xóa)
+
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Reset messages when docTitle changes
+  // Xử lý khi docTitle hoặc industry thay đổi (khi người dùng mở chat cho tài liệu khác)
   useEffect(() => {
-    if (isOpen) {
+    if (!docTitle || !industry) return;
+
+    const key = getStorageKey(docTitle, industry);
+    const savedHistory = localStorage.getItem(key);
+
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory);
+        if (
+          parsedHistory &&
+          Array.isArray(parsedHistory) &&
+          parsedHistory.length > 0
+        ) {
+          setMessages(parsedHistory);
+          return;
+        }
+      } catch (e) {
+        console.error("Lỗi khi tải lịch sử chat:", e);
+      }
+    }
+    // Nếu không có lịch sử cho docTitle và industry mới, set tin nhắn chào mừng
+    setMessages([initialWelcomeMessage(docTitle)]);
+  }, [docTitle, industry]);
+
+  // --- THAY ĐỔI 4: CHỨC NĂNG XÓA CHAT THỦ CÔNG ---
+  const handleClearChat = useCallback(() => {
+    const isConfirmed = window.confirm(
+      "Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện này không?"
+    );
+    if (isConfirmed && industry) {
+      const key = getStorageKey(docTitle, industry);
+      localStorage.removeItem(key); // Xóa khỏi localStorage
       setMessages([
+        // Reset state về tin nhắn chào mừng
         {
-          id: 1,
+          id: Date.now(),
           sender: "ai",
-          text: `Xin chào! Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
+          text: `Lịch sử chat đã được xóa. Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
         },
       ]);
       setInput("");
     }
-  }, [docTitle, isOpen]);
+  }, [docTitle, industry]);
 
-  const handleSend = useCallback(() => {
-    if (!input.trim()) return;
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || loading) return;
 
-    const userMessage = { id: Date.now(), sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    // Tạo prompt dựa trên toàn bộ lịch sử để AI có ngữ cảnh
+    const contextHistory = messages
+      .map((m) => `${m.sender.toUpperCase()}: ${m.text}`)
+      .join("\n");
+
+    const userMsg = { id: Date.now(), sender: "user", text: input };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          sender: "ai",
-          text: "Cảm ơn bạn đã gửi tin nhắn. Đây là phản hồi mẫu từ AI.",
-        },
-      ]);
-    }, 1000);
-  }, [input]);
+    const aiPrompt = `Bạn là trợ lý học tập thông minh. Người dùng đang hỏi về tài liệu "${docTitle}". 
+    Đây là lịch sử cuộc trò chuyện (USER là người dùng, AI là bạn):
+    
+    --- Bắt đầu Lịch sử ---
+    ${contextHistory}
+    USER: ${input}
+    --- Kết thúc Lịch sử ---
+
+    Hãy trả lời tin nhắn cuối cùng (USER) bằng tiếng Việt, súc tích, dễ hiểu và hữu ích. Giả định rằng bạn có thông tin về tài liệu "${docTitle}".`;
+
+    const reply = await askGemini(aiPrompt);
+
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now() + 1, sender: "ai", text: reply },
+    ]);
+    setLoading(false);
+  }, [input, loading, docTitle, messages]); // messages được thêm vào dependencies để lấy lịch sử
 
   const handleKeyPress = useCallback(
     (e) => {
@@ -105,19 +207,32 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
             <h3>Chat với AI</h3>
             <p>{docTitle}</p>
           </div>
-          <button
-            className="ai-chat-close"
-            onClick={onClose}
-            aria-label="Close chat"
-          >
-            <CloseIcon />
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            {/* --- THAY ĐỔI 5: NÚT XÓA CHAT THỦ CÔNG --- */}
+            {messages.length > 1 && (
+              <button
+                className="ai-chat-close"
+                onClick={handleClearChat}
+                title="Xóa lịch sử trò chuyện"
+              >
+                <TrashIcon />
+              </button>
+            )}
+            <button className="ai-chat-close" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          </div>
         </div>
 
         <div className="ai-chat-messages">
           {messages.map((msg) => (
             <Message key={msg.id} msg={msg} />
           ))}
+          {loading && (
+            <div className="ai-chat-message ai">
+              <div className="ai-chat-bubble">Đang trả lời...</div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -128,9 +243,9 @@ export default function AiChatModal({ isOpen, onClose, docTitle }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            aria-label="Chat input"
+            disabled={loading}
           />
-          <button onClick={handleSend} aria-label="Send message">
+          <button onClick={handleSend} disabled={loading}>
             <SendIcon />
           </button>
         </div>

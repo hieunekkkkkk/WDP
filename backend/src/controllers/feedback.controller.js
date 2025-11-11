@@ -16,8 +16,8 @@ class FeedbackController {
             const feedback = await feedbackService.findFeedbackByBusinessId(businessId);
 
             if (!feedback || feedback.length === 0) {
-                return res.status(404).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
                     message: 'No feedback found for this business'
                 });
             }
@@ -40,8 +40,8 @@ class FeedbackController {
             const feedback = await feedbackService.findFeedbackByProductId(productId);
 
             if (!feedback || feedback.length === 0) {
-                return res.status(404).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
                     message: 'No feedback found for this product'
                 });
             }

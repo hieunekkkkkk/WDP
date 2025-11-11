@@ -30,6 +30,7 @@
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "ioredis": "^5.7.0",
+    "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.11.0",
     "moment": "^2.30.1",

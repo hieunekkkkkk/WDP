@@ -1,7 +1,7 @@
 const BusinessModel = require('../entity/module/business.model');
 const ProductModel = require('../entity/module/product.model');
 const GoogleGenAI = require("@langchain/google-genai");
-const GOOGLE_API_KEY = "AIzaSyB8QO5YLX0IkDpW9TMZ--OCsd3s9OUGHVM";
+const GOOGLE_API_KEY = "AIzaSyC3nn204UDovFdU96ZhkqVs-3CglWpgp44";
 SYSTEM_PROMPT = `
 Bạn là một Trợ lý AI chuyên nghiệp. Nhiệm vụ của bạn là TƯ VẤN và ĐỀ XUẤT TỐI ĐA 5 DOANH NGHIỆP (business_id) phù hợp nhất với yêu cầu của khách hàng, dựa trên DỮ LIỆU SẢN PHẨM đã được cung cấp.
 
@@ -203,20 +203,14 @@ class AiService {
             );
 
             const model = new GoogleGenAI.ChatGoogleGenerativeAI({
-                model: "gemini-1.5-flash",
+                model: "gemini-2.5-flash",
                 apiKey: GOOGLE_API_KEY.toString(),
                 temperature: 0.01,
                 maxOutputTokens: 1000,
                 topP: 0.9,
                 topK: 20,
             });
-            // const model = new Ollama.ChatOllama({
-            //     model: "deepseek-r1:1.5b",
-            //     temperature: 0.01,
-            //     maxTokens: 1000,
-            //     topP: 0.9,
-            //     topK: 20
-            // });
+
 
             const response = await model.invoke([
                 {

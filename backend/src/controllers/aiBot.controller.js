@@ -74,7 +74,7 @@ class AiBotController {
             const { botId } = req.params;
             const { message } = req.params;
             if (!message) return res.status(400).json({ error: 'Message is required' });
-            const response = await AiBotService.testHandleMessage(botId, message);
+            const response = await AiBotService.handleMessage(botId, message);
             res.status(200).json({ response });
         } catch (err) {
             console.error('Error testing bot message handling:', err);

@@ -6,28 +6,34 @@ import { useAuth } from '@clerk/clerk-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import '../../css/StockPage.css';
 import '../../css/DashboardPage.css';
 
 const BACKEND_URL = 'http://localhost:3000';
 
-// === COMPONENT MODAL SỬA SẢN PHẨM ===
-// Component này CHỈ cập nhật tồn kho
 const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
-  // 1. State chỉ quản lý số lượng tồn kho
-  const [stock, setStock] = useState(0);
+  const [formData, setFormData] = useState({
+    product_name: '',
+    product_price: '',
+    product_number: 0,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (product) {
-      // Đọc từ product_number
-      setStock(product.product_number || 0);
+      setFormData({
+        product_name: product.product_name || '',
+        product_price: product.product_price || '',
+        product_number: product.product_number || 0,
+      });
     }
   }, [product]);
 
   if (!isOpen || !product) return null;
 
   const handleChange = (e) => {
-    setStock(e.target.value);
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -36,16 +42,15 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      // 2. Gọi API PATCH chuyên dụng (backend đã có)
-      // API này chỉ cập nhật số lượng (đã sửa thành product_number)
-      await axios.patch(`${BACKEND_URL}/api/product/${product._id}/amount`, {
-        // Controller của bạn đọc key tên là 'amount'
-        amount: Number(stock),
+      await axios.put(`${BACKEND_URL}/api/product/${product._id}`, {
+        product_name: formData.product_name,
+        product_price: formData.product_price,
+        product_number: Number(formData.product_number),
       });
 
       toast.success('Cập nhật tồn kho thành công!');
-      onSuccess(); // Tải lại danh sách
-      onClose(); // Đóng modal
+      onSuccess();
+      onClose();
     } catch (err) {
       console.error('Failed to update product stock:', err);
       toast.error(err.response?.data?.error || 'Lỗi khi cập nhật tồn kho');
@@ -60,16 +65,15 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
         <form onSubmit={handleSubmit}>
           <h2>Cập nhật Tồn kho</h2>
 
-          {/* 3. Hiển thị Tên và Giá ở dạng "disabled" (không sửa được) */}
           <div className="form-group">
             <label htmlFor="product_name">Tên sản phẩm</label>
             <input
               type="text"
               id="product_name"
               name="product_name"
-              value={product.product_name || ''}
-              disabled // Vô hiệu hóa
-              style={{ backgroundColor: '#eee' }} // Thêm style cho rõ
+              value={formData.product_name}
+              onChange={handleChange}
+              required
             />
           </div>
           <div className="form-group">
@@ -78,20 +82,19 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
               type="text"
               id="product_price"
               name="product_price"
-              value={product.product_price || ''}
-              disabled // Vô hiệu hóa
-              style={{ backgroundColor: '#eee' }} // Thêm style cho rõ
+              value={formData.product_price}
+              onChange={handleChange}
+              required
             />
           </div>
 
-          {/* 4. Chỉ cho phép sửa Tồn kho */}
           <div className="form-group">
             <label htmlFor="product_number">Số lượng tồn kho</label>
             <input
               type="number"
               id="product_number"
               name="product_number"
-              value={stock} // Dùng state 'stock'
+              value={formData.product_number}
               onChange={handleChange}
               required
             />
@@ -120,9 +123,51 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
   );
 };
 
-// === COMPONENT CHÍNH CỦA TRANG STOCK ===
+const InlineStockEditor = ({ product, onSuccess }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdateStock = async (newAmount) => {
+    if (isUpdating || newAmount < 0) return;
+
+    setIsUpdating(true);
+
+    try {
+      await axios.patch(`${BACKEND_URL}/api/product/${product._id}/amount`, {
+        amount: Number(newAmount),
+      });
+      onSuccess();
+    } catch (err) {
+      console.error('Failed to update stock:', err);
+      toast.error('Lỗi cập nhật tồn kho');
+    } finally {
+      setTimeout(() => setIsUpdating(false), 10);
+    }
+  };
+
+  return (
+    <div className="inline-stock-editor">
+      <button
+        className="inline-stock-btn"
+        onClick={() => handleUpdateStock(product.product_number - 1)}
+        disabled={isUpdating || product.product_number <= 0}
+      >
+        -
+      </button>
+
+      <span>{isUpdating ? '...' : product.product_number ?? 0}</span>
+
+      <button
+        className="inline-stock-btn"
+        onClick={() => handleUpdateStock(product.product_number + 1)}
+        disabled={isUpdating}
+      >
+        +
+      </button>
+    </div>
+  );
+};
+
 const StockPage = () => {
-  // (Các state... giữ nguyên)
   const [businessId, setBusinessId] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +178,6 @@ const StockPage = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
 
-  // (useEffect lấy businessId... giữ nguyên)
   useEffect(() => {
     if (userId) {
       setAppStatus('Đang tải thông tin business...');
@@ -155,7 +199,6 @@ const StockPage = () => {
     }
   }, [userId]);
 
-  // (fetchProducts... giữ nguyên)
   const fetchProducts = useCallback(async () => {
     if (!businessId) return;
     setLoading(true);
@@ -178,7 +221,6 @@ const StockPage = () => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // (Các hàm xử lý sự kiện... giữ nguyên)
   const handleNavigateToCreate = () => {
     navigate('/product-registration');
   };
@@ -214,9 +256,8 @@ const StockPage = () => {
     return amount;
   };
 
-  // (renderTableBody... đã sửa để đọc product_number)
   const renderTableBody = () => {
-    if (loading || (appStatus && !products.length)) {
+    if (loading && products.length === 0) {
       return (
         <tr>
           <td colSpan="5" style={{ textAlign: 'center' }}>
@@ -254,18 +295,19 @@ const StockPage = () => {
         </td>
         <td>{formatCurrency(product.product_price)}</td>
 
-        <td>{product.product_number ?? 0}</td>
-
         <td>
+          <InlineStockEditor product={product} onSuccess={fetchProducts} />
+        </td>
+
+        <td className="stock-action-buttons">
           <button
-            className="edit-btn dashboard-btn"
-            style={{ backgroundColor: '#ffc107', color: 'black' }}
+            className="stock-action-btn edit"
             onClick={() => handleOpenEditModal(product)}
           >
             <FaEdit />
           </button>
           <button
-            className="delete-btn"
+            className="stock-action-btn delete"
             onClick={() => handleDeleteProduct(product._id)}
           >
             <FaTrash />
@@ -288,22 +330,13 @@ const StockPage = () => {
         document.body
       )}
 
-      <div className="main-content">
-        <div className="business-card table-section">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
-            <h2 className="card-title" style={{ margin: 0 }}>
-              Quản lý Kho hàng
-            </h2>
+      <div className="stock-page-content">
+        <div className="business-card table-section stock-table-card">
+          <div className="stock-table-header">
+            <h2 className="stock-table-title">Quản lý Kho hàng</h2>
             <div className="table-actions">
               <button
-                className="add-btn"
+                className="stock-add-btn"
                 onClick={handleNavigateToCreate}
                 disabled={!businessId}
               >
@@ -311,7 +344,7 @@ const StockPage = () => {
               </button>
             </div>
           </div>
-          <table className="data-table">
+          <table className="data-table stock-data-table">
             <thead>
               <tr>
                 <th style={{ width: '35%' }}>Tên sản phẩm</th>

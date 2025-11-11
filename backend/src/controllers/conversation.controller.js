@@ -1,63 +1,87 @@
 const conversationService = require('../services/conversation.service');
-
+const chatGateway = require('../gateway/chatGateway');
 
 class ConversationController {
-    // Kiểm tra conversation trong Redis
     async checkConversation(req, res) {
         try {
             const { sender_id, receiver_id } = req.body;
-            console.log(req.body);
+
             if (!sender_id || !receiver_id) {
                 return res.status(400).json({ error: 'sender_id và receiver_id là bắt buộc' });
             }
+
             const result = await conversationService.checkOrCreateConversation(sender_id, receiver_id);
-            // result: { chatId, sender_messages, receiver_messages }
             return res.json(result);
         } catch (err) {
             console.error('checkConversation error', err);
             return res.status(500).json({ error: err.message });
         }
-    };
+    }
 
-    // Gửi tin nhắn (bot mode)
-    async sendMessage(req, res) {
+    // Lấy type của chat
+    async getChatType(req, res) {
         try {
             const { chatId } = req.params;
-            const type = (req.query.type || 'bot').toLowerCase(); // default bot
-            const { message } = req.body;
-            if (!chatId || typeof message === 'undefined') {
+
+            if (!chatId) {
+                return res.status(400).json({ error: 'chatId là bắt buộc' });
+            }
+
+            const meta = await conversationService.getChatMetadata(chatId);
+            return res.json({ type: meta.type });
+        } catch (err) {
+            console.error('getChatType error', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
+    // Cập nhật type của chat
+    async updateChatType(req, res) {
+        try {
+            const { chatId } = req.params;
+            const { type } = req.body;
+
+            if (!chatId || !type) {
+                return res.status(400).json({ error: 'chatId và type là bắt buộc' });
+            }
+
+            if (!['human', 'bot'].includes(type)) {
+                return res.status(400).json({ error: 'type phải là "human" hoặc "bot"' });
+            }
+
+            const result = await conversationService.updateChatType(chatId, type);
+            return res.json(result);
+        } catch (err) {
+            console.error('updateChatType error', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
+    // Bot mode: Student gửi tin nhắn, bot tự động trả lời
+    async sendMessageToBot(req, res) {
+        try {
+            const { chatId } = req.params;
+            const { sender_id, receiver_id, message } = req.body;
+
+            if (!chatId || !message) {
                 return res.status(400).json({ error: 'chatId và message là bắt buộc' });
             }
 
-            // Optionally sender_id/receiver_id may be passed in body to avoid parsing chatId
-            const sender_id = req.body.sender_id;
-            const receiver_id = req.body.receiver_id;
-
-            const result = await conversationService.processSendMessage({
+            const result = await conversationService.processBotResponse({
                 chatId,
                 sender_id,
                 receiver_id,
-                message,
-                type
+                message
             });
 
-            // result contains saved sender message and (if bot) the receiver message (response) or null (if human)
+            console.log("📤 Emitting bot response via chatGateway...");
+            chatGateway.emitBotResponse(chatId, result.botMessage);
+
             return res.json(result);
         } catch (err) {
-            console.error('sendMessage error', err);
+            console.error('sendMessageToBot error', err);
             return res.status(500).json({ error: err.message });
         }
-    };
-
-    // Xử lý socket message (human mode)
-    async socketSendMessage(data) {
-        return await conversationService.processSendMessage({
-            chatId: data.chatId,
-            sender_id: data.sender_id,
-            receiver_id: data.receiver_id,
-            message: data.message,
-            type: 'human'
-        });
     }
 
     async getAllHistoriesByUserId(req, res) {
@@ -74,7 +98,40 @@ class ConversationController {
         }
     }
 
+    // API lấy thông báo unread messages
+    async getUnreadNotifications(req, res) {
+        try {
+            const { userId } = req.params;
+
+            if (!userId) {
+                return res.status(400).json({ error: 'userId là bắt buộc' });
+            }
+
+            const result = await conversationService.getUnreadNotifications(userId);
+            return res.json(result);
+        } catch (err) {
+            console.error('getUnreadNotifications error', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
+    // API đánh dấu chat đã đọc
+    async markChatAsRead(req, res) {
+        try {
+            const { chatId } = req.params;
+            const { userId } = req.body;
+
+            if (!chatId || !userId) {
+                return res.status(400).json({ error: 'chatId và userId là bắt buộc' });
+            }
+
+            await conversationService.markChatAsRead(chatId, userId);
+            return res.json({ success: true });
+        } catch (err) {
+            console.error('markChatAsRead error', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
 }
 
-// Xuất instance của class
 module.exports = new ConversationController();

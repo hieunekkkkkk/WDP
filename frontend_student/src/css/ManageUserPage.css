@@ -192,3 +192,35 @@
 .manage-user-table-role {
   text-transform: capitalize;
 }
+
+.manage-user-sync-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background-color: #ff6b35; 
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  margin-left: 20px;
+}
+
+.manage-user-sync-btn:hover {
+  background-color: #ff4f0f;
+}
+
+.manage-user-sync-btn svg {
+  font-size: 14px; /* Chỉnh kích thước icon nếu cần */
+}
+
+/* Đảm bảo search bar và select vẫn hoạt động tốt */
+.manage-user-search-bar {
+  flex-grow: 1; /* Cho phép thanh tìm kiếm co dãn */
+}
+
+.manage-user-sort-select {
+  margin-left: auto; /* Đẩy select về cuối (nếu cần) */
+}

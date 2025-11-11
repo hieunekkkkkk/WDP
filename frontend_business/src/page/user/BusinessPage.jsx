@@ -306,12 +306,6 @@ const BusinessPage = () => {
                 </div>
 
                 <div className="action-buttons">
-                  <button
-                    className="contact-btn"
-                    onClick={() => setIsChatOpen(true)}
-                  >
-                    Chat ngay
-                  </button>
                   <button className="map-btn" onClick={handleShowOnMap}>
                     Hiển thị trên GG map
                   </button>

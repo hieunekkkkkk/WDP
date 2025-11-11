@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaUserCircle, FaHome, FaUserCog, FaBuilding } from 'react-icons/fa';
@@ -20,7 +21,7 @@ const HeaderAi = () => {
 
   return (
     <header className="header">
-      <div className="header-container">
+      <div className="header-ai-container">
 
         {/* Bỏ logo FPT và nav Trang chủ/Khám phá/Cá nhân hóa */}
 

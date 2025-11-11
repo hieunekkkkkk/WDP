@@ -265,6 +265,10 @@
   box-shadow: 0 0 0 3px rgba(40, 53, 147, 0.1);
 }
 
+.business-mess-input input:disabled {
+  cursor: not-allowed;
+}
+
 .business-mess-send-btn {
   background: #283593;
   color: white;
@@ -649,4 +653,14 @@
   text-align: center;
   padding: 20px;
   box-sizing: border-box;
+}
+
+.business-mess-placeholder-fullpage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 70vh; /* Hoặc 100% nếu bạn muốn */
+  text-align: center;
+  color: #888;
 }

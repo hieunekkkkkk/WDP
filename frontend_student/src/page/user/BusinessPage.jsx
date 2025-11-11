@@ -493,6 +493,7 @@ const BusinessPage = () => {
         <ChatBox
           onClose={() => setIsChatOpen(false)}
           businessName={business.business_name}
+          businessOwnerId={business.owner_id}
         />
       )}
       <Footer />
