@@ -29,9 +29,6 @@ class PaymentService {
     await payment.save();
 
     const description = "Thanh toan AI Stack";
-    if (description.length > 25) {
-      throw new Error("Mô tả thanh toán quá dài");
-    }
 
     const body = {
       orderCode: transactionId,

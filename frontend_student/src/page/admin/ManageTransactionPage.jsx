@@ -213,9 +213,9 @@ function ManageTransactionPage() {
     )
       .toString()
       .padStart(2, "0")}/${date.getUTCFullYear()} ${date
-      .getUTCHours()
-      .toString()
-      .padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`;
+        .getUTCHours()
+        .toString()
+        .padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`;
   };
 
   // Tạo dữ liệu thống kê cho charts
@@ -667,19 +667,18 @@ function ManageTransactionPage() {
                     </td>
                     <td data-label="Trạng thái">
                       <span
-                        className={`status ${
-                          payment.payment_status === "completed"
-                            ? "status-open"
-                            : payment.payment_status === "pending"
+                        className={`status ${payment.payment_status === "completed"
+                          ? "status-open"
+                          : payment.payment_status === "pending"
                             ? "status-busy"
                             : "status-closed"
-                        }`}
+                          }`}
                       >
                         {payment.payment_status === "completed"
                           ? "Hoàn thành"
                           : payment.payment_status === "pending"
-                          ? "Đang xử lý"
-                          : "Thất bại"}
+                            ? "Đang xử lý"
+                            : "Thất bại"}
                       </span>
                     </td>
                     <td data-label="Hành động" className="delete-button">
