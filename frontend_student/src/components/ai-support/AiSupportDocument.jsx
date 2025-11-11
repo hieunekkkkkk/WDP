@@ -389,7 +389,6 @@ export default function AiSupportDocument() {
     setCurrentPageLatest(1);
   }, [search]);
 
-  // SEO: update document head (title, meta description, canonical) and inject JSON-LD
   useEffect(() => {
     if (loading || error) return;
 
@@ -417,7 +416,6 @@ export default function AiSupportDocument() {
       }
       canonical.setAttribute("href", window.location.href);
 
-      // JSON-LD for ItemList
       const scriptId = "ai-docs-jsonld";
       const prev = document.getElementById(scriptId);
       if (prev) prev.remove();
