@@ -216,25 +216,41 @@ export default function MyCalendar() {
   };
 
   //  Hàm kiểm tra trùng lịch bằng API /calendar/check
-  const checkCalendarConflict = async (creator_id, start_time, end_time) => {
+  const checkWorkConflict = async (
+    creator_id,
+    start_time,
+    end_time,
+    selectedDays
+  ) => {
     try {
-      const res = await axios.post(`${CALENDAR_URL}/check`, {
-        creator_id,
-        start_time,
-        end_time,
-      });
+      for (const dayCode of selectedDays) {
+        const fullName = DAY_CODE_TO_FULL_NAME[dayCode];
+        if (!fullName) continue;
 
-      if (res.data?.isConflict) {
-        alert("Thời gian này đã có công việc khác!");
-        return true; // Có trùng
+        const res = await axios.post(`${CALENDAR_URL}/check`, {
+          creator_id,
+          start_time: start_time.toISOString(),
+          end_time: end_time.toISOString(),
+          task_mode: "hàng ngày",
+          task_day: fullName,
+        });
+
+        // Nếu BE trả về danh sách task trùng
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          alert(
+            `⚠️ Trùng lịch với công việc "${res.data[0].task_name}" vào ${fullName}!`
+          );
+          return true; // Có trùng
+        }
       }
-
       return false; // Không trùng
     } catch (err) {
-      console.error("Lỗi khi kiểm tra trùng lịch:", err?.response || err);
-      const msg = err.response?.data?.message || "Không thể kiểm tra lịch!";
-      alert(msg);
-      return true; // Báo trùng giả định nếu lỗi
+      console.error("❌ Lỗi checkWorkConflict:", err.response || err);
+      alert(
+        err.response?.data?.message ||
+          "Không thể kiểm tra trùng lịch! Vui lòng thử lại."
+      );
+      return true; // Dừng tạo nếu lỗi
     }
   };
 
@@ -262,10 +278,6 @@ export default function MyCalendar() {
       alert("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
       return;
     }
-
-    //  Kiểm tra trùng lịch
-    const hasConflict = await checkCalendarConflict(userId, start, end);
-    if (hasConflict) return; // Ngừng nếu trùng
 
     try {
       const body = {
@@ -318,9 +330,13 @@ export default function MyCalendar() {
     const start = new Date(payload.start_time);
     const end = new Date(payload.end_time);
 
-    //  Kiểm tra trùng lịch (nếu có task khác trong cùng ngày)
-    const hasConflict = await checkCalendarConflict(userId, start, end);
-    if (hasConflict) return; // Dừng nếu trùng
+    const hasConflict = await checkWorkConflict(
+      userId,
+      start,
+      end,
+      payload.selectedDays
+    );
+    if (hasConflict) return;
 
     const startISO = start.toISOString();
     const endISO = end.toISOString();

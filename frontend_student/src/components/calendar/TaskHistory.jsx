@@ -72,17 +72,19 @@ const TaskHistory = () => {
 
         setAllTasks(historyData);
         setFilteredTasks(historyData);
-        toast.success('Tải lịch sử công việc thành công!', {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-
-        });
+        if (!toast.isActive("task-history-success")) {
+          toast.success("Tải lịch sử công việc thành công!", {
+            toastId: "task-history-success",
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch task history:", error);
         toast.error("Không thể tải được lịch sử công việc.");
@@ -92,7 +94,7 @@ const TaskHistory = () => {
     };
 
     fetchHistoryTasks();
-  }, [userId]);
+  }, [userId, CALENDAR_BY_CREATOR_URL]);
 
   useEffect(() => {
     let result = allTasks;
@@ -258,10 +260,11 @@ const TaskHistory = () => {
                     {task.task_level}
                   </span>
                   <span
-                    className={`history-item-tag status-${task.task_status === "đã hoàn thành"
-                      ? "completed"
-                      : "cancelled"
-                      }`}
+                    className={`history-item-tag status-${
+                      task.task_status === "đã hoàn thành"
+                        ? "completed"
+                        : "cancelled"
+                    }`}
                   >
                     {task.task_status === "đã hoàn thành" ? (
                       <FaCheckCircle />
@@ -333,8 +336,9 @@ const TaskHistory = () => {
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`pagination-number ${currentPage === page ? "active" : ""
-                    }`}
+                  className={`pagination-number ${
+                    currentPage === page ? "active" : ""
+                  }`}
                 >
                   {page}
                 </button>
@@ -363,7 +367,12 @@ const TaskHistory = () => {
 
   return (
     <div className="history-container">
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="colored"
+        limit={1}
+      />
       <div className="history-wrapper">
         <header className="history-header">
           <h1 className="history-title">Lịch sử công việc</h1>

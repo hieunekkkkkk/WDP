@@ -9,24 +9,97 @@ class CalendarService {
     return await Calendar.findById(id);
   }
 
+  // async checkOverlap(data) {
+  //   const { start_time, end_time, creator_id } = data;
+
+  //   if (!creator_id) throw new Error("creator_id is required");
+  //   if (!start_time || !end_time)
+  //     throw new Error("Thiếu thời gian bắt đầu/kết thúc");
+
+  //   const startOfDay = new Date(start_time);
+  //   startOfDay.setHours(0, 0, 0, 0);
+  //   const endOfDay = new Date(start_time);
+  //   endOfDay.setHours(23, 59, 59, 999);
+
+  //   const overlappingTasks = await Calendar.find({
+  //     creator_id,
+  //     start_time: { $lt: end_time },
+  //     end_time: { $gt: start_time },
+  //     start_time: { $gte: startOfDay, $lte: endOfDay },
+  //   });
+
+  //   return overlappingTasks;
+  // }
+  // ============================================
+  // ✅ Hàm kiểm tra trùng lịch CHUẨN NHẤT
+  // ============================================
   async checkOverlap(data) {
-    const { start_time, end_time, creator_id } = data;
+    const {
+      start_time,
+      end_time,
+      creator_id,
+      task_mode,
+      task_day,
+      exclude_id,
+    } = data;
 
     if (!creator_id) throw new Error("creator_id is required");
-    if (!start_time || !end_time) throw new Error("Thiếu thời gian bắt đầu/kết thúc");
+    if (!start_time || !end_time)
+      throw new Error("Missing start_time or end_time");
 
+    const startDate = new Date(start_time);
+    const endDate = new Date(end_time);
+    if (endDate <= startDate)
+      throw new Error("end_time must be after start_time");
+
+    // ===============================
+    // 🔁 1. Check trùng cho task hàng ngày
+    // ===============================
+    if (task_mode === "hàng ngày" && task_day) {
+      const recurringQuery = {
+        creator_id,
+        task_mode: "hàng ngày",
+        task_day,
+      };
+      if (exclude_id) recurringQuery._id = { $ne: exclude_id };
+
+      const recurringTasks = await Calendar.find(recurringQuery);
+
+      const newStart = startDate.getUTCHours() * 60 + startDate.getUTCMinutes();
+      const newEnd = endDate.getUTCHours() * 60 + endDate.getUTCMinutes();
+
+      const overlappingTasks = recurringTasks.filter((task) => {
+        const tStart = new Date(task.start_time);
+        const tEnd = new Date(task.end_time);
+        const existStart = tStart.getUTCHours() * 60 + tStart.getUTCMinutes();
+        const existEnd = tEnd.getUTCHours() * 60 + tEnd.getUTCMinutes();
+
+        // ✅ Công thức overlap: startA < endB && endA > startB
+        return newStart < existEnd && newEnd > existStart;
+      });
+
+      return overlappingTasks;
+    }
+
+    // ===============================
+    // 📅 2. Check trùng cho task dài hạn (cùng ngày)
+    // ===============================
     const startOfDay = new Date(start_time);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(start_time);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const overlappingTasks = await Calendar.find({
+    const query = {
       creator_id,
-      start_time: { $lt: end_time },
-      end_time: { $gt: start_time },
-      start_time: { $gte: startOfDay, $lte: endOfDay },
-    });
+      $and: [
+        { start_time: { $lt: end_time } },
+        { end_time: { $gt: start_time } },
+        { start_time: { $gte: startOfDay, $lte: endOfDay } },
+      ],
+    };
+    if (exclude_id) query._id = { $ne: exclude_id };
 
+    const overlappingTasks = await Calendar.find(query);
     return overlappingTasks;
   }
 

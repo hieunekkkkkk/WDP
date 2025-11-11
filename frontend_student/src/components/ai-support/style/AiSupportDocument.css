@@ -952,7 +952,7 @@
   color: var(--brand-dark);
 }
 
-.ai-doc-desc {
+.ai-doc_desc {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
@@ -997,23 +997,25 @@
   padding: 8px 12px;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   border: none;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
+  justify-content: center;
+  line-height: 1;
 }
 
 .ai-doc-drive-btn {
-  background: var(--drive-blue);
+  background: #1a73e8;
   color: #fff;
   text-decoration: none;
-  box-shadow: 0 2px 6px rgba(66, 133, 244, 0.12);
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.2);
 }
 
 .ai-doc-drive-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(66, 133, 244, 0.18);
-  background: var(--drive-blue-dark);
+  box-shadow: 0 6px 18px rgba(26, 115, 232, 0.3);
+  background: #1558b0;
 }
 
 .ai-doc-chat-btn {
