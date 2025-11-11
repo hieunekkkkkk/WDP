@@ -30,7 +30,7 @@ class BotKnowledgeService {
         const exists = collections.collections.some(c => c.name === collectionName);
         if (!exists) {
             await this.qdrantClient.createCollection(collectionName, {
-                vectors: { size: 768, distance: 'Cosine' },
+                vectors: { size: 3072, distance: 'Cosine' },
             });
             console.log(`Created Qdrant collection: ${collectionName}`);
         }

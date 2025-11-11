@@ -500,12 +500,12 @@
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
     transition: none !important;
   }
-}
+} */
 
 /* 7) Print-friendly (SEO + share) */
 @media print {

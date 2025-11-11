@@ -72,7 +72,17 @@ const TaskHistory = () => {
 
         setAllTasks(historyData);
         setFilteredTasks(historyData);
-        toast.success("Tải lịch sử công việc thành công!");
+        toast.success('Tải lịch sử công việc thành công!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+
+        });
       } catch (error) {
         console.error("Failed to fetch task history:", error);
         toast.error("Không thể tải được lịch sử công việc.");
@@ -248,11 +258,10 @@ const TaskHistory = () => {
                     {task.task_level}
                   </span>
                   <span
-                    className={`history-item-tag status-${
-                      task.task_status === "đã hoàn thành"
-                        ? "completed"
-                        : "cancelled"
-                    }`}
+                    className={`history-item-tag status-${task.task_status === "đã hoàn thành"
+                      ? "completed"
+                      : "cancelled"
+                      }`}
                   >
                     {task.task_status === "đã hoàn thành" ? (
                       <FaCheckCircle />
@@ -324,9 +333,8 @@ const TaskHistory = () => {
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`pagination-number ${
-                    currentPage === page ? "active" : ""
-                  }`}
+                  className={`pagination-number ${currentPage === page ? "active" : ""
+                    }`}
                 >
                   {page}
                 </button>
