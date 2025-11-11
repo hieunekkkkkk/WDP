@@ -59,7 +59,16 @@ const AppRoutes = () => {
           <Route path="messages" element={<StudentMessagesPage />} />
           <Route
             path="/dashboard/bot-knowledge/:botId"
-            element={<KnowledgePage />}
+            element={
+            <>
+              <SignedIn>
+                <KnowledgePage />
+              </SignedIn>
+              <SignedOut>
+                <LoginPage />
+              </SignedOut>
+            </>
+          }
           />
           <Route path="/dashboard/calendar" element={<MyCalendar />} />
           <Route path="/dashboard/tasks" element={<TaskCalendar />} />

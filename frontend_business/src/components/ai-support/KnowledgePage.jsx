@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 import axios from "axios";
+import { useUser } from "@clerk/clerk-react"; // Import useUser
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
 import KnowledgeCreateModal from "../ai-modal/KnowledgeCreateModal";
@@ -11,6 +12,9 @@ import "./style/KnowledgePage.css";
 const KnowledgePage = () => {
   const { botId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate(); 
+  const { user } = useUser(); 
+
   const isBusinessKnowledge = location.pathname.includes("business-dashboard");
   const [bot, setBot] = useState(null);
   const [knowledges, setKnowledges] = useState([]);
@@ -27,18 +31,30 @@ const KnowledgePage = () => {
       k.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const fetchBot = async () => {
+  const fetchBot = useCallback(async () => {
+    if (!user) return; 
+
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/aibot/${botId}`
       );
-      setBot(res.data);
+
+      if (res.data.ownerId !== user.id) {
+        console.warn("Access Denied: User is not the owner of this bot.");
+        navigate("/business-dashboard/my-ai");
+        return;
+      }
+
+      setBot(res.data); 
     } catch (err) {
       console.error("Error fetching bot:", err);
+      if (err.response && err.response.status === 500) {
+        navigate("/business-dashboard/my-ai");
+      }
     }
-  };
+  }, [botId, user, navigate]);
 
-  const fetchKnowledge = async () => {
+  const fetchKnowledge = useCallback(async () => {
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`
@@ -47,12 +63,15 @@ const KnowledgePage = () => {
     } catch (err) {
       console.error("Error fetching knowledge:", err);
     }
-  };
+  }, [botId]); // fetchKnowledge chỉ phụ thuộc vào botId
 
   useEffect(() => {
-    fetchBot();
-    fetchKnowledge();
-  }, [botId]);
+    // Chỉ chạy fetch khi user đã được tải
+    if (user) {
+      fetchBot();
+      fetchKnowledge();
+    }
+  }, [botId, user, fetchBot, fetchKnowledge]); // Thêm user, fetchBot, fetchKnowledge
 
   const deleteKnowledge = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa kiến thức này?")) return;
@@ -60,8 +79,7 @@ const KnowledgePage = () => {
       await axios.delete(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${id}`
       );
-
-      fetchKnowledge();
+      fetchKnowledge(); // Gọi lại fetchKnowledge sau khi xóa thành công
     } catch (err) {
       console.error("Error deleting knowledge:", err);
     }

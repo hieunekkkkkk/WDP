@@ -122,7 +122,6 @@ const Header = () => {
       socketRef.current.on("receive_message", (msg) => {
         // Chỉ fetch lại nếu tin nhắn KHÔNG phải của mình
         if (msg.sender_id !== user.id) {
-          console.log("📬 Received new message, refreshing notifications...");
           fetchUnreadNotifications();
         }
       });

@@ -140,8 +140,6 @@ export default function MyAi() {
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
-        console.log(stackRes);
-
         const data = stackRes.data;
         const stackList = Array.isArray(data) ? data : data.stacks || [];
         const filteredStacks = stackList.filter(
@@ -204,6 +202,7 @@ export default function MyAi() {
         const paymentData = {
           user_id: user.id,
           stack_id: selectedStack._id,
+          type: "business",
         };
 
         const res = await axios.post(paymentUrl, paymentData);

@@ -14,12 +14,12 @@ const formatTime = (dateStr) => {
 
 /**
  * ChatBox Component - Popup chat mini cho Business
- * 
+ *
  * Hoạt động GIỐNG HỆT BusinessMessagesPage:
  * - Business chat với Student hoặc Business khác
  * - Luôn dùng Manager mode (không có bot)
  * - Tin nhắn luôn được lưu vào Redis (qua socket)
- * 
+ *
  * Props:
  * - businessName: Tên người chat (Student/Business)
  * - studentId: ID của người nhận (có thể là Student hoặc Business khác)
@@ -83,41 +83,28 @@ const ChatBox = ({ onClose, businessName, studentId: propStudentId }) => {
     });
 
     socketRef.current.on("connect", () => {
-      console.log("✅ Business ChatBox socket connected:", socketRef.current.id);
-
-      // Re-join room if reconnect
       if (currentChatIdRef.current) {
-        console.log("🔄 Business ChatBox re-joining room:", currentChatIdRef.current);
         socketRef.current.emit("join_chat", currentChatIdRef.current);
         roomJoinedRef.current = true;
       }
     });
 
     socketRef.current.on("receive_message", (msg) => {
-      console.log("📩 Business ChatBox received message:", msg);
-
-      // Skip own messages
       if (msg.sender_id === businessId) {
-        console.log("⏭️ Business ChatBox skipping own message");
         return;
       }
 
-      // Only add if belongs to current chat
       const belongsToCurrentChat = msg.chatId === currentChatIdRef.current;
       if (!belongsToCurrentChat) {
-        console.log("⏭️ Business ChatBox: message doesn't belong to current chat");
         return;
       }
 
-      // Check duplicate
       setMessages((prev) => {
-        const exists = prev.some(m => m.id === msg.ts);
+        const exists = prev.some((m) => m.id === msg.ts);
         if (exists) {
-          console.log("⏭️ Business ChatBox: duplicate message");
           return prev;
         }
 
-        console.log("✅ Business ChatBox adding received message");
         return [
           ...prev,
           {
@@ -141,7 +128,6 @@ const ChatBox = ({ onClose, businessName, studentId: propStudentId }) => {
   useEffect(() => {
     if (!currentChatId || !socketRef.current?.connected) return;
 
-    console.log("🔗 Business ChatBox joining room:", currentChatId);
     socketRef.current.emit("join_chat", currentChatId);
     roomJoinedRef.current = true;
   }, [currentChatId]);
@@ -151,14 +137,14 @@ const ChatBox = ({ onClose, businessName, studentId: propStudentId }) => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !businessId || !propStudentId || !currentChatId) return;
+    if (!input.trim() || !businessId || !propStudentId || !currentChatId)
+      return;
 
     // Đảm bảo đã join room
     if (!roomJoinedRef.current && socketRef.current?.connected) {
-      console.log("⚠️ Business ChatBox not in room yet, joining now...");
       socketRef.current.emit("join_chat", currentChatId);
       roomJoinedRef.current = true;
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     const messageContent = input.trim();
@@ -174,18 +160,15 @@ const ChatBox = ({ onClose, businessName, studentId: propStudentId }) => {
     setMessages((prev) => [...prev, optimisticMessage]);
     setInput("");
 
-    // Gửi tin nhắn qua socket (giống BusinessMessagesPage - Manager mode)
-    console.log("💬 Business ChatBox sending message via socket...");
     socketRef.current.emit("send_message", {
       chatId: currentChatId,
       sender_id: businessId,
       receiver_id: propStudentId,
       message: messageContent,
-      message_who: 'receiver'
+      message_who: "receiver",
     });
   };
 
-  // Nếu không có studentId, hiển thị placeholder
   if (!propStudentId) {
     return (
       <div className="business-view-container">
@@ -220,8 +203,9 @@ const ChatBox = ({ onClose, businessName, studentId: propStudentId }) => {
           messages.map((msg) => (
             <div
               key={msg.id}
-              className={`business-view-message ${msg.type === "sent" ? "user" : "bot"
-                }`}
+              className={`business-view-message ${
+                msg.type === "sent" ? "user" : "bot"
+              }`}
             >
               {msg.content}
             </div>

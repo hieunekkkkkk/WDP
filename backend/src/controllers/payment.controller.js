@@ -29,7 +29,7 @@ class PaymentController {
       if (status === "CANCELLED") {
         if (type === "business") {
           return res.redirect(
-            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=failed`
+            `${process.env.FRONTEND_BUSINESS_URL}/business-dashboard`
           );
         }
         return res.redirect(
@@ -46,7 +46,7 @@ class PaymentController {
       if (result) {
         if (type === "business") {
           return res.redirect(
-            `${process.env.FRONTEND_BUSINESS_URL}/dashboard/payment-complete?orderCode=${orderCode}`
+            `${process.env.FRONTEND_BUSINESS_URL}/payment-complete?orderCode=${orderCode}`
           );
         }
         return res.redirect(
@@ -57,7 +57,7 @@ class PaymentController {
       console.error("Payment callback error:", err);
       const errorUrl =
         type === "business"
-          ? `${process.env.FRONTEND_BUSINESS_URL}/dashboard/my-ai?payment=error`
+          ? `${process.env.FRONTEND_BUSINESS_URL}/business-dashboard/my-ai`
           : `${process.env.FRONTEND_STUDENT_URL}/dashboard/my-ai?payment=error`;
       return res.redirect(errorUrl);
     }

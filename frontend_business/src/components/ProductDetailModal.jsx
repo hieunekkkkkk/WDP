@@ -24,8 +24,6 @@ const ProductDetailModal = ({
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
-      console.log(selectedProduct.id);
-      
       if (!selectedProduct?.id) return;
 
       try {

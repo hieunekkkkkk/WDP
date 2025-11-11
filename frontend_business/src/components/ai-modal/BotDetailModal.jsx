@@ -17,7 +17,6 @@ const BotDetailModal = ({ bot, onClose, onSave }) => {
         { name, description }
       );
 
-      console.log(" Update bot response:", res.data);
       toast.success("Cập nhật bot thành công!");
       onSave();
       onClose();
