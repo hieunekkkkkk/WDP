@@ -178,6 +178,7 @@ function ManageFeedbackPage() {
         pending: "Đang xóa phản hồi...",
         success: "Đã xóa phản hồi thành công!",
         error: "Không thể xóa phản hồi. Vui lòng thử lại.",
+        autoClose: 3000,
       });
 
       // Cập nhật state sau khi promise thành công
