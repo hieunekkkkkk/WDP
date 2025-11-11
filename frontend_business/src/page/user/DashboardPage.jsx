@@ -440,7 +440,6 @@ const DashboardPage = () => {
     fetchStackData();
   }, []);
 
-  // Tách hàm fetch data
   const fetchTableData = () => {
     if (!businessId) return;
     setIsLoadingTable(true);
@@ -469,7 +468,6 @@ const DashboardPage = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Lấy dữ liệu dashboard
   useEffect(() => {
     if (!businessId) return;
 
@@ -551,7 +549,6 @@ const DashboardPage = () => {
     fetchChartData();
   }, [businessId, startDate, endDate]);
 
-  // Xử lý khi người dùng chọn file Excel
   const handleFileImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -680,7 +677,6 @@ const DashboardPage = () => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
 
-        // Xử lý theo từng loại key
         if (sortConfig.key === 'revenue_amount') {
           aValue = Number(aValue) || 0;
           bValue = Number(bValue) || 0;
@@ -692,7 +688,6 @@ const DashboardPage = () => {
           bValue = String(bValue || '').toLowerCase();
         }
 
-        // So sánh
         if (aValue < bValue) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
