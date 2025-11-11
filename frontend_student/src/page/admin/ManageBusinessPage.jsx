@@ -17,42 +17,44 @@ import '../../css/ManageBusinessPage.css';
 
 function ManageBusinessPage() {
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState([]);
+  const [businesses, setBusinesses] = useState([]); 
   const [search, setSearch] = useState('');
   const [sortStatus, setSortStatus] = useState('Newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [banReason, setBanReason] = useState('');
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedBusiness, setSelectedBusiness] = useState(null); 
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [ownerNames, setOwnerNames] = useState({});
 
-  const limit = 5;
+  const limit = 5; 
   Modal.setAppElement('#root');
 
   useEffect(() => {
-    fetchBusinesses(currentPage, sortStatus);
-  }, [currentPage, sortStatus]);
+    fetchBusinesses(sortStatus);
+  }, [sortStatus]);
 
-  const fetchBusinesses = async (page, sort) => {
+  const fetchBusinesses = async (sort) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/business/`, {
-        params: { page, limit, sort }
-      });
+      const res = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/business/`,
+        {
+          params: { sort, limit: 1000 },
+        }
+      );
 
       const businessesData = res.data.businesses;
       setBusinesses(businessesData);
-      setTotalPages(res.data.totalPages);
-
       const ownerIds = [...new Set(businessesData.map((b) => b.owner_id))];
       const ownerResponses = await Promise.all(
-        ownerIds.map((id) => axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${id}`))
+        ownerIds.map((id) =>
+          axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${id}`)
+        )
       );
 
       const nameMap = {};
       ownerResponses.forEach((res) => {
-        const user = res.data.users;
-        if (user?.id) nameMap[user.id] = user.fullName;
+        const user = res.data;
+        if (user?.clerkId) nameMap[user.clerkId] = user.fullName;
       });
 
       setOwnerNames(nameMap);
@@ -62,21 +64,31 @@ function ManageBusinessPage() {
     }
   };
 
-  const updateBusinessStatus = async (index, name, newStatus) => {
-    const loadingToastId = toast.loading('Đang cập nhật trạng thái doanh nghiệp...');
+  const updateBusinessStatus = async (businessId, name, newStatus) => {
+    const loadingToastId = toast.loading(
+      'Đang cập nhật trạng thái doanh nghiệp...'
+    );
 
     try {
-      const business = businesses[index];
-      await axios.put(`${import.meta.env.VITE_BE_URL}/api/business/${business._id}`, {
-        business_active: newStatus
-      });
+      await axios.put(
+        `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`, 
+        {
+          business_active: newStatus,
+        }
+      );
 
-      const updated = [...businesses];
-      updated[index].business_active = newStatus;
-      setBusinesses(updated);
+      setBusinesses((prevBusinesses) =>
+        prevBusinesses.map((b) =>
+          b._id === businessId ? { ...b, business_active: newStatus } : b
+        )
+      );
 
       toast.dismiss(loadingToastId);
-      toast.success(`${newStatus === 'active' ? 'Kích hoạt' : 'Vô hiệu hóa'} doanh nghiệp "${name}" thành công!`);
+      toast.success(
+        `${
+          newStatus === 'active' ? 'Kích hoạt' : 'Vô hiệu hóa'
+        } doanh nghiệp "${name}" thành công!`
+      );
     } catch (err) {
       console.error('PUT error:', err);
       toast.dismiss(loadingToastId);
@@ -84,33 +96,38 @@ function ManageBusinessPage() {
     }
   };
 
-  const handleBan = (index, name) => updateBusinessStatus(index, name, 'inactive');
-  const handleActivate = (index, name) => updateBusinessStatus(index, name, 'active');
-  const handleBanPending = (index, name) => {
-    setSelectedBusiness({ index, name });
+  const handleBan = (businessId, name) =>
+    updateBusinessStatus(businessId, name, 'inactive');
+  const handleActivate = (businessId, name) =>
+    updateBusinessStatus(businessId, name, 'active');
+
+  const handleBanPending = (businessId, name) => {
+    setSelectedBusiness({ id: businessId, name });
     setIsBanModalOpen(true);
   };
-  const handleEnterBusiness = (index, id) => navigate(`/business/${id}`);
+  const handleEnterBusiness = (id) => navigate(`/business/${id}`); 
 
   const submitBanReason = async () => {
     if (!banReason.trim()) return toast.error('Vui lòng nhập lý do từ chối.');
 
-    const { index, name } = selectedBusiness;
-    const business = businesses[index];
+    const { id, name } = selectedBusiness;
+    const business = businesses.find((b) => b._id === id); 
+
+    if (!business) return toast.error('Không tìm thấy doanh nghiệp.');
 
     const loadingToastId = toast.loading('Đang xử lý từ chối doanh nghiệp...');
 
     try {
-      const userRes = await axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${business.owner_id}`);
-      const owner = userRes.data.users;
+      const userRes = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/user/${business.owner_id}`
+      );
+
+      const owner = userRes.data;
 
       if (!owner?.email || !owner?.fullName) {
         toast.dismiss(loadingToastId);
         return toast.error('Không tìm thấy thông tin người dùng.');
       }
-
-      console.log(owner.email, owner.fullName);
-      
 
       await sendEmail(import.meta.env.VITE_EMAILJS_TEMPLATE_REJECT_ID, {
         email: owner.email,
@@ -123,10 +140,12 @@ function ManageBusinessPage() {
       `,
       });
 
-      await updateBusinessStatus(index, name, 'inactive');
+      await updateBusinessStatus(id, name, 'inactive'); 
 
       toast.dismiss(loadingToastId);
-      toast.success(`Đã từ chối doanh nghiệp "${name}" và gửi email thành công`);
+      toast.success(
+        `Đã từ chối doanh nghiệp "${name}" và gửi email thành công`
+      );
 
       setIsBanModalOpen(false);
       setBanReason('');
@@ -134,47 +153,93 @@ function ManageBusinessPage() {
     } catch (err) {
       console.error(err);
       toast.dismiss(loadingToastId);
-      toast.error('Từ chối doanh nghiệp hoặc gửi email thất bại');
+      if (err.response && err.config.url.includes('/api/user/')) {
+        toast.error('Lỗi: Không tìm thấy thông tin chủ sở hữu.');
+      } else {
+        toast.error('Từ chối doanh nghiệp hoặc gửi email thất bại');
+      }
     }
   };
 
-
   const filteredBusinesses = businesses.filter((b) => {
-    const matchesSearch = b.business_name.toLowerCase().includes(search.toLowerCase()) ||
-      b.owner_id.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      b.business_name.toLowerCase().includes(search.toLowerCase()) ||
+      b.owner_id.toLowerCase().includes(search.toLowerCase()) ||
+      (ownerNames[b.owner_id] || '')
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
     const matchesStatus = ['Active', 'Inactive', 'Pending'].includes(sortStatus)
       ? b.business_active === sortStatus.toLowerCase()
       : true;
+
     return matchesSearch && matchesStatus;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredBusinesses.length / limit);
+
+  const paginatedBusinesses = filteredBusinesses.slice(
+    (currentPage - 1) * limit,
+    currentPage * limit
+  );
 
   return (
     <>
       <Header />
-      <HeroSectionAdmin message={<>Trang quản lý <br /> doanh nghiệp</>} />
+      <HeroSectionAdmin
+        message={
+          <>
+            Trang quản lý <br /> doanh nghiệp
+          </>
+        }
+      />
 
       <Modal
         isOpen={isBanModalOpen}
         onRequestClose={() => setIsBanModalOpen(false)}
         contentLabel="Từ chối doanh nghiệp"
         style={{
-          content: { maxWidth: '700px', maxHeight: '300px', margin: 'auto', padding: '20px', borderRadius: '10px' },
+          content: {
+            maxWidth: '700px',
+            maxHeight: '300px',
+            margin: 'auto',
+            padding: '20px',
+            borderRadius: '10px',
+            zIndex: 100
+          },
           overlay: { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
         }}
       >
-        <h2 className='business-ban-title'>Từ chối doanh nghiệp</h2>
-        <p>Nhập lý do từ chối doanh nghiệp <strong>"{selectedBusiness?.name}"</strong>:</p>
+        <h2 className="business-ban-title">Từ chối doanh nghiệp</h2>
+        <p>
+          Nhập lý do từ chối doanh nghiệp{' '}
+          <strong>"{selectedBusiness?.name}"</strong>:
+        </p>
         <textarea
           value={banReason}
           onChange={(e) => setBanReason(e.target.value)}
           placeholder="Lý do từ chối..."
           rows={4}
-          className='business-ban-text-area'
+          className="business-ban-text-area"
         ></textarea>
 
         <div style={{ marginTop: '20px', textAlign: 'right' }}>
-          <button onClick={() => setIsBanModalOpen(false)} className="business-ban-modal-btn cancel">Hủy</button>
-          <button onClick={submitBanReason} className="business-ban-modal-btn confirm">Xác nhận từ chối</button>
+          <button
+            onClick={() => setIsBanModalOpen(false)}
+            className="business-ban-modal-btn cancel"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={submitBanReason}
+            className="business-ban-modal-btn confirm"
+          >
+            Xác nhận từ chối
+          </button>
         </div>
       </Modal>
 
@@ -189,7 +254,10 @@ function ManageBusinessPage() {
             />
           </div>
           <div className="manage-business-sort-select">
-            <select value={sortStatus} onChange={(e) => setSortStatus(e.target.value)}>
+            <select
+              value={sortStatus}
+              onChange={(e) => setSortStatus(e.target.value)}
+            >
               <option value="Newest">Mới nhất</option>
               <option value="Oldest">Cũ nhất</option>
               <option value="Active">Kích hoạt</option>
@@ -199,8 +267,8 @@ function ManageBusinessPage() {
           </div>
         </div>
 
-        <div className='manage-business-table-container'>
-          <table className='manage-business-table'>
+        <div className="manage-business-table-container">
+          <table className="manage-business-table">
             <thead>
               <tr>
                 <th>Tên doanh nghiệp</th>
@@ -212,7 +280,8 @@ function ManageBusinessPage() {
             </thead>
             <tbody>
               <AnimatePresence mode="wait">
-                {filteredBusinesses.map((b, i) => (
+                {/* --- THAY ĐỔI: Dùng paginatedBusinesses --- */}
+                {paginatedBusinesses.map((b) => (
                   <motion.tr
                     key={b._id}
                     initial={{ opacity: 0, y: 10 }}
@@ -221,29 +290,58 @@ function ManageBusinessPage() {
                     transition={{ duration: 0.25 }}
                   >
                     <td>{b.business_name}</td>
-                    <td>{ownerNames[b.owner_id] || "Loading..."}</td>
+                    <td>{ownerNames[b.owner_id] || 'Loading...'}</td>
                     <td>{b.business_category_id?.category_name}</td>
                     <td>
-                      <span className={`manage-business-status ${b.business_active.toLowerCase()}`}>
+                      <span
+                        className={`manage-business-status ${b.business_active.toLowerCase()}`}
+                      >
                         {b.business_active === 'active' && <p>Hoạt động</p>}
-                        {b.business_active === 'pending' && <p>Chờ kiểm duyệt</p>}
+                        {b.business_active === 'pending' && (
+                          <p>Chờ kiểm duyệt</p>
+                        )}
                         {b.business_active === 'inactive' && <p>Bị khóa</p>}
                       </span>
                     </td>
-                    <td className='manage-business-actions-icons'>
+                    <td className="manage-business-actions-icons">
+                      {/* --- THAY ĐỔI: Sử dụng b._id thay vì i --- */}
                       {b.business_active === 'inactive' && (
-                        <FaRegCircleCheck className="manage-business-actions action-check" onClick={() => handleActivate(i, b.business_name)} title="Kích hoạt doanh nghiệp" />
+                        <FaRegCircleCheck
+                          className="manage-business-actions action-check"
+                          onClick={() => handleActivate(b._id, b.business_name)}
+                          title="Kích hoạt doanh nghiệp"
+                        />
                       )}
                       {b.business_active === 'active' && (
-                        <IoBanSharp className="manage-business-actions action-ban" onClick={() => handleBan(i, b.business_name)} title="Vô hiệu hóa doanh nghiệp" />
+                        <IoBanSharp
+                          className="manage-business-actions action-ban"
+                          onClick={() => handleBan(b._id, b.business_name)}
+                          title="Vô hiệu hóa doanh nghiệp"
+                        />
                       )}
                       {b.business_active === 'pending' && (
                         <>
-                          <FaRegCircleCheck className="manage-business-actions action-check" onClick={() => handleActivate(i, b.business_name)} title="Chấp nhận doanh nghiệp" />
-                          <IoBanSharp className="manage-business-actions action-ban" onClick={() => handleBanPending(i, b.business_name)} title="Từ chối doanh nghiệp" />
+                          <FaRegCircleCheck
+                            className="manage-business-actions action-check"
+                            onClick={() =>
+                              handleActivate(b._id, b.business_name)
+                            }
+                            title="Chấp nhận doanh nghiệp"
+                          />
+                          <IoBanSharp
+                            className="manage-business-actions action-ban"
+                            onClick={() =>
+                              handleBanPending(b._id, b.business_name)
+                            }
+                            title="Từ chối doanh nghiệp"
+                          />
                         </>
                       )}
-                      <RiLoginCircleLine className="manage-business-actions enter" onClick={() => handleEnterBusiness(i, b._id)} title="Truy cập doanh nghiệp" />
+                      <RiLoginCircleLine
+                        className="manage-business-actions enter"
+                        onClick={() => handleEnterBusiness(b._id)}
+                        title="Truy cập doanh nghiệp"
+                      />
                     </td>
                   </motion.tr>
                 ))}
@@ -252,8 +350,13 @@ function ManageBusinessPage() {
           </table>
         </div>
 
+        {/* --- PHÂN TRANG FRONTEND --- */}
         <div className="manage-business-pagination">
-          <button className="nav-btn" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+          <button
+            className="nav-btn"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
             &lt;
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
@@ -265,7 +368,13 @@ function ManageBusinessPage() {
               {i + 1}
             </button>
           ))}
-          <button className="nav-btn" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+          <button
+            className="nav-btn"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
             &gt;
           </button>
         </div>

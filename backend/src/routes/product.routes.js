@@ -131,6 +131,7 @@ router.put('/:id', ProductController.updateProduct);
  *             schema:
  *               $ref: '#/components/schemas/Product'
  */
+router.patch('/:id/amount', ProductController.updateProductAmount);
 router.delete('/:id', ProductController.deleteProduct);
 /**
  * @swagger

@@ -1,83 +1,156 @@
-const conversationController = require('../controllers/conversation.controller');
-const { redisClient, redisSubscriber } = require('../utils/redis');
+const conversationService = require("../services/conversation.service");
+const redis = require("../utils/redis");
+
 
 let io;
 
+const allowedOrigins = [
+  process.env.FRONTEND_STUDENT_URL,
+  process.env.FRONTEND_BUSINESS_URL,
+  'http://localhost:5173',
+  'http://localhost:5174'
+];
+
+
 const chatGateway = {
-    init: (server) => {
-        io = require('socket.io')(server, {
-            cors: {
-                origin: '*',
-                methods: ['GET', 'POST'],
-            },
-        });
+  init: (server) => {
+    io = require("socket.io")(server, {
+      cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
+      },
+    });
 
-        // Sub Redis để sync message khi scale nhiều instance
-        redisSubscriber.subscribe('chat_messages');
-        redisSubscriber.on('message', (channel, message) => {
-            if (channel === 'chat_messages') {
-                const parsed = JSON.parse(message);
-                io.to(parsed.receiver_id).emit('receive_message', parsed);
-            }
-        });
+    // Subscribe Redis để sync messages giữa các server instances
+    redis.subscribe("chat_messages", (parsed) => {
+      console.log("📢 Redis pub/sub received:", parsed);
+      io.to(parsed.chatId).emit("receive_message", parsed);
+    });
 
-        io.on('connection', (socket) => {
-            console.log(`🔌 User connected: ${socket.id}`);
+    io.on("connection", (socket) => {
+      console.log(`🔌 User connected: ${socket.id}`);
 
-            // User join theo userId
-            socket.on('join', (userId) => {
-                socket.join(userId);
-                console.log(`👤 User ${userId} joined room`);
-            });
+      // Join user room for notifications
+      socket.on("join", (userId) => {
+        socket.join(`user_${userId}`);
+        console.log(`🔔 Socket ${socket.id} joined notification room: user_${userId}`);
+      });
 
-            // Human ↔ Human
-            socket.on('send_message_socket', async (data) => {
-                try {
-                    const saved = await conversationController.socketSendMessage(data);
+      // Join chat room
+      socket.on("join_chat", (chatId) => {
+        socket.join(chatId);
+        console.log(`👤 Socket ${socket.id} joined room: ${chatId}`);
+      });
 
-                    await redisClient.publish('chat_messages', JSON.stringify(saved.senderMessage));
-                    io.to(data.receiver_id).emit('receive_message', saved.senderMessage);
+      // Human mode: Student hoặc Business gửi tin nhắn
+      socket.on("send_message", async (data) => {
+        try {
+          const { chatId, sender_id, receiver_id, message, message_who } = data;
 
-                    socket.emit('message_sent', saved.senderMessage);
-                } catch (err) {
-                    console.error('❌ Error send_message_socket:', err);
-                    socket.emit('error', { error: err.message });
-                }
-            });
+          console.log("📤 send_message received:", { chatId, sender_id, receiver_id, message_who });
 
-            // Human ↔ Bot
-            socket.on('send_message_bot', async (data) => {
-                try {
-                    // gọi thẳng lại service qua controller sendMessage nhưng custom type = bot
-                    const result = await conversationController.sendMessage({
-                        params: { chatId: data.chatId },
-                        query: { type: 'bot' },
-                        body: {
-                            sender_id: data.sender_id,
-                            receiver_id: data.receiver_id,
-                            message: data.message,
-                        },
-                    }, {
-                        json: (payload) => payload, // fake res.json cho phù hợp với controller
-                        status: () => ({ json: (payload) => payload })
-                    });
+          // Kiểm tra socket có trong room không
+          const rooms = Array.from(socket.rooms);
+          console.log("🔍 Socket rooms:", rooms);
+          console.log("🔍 Socket in chatId room?", rooms.includes(chatId));
 
-                    // Emit bot reply cho sender
-                    socket.emit('receive_message', result.receiverMessage);
-                    socket.emit('message_sent', result.senderMessage);
-                } catch (err) {
-                    console.error('❌ Error send_message_bot:', err);
-                    socket.emit('error', { error: err.message });
-                }
-            });
+          // Lưu tin nhắn vào Redis
+          const savedMessage = await conversationService.saveMessage({
+            chatId,
+            sender_id,
+            receiver_id,
+            message,
+            message_who
+          });
 
-            socket.on('disconnect', () => {
-                console.log(`❎ User disconnected: ${socket.id}`);
-            });
-        });
+          const messageWithChatId = {
+            ...savedMessage,
+            chatId: chatId
+          };
 
-        console.log('✅ ChatGateway initialized');
-    },
+          console.log("✅ Message saved, emitting to room:", chatId);
+          console.log("📢 Emitting message:", messageWithChatId);
+
+          // Emit tới TẤT CẢ users trong chatId room (bao gồm cả người gửi)
+          io.to(chatId).emit("receive_message", messageWithChatId);
+
+          // Publish để sync với các server instances khác
+          await redis.publish("chat_messages", JSON.stringify(messageWithChatId));
+
+          // Emit notification tới receiver (nếu họ không trong room chat)
+          const notification = {
+            id: savedMessage.id,
+            sender_id: sender_id,
+            receiver_id: receiver_id,
+            message: message.length > 50 ? message.substring(0, 50) + "..." : message,
+            timestamp: savedMessage.created_at || new Date().toISOString(),
+            chatId: chatId
+          };
+
+          console.log(`🔔 Emitting notification to user_${receiver_id}:`, notification);
+          io.to(`user_${receiver_id}`).emit("new_notification", notification);
+
+          console.log("✅ Message emitted and published");
+
+        } catch (err) {
+          console.error("❌ Error send_message:", err);
+          socket.emit("error", { error: err.message });
+        }
+      });
+
+      // KHÔNG CẦN socket handler "emit_bot_response" nữa
+      // Bot response được emit trực tiếp từ controller qua chatGateway.emitBotResponse()
+
+      socket.on("disconnect", () => {
+        console.log(`❎ User disconnected: ${socket.id}`);
+      });
+    });
+
+    console.log("✅ ChatGateway initialized");
+  },
+
+  // Helper method để emit bot response từ controller
+  emitBotResponse: (chatId, botMessage) => {
+    if (!io) {
+      console.error("❌ Socket.io not initialized!");
+      return;
+    }
+
+    const messageWithChatId = {
+      ...botMessage,
+      chatId: chatId
+    };
+
+    console.log("🤖 Backend emitting bot response to room:", chatId);
+    console.log("� ChatId type:", typeof chatId);
+    console.log("📢 Bot message:", messageWithChatId);
+    console.log("�📢 Bot message chatId:", messageWithChatId.chatId, "type:", typeof messageWithChatId.chatId);
+
+    // Emit tới tất cả users trong room
+    io.to(chatId).emit("receive_message", messageWithChatId);
+
+    // Publish để sync với các server instances khác
+    redis.publish("chat_messages", JSON.stringify(messageWithChatId));
+
+    // Emit notification tới receiver (bot response)
+    const [senderId, receiverId] = chatId.split('_');
+    const notification = {
+      id: botMessage.id,
+      sender_id: botMessage.sender_id,
+      receiver_id: receiverId,
+      message: botMessage.message.length > 50
+        ? botMessage.message.substring(0, 50) + "..."
+        : botMessage.message,
+      timestamp: botMessage.created_at || new Date().toISOString(),
+      chatId: chatId
+    };
+
+    console.log(`🔔 Emitting bot notification to user_${receiverId}:`, notification);
+    io.to(`user_${receiverId}`).emit("new_notification", notification);
+
+    console.log("✅ Bot response emitted and published");
+  }
 };
 
 module.exports = chatGateway;

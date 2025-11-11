@@ -3,7 +3,9 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "../css/BusinessFeedback.css";
 import { IoBanSharp } from "react-icons/io5";
-import { FaRegCircleCheck } from "react-icons/fa6";
+import { FaRegCircleCheck, FaTrash } from "react-icons/fa6";
+import { FaPencilAlt } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion"; // Đã thêm
 
 const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -21,6 +23,17 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showActiveOnly, setShowActiveOnly] = useState(true);
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editedReplyText, setEditedReplyText] = useState("");
+
+  // States cho modal ẩn/hiện
+  const [toggleModalOpen, setToggleModalOpen] = useState(false);
+  const [feedbackToToggle, setFeedbackToToggle] = useState(null); // Sẽ lưu { id, status }
+
+  // States cho modal xóa phản hồi
+  const [deleteReplyModalOpen, setDeleteReplyModalOpen] = useState(false);
+  const [feedbackIdForReplyDelete, setFeedbackIdForReplyDelete] =
+    useState(null);
 
   const itemsPerPage = 5;
 
@@ -226,67 +239,45 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  const handleToggleFeedbackStatus = (feedbackId, currentStatus) => {
-    const isInactive = currentStatus === "inactive";
-    const actionText = isInactive ? "hiện lại" : "ẩn";
+  // ---- ĐÃ THAY ĐỔI: Logic Ẩn/Hiện Đánh giá ----
+  // 1. Hàm mở modal
+  const confirmToggleFeedbackStatus = (feedbackId, currentStatus) => {
+    setFeedbackToToggle({ id: feedbackId, status: currentStatus });
+    setToggleModalOpen(true);
+  };
+
+  // 2. Hàm thực thi logic sau khi xác nhận
+  const executeToggleFeedbackStatus = async () => {
+    if (!feedbackToToggle) return;
+
+    const { id, status } = feedbackToToggle;
+    const isInactive = status === "inactive";
     const newStatus = isInactive ? "active" : "inactive";
 
-    const confirmToast = toast.info(
-      <div>
-        <p>Bạn có chắc chắn muốn {actionText} đánh giá này?</p>
-        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-          <button
-            onClick={async () => {
-              toast.dismiss(confirmToast);
-              try {
-                await axios.put(
-                  `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`,
-                  { feedback_status: newStatus }
-                );
+    setToggleModalOpen(false); // Đóng modal
 
-                toast.success(
-                  `Đánh giá đã được ${isInactive ? "hiện" : "ẩn"} thành công!`
-                );
-                fetchFeedbacks();
-              } catch (err) {
-                console.error("Error updating feedback status:", err);
-                toast.error("Không thể cập nhật trạng thái. Vui lòng thử lại.");
-              }
-            }}
-            style={{
-              background: isInactive ? "green" : "red",
-              color: "white",
-              border: "none",
-              padding: "5px 10px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            {isInactive ? "Hiện" : "Ẩn"}
-          </button>
-          <button
-            onClick={() => toast.dismiss(confirmToast)}
-            style={{
-              background: "#ccc",
-              border: "none",
-              padding: "5px 10px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            Hủy
-          </button>
-        </div>
-      </div>,
-      {
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-      }
-    );
+    try {
+      // Sử dụng toast.promise
+      const promise = axios.put(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${id}`,
+        { feedback_status: newStatus }
+      );
+
+      await toast.promise(promise, {
+        pending: "Đang cập nhật trạng thái...",
+        success: `Đánh giá đã được ${isInactive ? "hiện" : "ẩn"} thành công!`,
+        error: "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+      });
+
+      fetchFeedbacks();
+    } catch (err) {
+      console.error("Error updating feedback status:", err);
+      // toast.promise đã xử lý toast lỗi
+    } finally {
+      setFeedbackToToggle(null); // Reset state
+    }
   };
+  // ---- KẾT THÚC THAY ĐỔI ----
 
   const handleSubmitReply = async (feedbackId) => {
     if (!replyText.trim()) {
@@ -311,6 +302,81 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
       setIsReplying(false);
     }
   };
+
+  const handleStartEditReply = (feedback) => {
+    setEditingReplyId(feedback._id);
+    setEditedReplyText(feedback.feedback_response);
+    setReplyingTo(null); // Close the 'new reply' box if it's open
+    setReplyText("");
+  };
+
+  // Handler to cancel editing
+  const handleCancelEditReply = () => {
+    setEditingReplyId(null);
+    setEditedReplyText("");
+  };
+
+  // Handler to submit the edited reply
+  const handleSubmitEditReply = async (feedbackId) => {
+    if (!editedReplyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi");
+      return;
+    }
+    setIsReplying(true); // Reuse isReplying state for loading
+    try {
+      // Use PATCH with the new text, as requested
+      await axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: editedReplyText.trim() }
+      );
+      toast.success("Đã cập nhật phản hồi!");
+      handleCancelEditReply();
+      fetchFeedbacks();
+    } catch (err) {
+      console.error("Error updating reply:", err);
+      toast.error("Không thể cập nhật phản hồi.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  // ---- ĐÃ THAY ĐỔI: Logic Xóa Phản hồi ----
+  // 1. Hàm mở modal
+  const confirmDeleteReply = (feedbackId) => {
+    setFeedbackIdForReplyDelete(feedbackId);
+    setDeleteReplyModalOpen(true);
+  };
+
+  // 2. Hàm thực thi logic sau khi xác nhận
+  const executeDeleteReply = async () => {
+    if (!feedbackIdForReplyDelete) return;
+
+    const feedbackId = feedbackIdForReplyDelete;
+    setDeleteReplyModalOpen(false); // Đóng modal
+
+    try {
+      // Sử dụng toast.promise
+      const promise = axios.patch(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}/response`,
+        { response: null } // Gửi null để xóa
+      );
+
+      await toast.promise(promise, {
+        pending: "Đang xóa phản hồi...",
+        success: "Đã xóa phản hồi!",
+        error: "Không thể xóa phản hồi.",
+      });
+
+      fetchFeedbacks();
+      handleCancelEditReply();
+    } catch (err) {
+      console.error("Error deleting reply:", err);
+      // toast.promise đã xử lý toast lỗi
+    } finally {
+      setFeedbackIdForReplyDelete(null); // Reset state
+    }
+  };
+  // ---- KẾT THÚC THAY ĐỔI ----
 
   // Render star rating
   const renderStars = (
@@ -456,6 +522,12 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
       </section>
     );
   }
+
+  // Biến cho modal Ẩn/Hiện
+  const isInactiveForModal = feedbackToToggle?.status === "inactive";
+  const toggleModalActionText = isInactiveForModal ? "hiện" : "ẩn";
+  const toggleModalButtonText = isInactiveForModal ? "Hiện" : "Ẩn";
+  const toggleModalButtonColor = isInactiveForModal ? "green" : "red";
 
   return (
     <section className="business-feedback-section">
@@ -616,7 +688,8 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                               <span className="active-feedback-btn">
                                 <FaRegCircleCheck
                                   onClick={() =>
-                                    handleToggleFeedbackStatus(
+                                    // ---- THAY ĐỔI: Sử dụng hàm confirm ----
+                                    confirmToggleFeedbackStatus(
                                       feedback._id,
                                       feedback.feedback_status
                                     )
@@ -630,7 +703,8 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                               <span className="delete-feedback-btn">
                                 <IoBanSharp
                                   onClick={() =>
-                                    handleToggleFeedbackStatus(
+                                    // ---- THAY ĐỔI: Sử dụng hàm confirm ----
+                                    confirmToggleFeedbackStatus(
                                       feedback._id,
                                       feedback.feedback_status
                                     )
@@ -650,14 +724,82 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                       <p className="review-text">{feedback.feedback_comment}</p>
 
                       {feedback.feedback_response ? (
-                        <div className="business-response">
-                          <div className="response-header">
-                            <strong>Phản hồi từ doanh nghiệp:</strong>
-                          </div>
-                          <p className="response-text">
-                            {feedback.feedback_response}
-                          </p>
-                        </div>
+                        <>
+                          {editingReplyId === feedback._id ? (
+                            // EDITING MODE FOR EXISTING REPLY
+                            <div
+                              className="reply-section"
+                              style={{ marginTop: "10px" }}
+                            >
+                              <textarea
+                                className="reply-textarea"
+                                value={editedReplyText}
+                                onChange={(e) =>
+                                  setEditedReplyText(e.target.value)
+                                }
+                                rows="3"
+                              />
+                              <div className="reply-actions">
+                                <button
+                                  className="submit-reply-btn"
+                                  onClick={() =>
+                                    handleSubmitEditReply(feedback._id)
+                                  }
+                                  disabled={
+                                    isReplying || !editedReplyText.trim()
+                                  }
+                                >
+                                  {isReplying ? "Đang lưu..." : "Lưu"}
+                                </button>
+                                <button
+                                  className="cancel-reply-btn"
+                                  onClick={handleCancelEditReply}
+                                  disabled={isReplying}
+                                >
+                                  Hủy
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // DISPLAY MODE FOR EXISTING REPLY
+                            <div className="business-response">
+                              <div className="response-header">
+                                <strong>Phản hồi từ doanh nghiệp:</strong>
+                                {canDelete && (
+                                  <div
+                                    className="review-owner-controls"
+                                    style={{ marginLeft: "auto" }}
+                                  >
+                                    <button
+                                      className="edit-review-btn"
+                                      onClick={() =>
+                                        handleStartEditReply(feedback)
+                                      }
+                                      aria-label="Sửa phản hồi"
+                                      title="Sửa phản hồi này"
+                                    >
+                                      <FaPencilAlt />
+                                    </button>
+                                    <button
+                                      className="delete-review-btn"
+                                      onClick={() =>
+                                        // ---- THAY ĐỔI: Sử dụng hàm confirm ----
+                                        confirmDeleteReply(feedback._id)
+                                      }
+                                      aria-label="Xóa phản hồi"
+                                      title="Xóa phản hồi này"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="response-text">
+                                {feedback.feedback_response}
+                              </p>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         canDelete && (
                           <>
@@ -696,7 +838,10 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                             ) : (
                               <button
                                 className="reply-toggle-btn"
-                                onClick={() => setReplyingTo(feedback._id)}
+                                onClick={() => {
+                                  setReplyingTo(feedback._id);
+                                  handleCancelEditReply(); // Close edit box if it's open
+                                }}
                               >
                                 💬 Phản hồi
                               </button>
@@ -768,6 +913,146 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
           </div>
         </div>
       </div>
+
+      {/* ---- MODAL XÁC NHẬN ẨN/HIỆN ---- */}
+      <AnimatePresence>
+        {toggleModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setToggleModalOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+              }}
+            >
+              <h3>Xác nhận {toggleModalActionText}</h3>
+              <p>
+                Bạn có chắc chắn muốn {toggleModalActionText} đánh giá này không?
+              </p>
+              <div style={{ marginTop: "20px" }}>
+                <button
+                  onClick={() => setToggleModalOpen(false)}
+                  style={{
+                    marginRight: "10px",
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#ccc",
+                    border: "none",
+                    borderRadius: "5px",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={executeToggleFeedbackStatus}
+                  style={{
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: toggleModalButtonColor,
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                  }}
+                >
+                  {toggleModalButtonText}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ---- MODAL XÁC NHẬN XÓA PHẢN HỒI ---- */}
+      <AnimatePresence>
+        {deleteReplyModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setDeleteReplyModalOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p>Bạn có chắc chắn muốn xóa phản hồi này không?</p>
+              <div style={{ marginTop: "20px" }}>
+                <button
+                  onClick={() => setDeleteReplyModalOpen(false)}
+                  style={{
+                    marginRight: "10px",
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#ccc",
+                    border: "none",
+                    borderRadius: "5px",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={executeDeleteReply}
+                  style={{
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "red",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

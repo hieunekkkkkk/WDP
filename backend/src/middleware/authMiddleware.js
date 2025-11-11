@@ -1,34 +1,18 @@
-const { Clerk } = require('@clerk/clerk-sdk-node');
+// middleware/authMiddleware.js
+const { verifyClerkToken } = require('../utils/verifyClerkToken');
 
-// Khởi tạo Clerk với secret key
-const clerk = new Clerk({
-    secretKey: process.env.CLERK_SECRET_KEY,
-});
-
-// Middleware xác thực JWT
-const authMiddleware = async (req, res, next) => {
+module.exports = async function authMiddleware(req, res, next) {
     try {
-        // Lấy token từ header Authorization
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'No token provided' });
-        }
-
+        const authHeader = req.headers.authorization || '';
         const token = authHeader.split(' ')[1];
+        if (!token) return res.status(401).json({ message: 'Missing token' });
 
-        // Xác minh token với Clerk
-        const decoded = await clerk.verifyToken(token);
-        if (!decoded) {
-            return res.status(401).json({ error: 'Invalid or expired token' });
-        }
+        const user = await verifyClerkToken(token);
+        req.user = user;
 
-        // Lưu thông tin user vào req để sử dụng ở các route sau
-        req.user = decoded; // decoded chứa các claims như userId, role, v.v.
         next();
-    } catch (error) {
-        console.error('Token verification error:', error);
-        return res.status(401).json({ error: 'Unauthorized access' });
+    } catch (err) {
+        console.error('[AuthMiddleware] ❌', err.message);
+        return res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
-
-module.exports = authMiddleware;

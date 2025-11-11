@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Modal from "react-modal";
 import { toast } from "react-toastify";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { IoBanSharp } from "react-icons/io5";
@@ -22,19 +23,26 @@ function ManageAIBotPage() {
   const [isKnowledgeModalOpen, setIsKnowledgeModalOpen] = useState(false);
   const [selectedBotKnowledge, setSelectedBotKnowledge] = useState([]);
   const [selectedBotName, setSelectedBotName] = useState("");
+  const [allBots, setAllBots] = useState([]);
 
   const limit = 5;
   Modal.setAppElement("#root");
 
   useEffect(() => {
-    fetchBots();
+    fetchAllBotsAndNames();
   }, []);
 
-  const fetchBots = async () => {
-    try {
-      const res = await axios.get("http://localhost:3000/api/aibot");
-      const botsData = res.data || [];
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    setBots(allBots.slice(startIndex, endIndex));
+  }, [allBots, currentPage, limit]);
 
+  const fetchAllBotsAndNames = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/aibot`);
+      const botsData = res.data || [];
+      setAllBots(botsData);
       setTotalPages(Math.ceil(botsData.length / limit));
       setBots(botsData.slice(0, limit));
 
@@ -50,8 +58,11 @@ function ManageAIBotPage() {
       const nameMap = {};
       ownerResponses.forEach((res) => {
         const user = res?.data;
-        if (user?.id) nameMap[user.id] = user.fullName;
+        if (user?.clerkId) {
+          nameMap[user.clerkId] = user.fullName;
+        }
       });
+
       setOwnerNames(nameMap);
     } catch (err) {
       console.error(err);
@@ -63,13 +74,19 @@ function ManageAIBotPage() {
     const loadingToastId = toast.loading("Đang cập nhật trạng thái bot...");
     try {
       const bot = bots[index];
-      await axios.put(`http://localhost:3000/api/aibot/${bot.id}`, {
+      await axios.put(`${import.meta.env.VITE_BE_URL}/api/aibot/${bot.id}`, {
         status: newStatus,
       });
 
       const updated = [...bots];
       updated[index].status = newStatus;
       setBots(updated);
+
+      setAllBots((prevAllBots) =>
+        prevAllBots.map((b) =>
+          b.id === bot.id ? { ...b, status: newStatus } : b
+        )
+      );
 
       toast.dismiss(loadingToastId);
       toast.success(
@@ -147,7 +164,7 @@ function ManageAIBotPage() {
                     <div className="knowledge-tags">
                       {k.tags.map((tag, i) => (
                         <span key={i} className="tag">
-                          {tag.replace(/["\[\]]/g, "")}
+                          {tag.replace(/["[\]]/g, "")}
                         </span>
                       ))}
                     </div>

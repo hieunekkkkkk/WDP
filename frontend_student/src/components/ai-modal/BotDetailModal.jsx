@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
-import "../../components/ai-support/style/KnowledgePage.css";
-import "../../components/ai-support/style/Modal.css";
+import React, { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import '../../components/ai-support/style/KnowledgePage.css';
+import '../../components/ai-support/style/Modal.css';
 
 const BotDetailModal = ({ bot, onClose, onSave }) => {
   const botId = bot._id || bot.id;
-  const [name, setName] = useState(bot.name || "");
-  const [description, setDescription] = useState(bot.description || "");
+  const [name, setName] = useState(bot.name || '');
+  const [description, setDescription] = useState(bot.description || '');
 
   const handleSave = async () => {
     try {
@@ -17,14 +17,13 @@ const BotDetailModal = ({ bot, onClose, onSave }) => {
         { name, description }
       );
 
-      console.log(" Update bot response:", res.data);
-      toast.success("Cập nhật bot thành công!");
+      toast.success('Cập nhật bot thành công!');
       onSave();
       onClose();
     } catch (err) {
-      console.error(" Error updating bot:", err.response?.data || err.message);
+      console.error(' Error updating bot:', err.response?.data || err.message);
       toast.error(
-        "Có lỗi khi cập nhật bot" + (err.response?.data?.message || "")
+        'Có lỗi khi cập nhật bot' + (err.response?.data?.message || '')
       );
     }
   };

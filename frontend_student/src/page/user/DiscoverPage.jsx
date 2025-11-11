@@ -25,8 +25,8 @@ function DiscoverPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [currentServicePage, setCurrentServicePage] = useState(0);
-  const [direction, setDirection] = useState(0);
+  // const [currentServicePage, setCurrentServicePage] = useState(0);
+  // const [direction, setDirection] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -34,14 +34,6 @@ function DiscoverPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
     useState([]);
-
-  const handleNextService = useCallback(() => {
-    setDirection(1);
-    const totalServicePages = Math.ceil(categories.length / 4);
-    setCurrentServicePage((prev) =>
-      prev === totalServicePages - 1 ? 0 : prev + 1
-    );
-  }, [categories.length]);
 
   useEffect(() => {
     if (query) {
@@ -55,8 +47,7 @@ function DiscoverPage() {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_BE_URL
+        `${import.meta.env.VITE_BE_URL
         }/api/business/search?query=${encodeURIComponent(query)}`
       );
 
@@ -87,35 +78,9 @@ function DiscoverPage() {
         (b) => b.business_active === "active"
       );
 
-      const businessesWithRatings = await Promise.all(
-        activeBusinesses.map(async (b) => {
-          try {
-            const res = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
-            );
-
-            if (res.data?.success && Array.isArray(res.data.data)) {
-              const feedbacks = res.data.data;
-              const total = feedbacks.reduce(
-                (sum, fb) => sum + (fb.feedback_rating || 0),
-                0
-              );
-              const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
-              return { ...b, business_rating: avg };
-            }
-          } catch (err) {
-            console.error(
-              `Error fetching feedback for ${b.business_name}:`,
-              err
-            );
-          }
-          return { ...b, business_rating: 0 };
-        })
-      );
-
       setCategories(catRes.data.categories || []);
-      setBusinesses(businessesWithRatings);
-      setFilteredBusinessesByCategory(businessesWithRatings);
+      setBusinesses(activeBusinesses);
+      setFilteredBusinessesByCategory(activeBusinesses);
     } catch (err) {
       console.error("Fetch failed:", err);
       setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
@@ -194,11 +159,6 @@ function DiscoverPage() {
       FaDumbbell: <FaDumbbell />,
       PiStudent: <PiStudent />,
       FaHouse: <FaHouse />,
-      // Coffee: <FaCoffee />,
-      // "Hàng ăn": <MdFoodBank />,
-      // "Nhà trọ": <RiHotelLine />,
-      // "Khu vui chơi": <PiPark />,
-      // "Nguyên vật liệu": <GiMaterialsScience />,
     };
 
     return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
@@ -224,68 +184,9 @@ function DiscoverPage() {
     );
   }
 
-  const showServiceNav = categories.length > 4;
-
-  const ServiceCard = ({ category, businesses, onSeeMore, index }) => {
-    const categoryBusinesses = businesses.filter(
-      (b) => b.business_category_id?._id === category._id
-    );
-
-    const backgroundImages = ["/1.png", "/2.png", "/3.png", "/1.png", "/2.png"];
-
-    const gradients = [
-      "linear-gradient(135deg, rgba(255,107,53,0.8) 0%, rgba(255,107,53,0.6) 100%)",
-      "linear-gradient(135deg, rgba(103,92,231,0.8) 0%, rgba(103,92,231,0.6) 100%)",
-      "linear-gradient(135deg, rgba(52,168,83,0.8) 0%, rgba(52,168,83,0.6) 100%)",
-      "linear-gradient(135deg, rgba(233,30,99,0.8) 0%, rgba(233,30,99,0.6) 100%)",
-    ];
-
-    const handleSeeMore = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onSeeMore(category.category_name, category._id);
-    };
-
-    const handleCardClick = (e) => {
-      e.preventDefault();
-      onSeeMore(category.category_name, category._id);
-    };
-
-    return (
-      <div
-        className="service-card-new"
-        onClick={handleCardClick}
-        style={{ cursor: "pointer" }}
-      >
-        <div className="service-background">
-          <img
-            src={backgroundImages[index % backgroundImages.length] || "/1.png"}
-            alt={category.category_name}
-            loading="lazy"
-            onError={(e) => {
-              e.target.src = "/1.png";
-            }}
-          />
-          <div
-            className="service-gradient"
-            style={{ backgroundImage: gradients[index % gradients.length] }}
-          ></div>
-        </div>
-        <div className="service-content-new">
-          <h3>{category.category_name}</h3>
-          <p>{categoryBusinesses.length} địa điểm</p>
-          <button className="service-btn-new" onClick={handleSeeMore}>
-            Khám phá →
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   const PlaceCard = React.memo(({ business, onClick }) => {
     const businessName = business.business_name || "Tên không có";
     const businessAddress = business.business_address || "Địa chỉ không có";
-    const businessRating = business.business_rating || 0;
 
     const handleClick = useCallback(() => {
       onClick(business._id);
@@ -316,7 +217,7 @@ function DiscoverPage() {
               <h3>{businessName}</h3>
               <p>{businessAddress}</p>
               <div className="rating-overlay">
-                ⭐ {business.business_rating?.toFixed(1) || "0.0"}
+                ⭐ {(business.avg_rating || 0).toFixed(1)}
               </div>
             </div>
           </div>
@@ -330,7 +231,11 @@ function DiscoverPage() {
       <Header />
       <section className="hero-section-landing">
         <div className="hero-background">
-          <img src="/1.png" alt="Mountains" className="hero-bg-image" />
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Mountains"
+            className="hero-bg-image"
+          />
           <div className="hero-overlay"></div>
         </div>
         <div className="hero-content">
@@ -359,9 +264,8 @@ function DiscoverPage() {
             <div className="pills-container">
               <button
                 onClick={() => handleCategoryClick("all")}
-                className={`category-pill ${
-                  selectedCategory === "all" ? "active" : ""
-                }`}
+                className={`category-pill ${selectedCategory === "all" ? "active" : ""
+                  }`}
               >
                 <span className="pill-icon">🏠</span>
                 <span>Tất cả</span>
@@ -372,9 +276,8 @@ function DiscoverPage() {
                   onClick={() =>
                     handleSeeMore(category.category_name, category._id)
                   }
-                  className={`category-pill ${
-                    selectedCategory === category._id ? "active" : ""
-                  }`}
+                  className={`category-pill ${selectedCategory === category._id ? "active" : ""
+                    }`}
                 >
                   <span className="pill-icon">
                     {getCategoryIcon(category.icon, category.category_name)}
@@ -470,16 +373,15 @@ function DiscoverPage() {
                       </p>
                       <div className="discover-place-meta">
                         <span
-                          className={`discover-status ${
-                            business.business_status ? "open" : "closed"
-                          }`}
+                          className={`discover-status ${business.business_status ? "open" : "closed"
+                            }`}
                         >
                           {business.business_status
                             ? "Đang mở cửa"
                             : "Đã đóng cửa"}
                         </span>
                         <span className="discover-rating">
-                          ⭐ {business.business_rating || 0}
+                          ⭐ {(business.avg_rating || 0).toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -525,16 +427,15 @@ function DiscoverPage() {
                           </p>
                           <div className="discover-place-meta">
                             <span
-                              className={`discover-status ${
-                                business.business_status ? "open" : "closed"
-                              }`}
+                              className={`discover-status ${business.business_status ? "open" : "closed"
+                                }`}
                             >
                               {business.business_status
                                 ? "Đang mở cửa"
                                 : "Đã đóng cửa"}
                             </span>
                             <span className="discover-rating">
-                              ⭐ {business.business_rating || 0}
+                              ⭐ {(business.avg_rating || 0).toFixed(1)}
                             </span>
                           </div>
                         </div>

@@ -35,7 +35,7 @@ function PersonalizedPage() {
     const handleSendMessage = async () => {
         if (!userMessage.trim()) return;
 
-        const formattedText = `Yêu cầu: ${userMessage}, loại doanh nghiệp: ${type}, giá tối đa: ${budget === 'Tự chọn...' ? customBudget : budget.replace(/,/g, '')}, đánh giá: ${rating} sao`;
+        const formattedText = `${userMessage}`;
 
         try {
             setIsLoadingPlaces(true);
@@ -232,9 +232,14 @@ function PersonalizedPage() {
                                     <div
                                         key={place._id}
                                         className="discover-place-card"
-                                        onClick={() => navigate(`/business/${place._id}`)}
+                                        onClick={() => {
+                                            console.log("Navigating to business:", place?.business_id);
+                                            navigate(`/business/${place?.business_id}`);
+                                        }}
                                         style={{ cursor: 'pointer' }}
+
                                     >
+
                                         <div className="discover-place-image">
                                             <img
                                                 src={place.business_image?.[0] || '/placeholder.jpg'}
@@ -246,13 +251,14 @@ function PersonalizedPage() {
                                             />
                                         </div>
                                         <div className="discover-place-info">
-                                            <h3>{place.business_name}</h3>
+                                            <h3>{place.business_id}</h3>
                                             <p className="discover-place-location">{place.business_address}</p>
                                             <div className="discover-place-meta">
                                                 <span className={`discover-status ${place.business_status ? 'open' : 'closed'}`}>
                                                     {place.business_status ? 'Đang mở cửa' : 'Đã đóng cửa'}
                                                 </span>
                                             </div>
+
                                         </div>
                                     </div>
                                 ))}

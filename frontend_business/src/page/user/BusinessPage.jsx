@@ -10,31 +10,28 @@ import {
   FaInstagram,
   FaGoogle,
   FaArrowLeft,
-} from "react-icons/fa";
-import ProductDetailModal from "../../components/ProductDetailModal";
-import ImageZoomModal from "../../components/ImageZoomModal";
-import "../../css/BusinessPage.css";
-import { getCurrentUserId } from "../../utils/useCurrentUserId";
-import ChatBox from "../../components/ChatBox";
-import MyBusinessFeedback from "../../components/MyBusinessFeedback";
+} from 'react-icons/fa';
+import ProductDetailModal from '../../components/ProductDetailModal';
+import ImageZoomModal from '../../components/ImageZoomModal';
+import '../../css/BusinessPage.css';
+import { getCurrentUserId } from '../../utils/useCurrentUserId';
+import ChatBox from '../../components/ChatBox';
+import MyBusinessFeedback from '../../components/MyBusinessFeedback';
 
 const BusinessPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // State for business data
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // UI State
   const [selectedImage, setSelectedImage] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Image zoom state
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
   const [zoomedImageUrl, setZoomedImageUrl] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -287,10 +284,10 @@ const BusinessPage = () => {
                     'Chưa phân loại'}
                 </p>
 
-                <div className="rating-section">
+                {/* <div className="rating-section">
                   <div className="stars">{renderStars(overallRating)}</div>
                   <span className="rating-count">{totalReviews}</span>
-                </div>
+                </div> */}
 
                 <div className="business-long-description">
                   <strong>Địa chỉ:</strong>{' '}
@@ -306,12 +303,6 @@ const BusinessPage = () => {
                 </div>
 
                 <div className="action-buttons">
-                  <button
-                    className="contact-btn"
-                    onClick={() => setIsChatOpen(true)}
-                  >
-                    Chat ngay
-                  </button>
                   <button className="map-btn" onClick={handleShowOnMap}>
                     Hiển thị trên GG map
                   </button>
@@ -411,7 +402,6 @@ const BusinessPage = () => {
       {/* Feedback Section - Use BusinessFeedback component */}
       {/* <BusinessFeedback businessId={id} /> */}
       {/* <MyBusinessFeedback businessId={id} /> */}
-      
 
       <ProductDetailModal
         showModal={showModal}

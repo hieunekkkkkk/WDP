@@ -64,7 +64,6 @@ const BusinessRegistrationPage = () => {
       setImages((prev) => [...prev, ...uploadedUrls]);
     } catch (err) {
       toast.error("Không thể tải ảnh lên Cloudinary");
-      console.log(("Cloudinary upload error:", err));
     }
   };
 

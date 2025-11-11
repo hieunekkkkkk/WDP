@@ -12,19 +12,17 @@ const aiRoutes = require('./ai.routes');
 const authRoutes = require('./auth');
 const businessViewRoutes = require('./businessView.routes');
 const businessRevenueRoutes = require('./businessRevenue.routes');
-
 const AiBotRoutes = require('./aibot.routes');
 const conversationRoutes = require('./conversation.routes');
 const BotKnowledgeRoutes = require('./botknowledge');
-
-
-
 const calendarRoutes = require('./calendar.route');
+const SubjectRoutes = require('./subject.routes');
 
 // const redisRoutes = require('./redisRouter');
+const syncClerkUsersController = require('../controllers/jobs/sync.controller');
+router.post('/sync-clerk-users', syncClerkUsersController.handleSyncClerkUsers);
 
 // Tập trung các routes
-
 router.use('/business', businessRoutes);
 router.use('/conversation', conversationRoutes);
 router.use('/', businessViewRoutes);
@@ -37,6 +35,7 @@ router.use('/feedback', feedbackRoutes);
 router.use('/user', userRoutes);
 router.use('/ai', aiRoutes);
 router.use('/auth', authRoutes);
+router.use('/subject', SubjectRoutes);
 
 router.use('/aibot', AiBotRoutes);
 router.use('/botknowledge', BotKnowledgeRoutes);

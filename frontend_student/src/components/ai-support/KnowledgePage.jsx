@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
 import KnowledgeCreateModal from "../ai-modal/KnowledgeCreateModal";
@@ -19,6 +20,8 @@ const KnowledgePage = () => {
   const [editingKnowledge, setEditingKnowledge] = useState(null);
   const [showBotDetail, setShowBotDetail] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const filteredKnowledges = knowledges.filter(
     (k) =>
@@ -27,34 +30,45 @@ const KnowledgePage = () => {
       k.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const fetchBot = async () => {
+  const fetchBot = useCallback(async () => {
     try {
+      setError(null);
       const res = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/aibot/${botId}`
       );
       setBot(res.data);
     } catch (err) {
       console.error("Error fetching bot:", err);
+      const errorMessage =
+        err.response?.data?.message || "Không thể tải thông tin bot";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
-  };
+  }, [botId]);
 
-  const fetchKnowledge = async () => {
+  const fetchKnowledge = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/botknowledge`
+        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`
       );
-      // Tạm thời filter client-side vì BE chưa có API theo botId
-      const filtered = res.data.filter((k) => k.aibot_id === botId);
-      setKnowledges(filtered);
+      setKnowledges(res.data);
     } catch (err) {
       console.error("Error fetching knowledge:", err);
+      const errorMessage =
+        err.response?.data?.message || "Không thể tải danh sách kiến thức";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [botId]);
 
   useEffect(() => {
     fetchBot();
     fetchKnowledge();
-  }, [botId]);
+  }, [fetchBot, fetchKnowledge]);
 
   const deleteKnowledge = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa kiến thức này?")) return;
@@ -100,7 +114,16 @@ const KnowledgePage = () => {
 
       {/* Panel danh sách */}
       <div className="knowledge-list-panel">
-        {bot && (
+        {error && <div className="error-message">{error}</div>}
+
+        {loading && (
+          <div className="loading">
+            <div className="loading-spinner"></div>
+            Đang tải dữ liệu...
+          </div>
+        )}
+
+        {!loading && !error && bot && (
           <div className="bot-info-box">
             <p>
               <b>Bot ID:</b>{" "}
@@ -127,37 +150,46 @@ const KnowledgePage = () => {
             <div className="col actions-col">Hành động</div>
           </div>
 
-          {filteredKnowledges.map((k, idx) => (
-            <div
-              key={k._id}
-              className={`knowledge-row ${idx % 2 === 0 ? "zebra" : ""}`}
-            >
-              <div className="knowledge-info-box">📄 {k.title}</div>
-              <div className="actions">
-                <button
-                  style={{ backgroundColor: "#059669", ...btnStyle }}
-                  onClick={() => setSelected(k)}
-                  title="Xem"
-                >
-                  <FaEye size={14} />
-                </button>
-                <button
-                  style={{ backgroundColor: "#3b82f6", ...btnStyle }}
-                  onClick={() => setEditingKnowledge(k)}
-                  title="Sửa"
-                >
-                  <FaEdit size={14} />
-                </button>
-                <button
-                  style={{ backgroundColor: "#ef4444", ...btnStyle }}
-                  onClick={() => deleteKnowledge(k._id)}
-                  title="Xóa"
-                >
-                  <FaTrash size={14} />
-                </button>
-              </div>
+          {loading && (
+            <div className="loading-overlay">
+              <div className="loading-spinner"></div>
+              Đang tải...
             </div>
-          ))}
+          )}
+
+          {!loading &&
+            !error &&
+            filteredKnowledges.map((k, idx) => (
+              <div
+                key={k._id}
+                className={`knowledge-row ${idx % 2 === 0 ? "zebra" : ""}`}
+              >
+                <div className="knowledge-info-box">📄 {k.title}</div>
+                <div className="actions">
+                  <button
+                    style={{ backgroundColor: "#059669", ...btnStyle }}
+                    onClick={() => setSelected(k)}
+                    title="Xem"
+                  >
+                    <FaEye size={14} />
+                  </button>
+                  <button
+                    style={{ backgroundColor: "#3b82f6", ...btnStyle }}
+                    onClick={() => setEditingKnowledge(k)}
+                    title="Sửa"
+                  >
+                    <FaEdit size={14} />
+                  </button>
+                  <button
+                    style={{ backgroundColor: "#ef4444", ...btnStyle }}
+                    onClick={() => deleteKnowledge(k._id)}
+                    title="Xóa"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
 
           {filteredKnowledges.length === 0 && (
             <p className="empty">

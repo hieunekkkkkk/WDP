@@ -137,6 +137,7 @@
   color: white;
   outline: none;
   font-size: 0.95rem;
+  margin: 0;
 }
 
 .newsletter-input::placeholder {

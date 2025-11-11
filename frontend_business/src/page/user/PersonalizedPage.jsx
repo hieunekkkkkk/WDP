@@ -35,7 +35,7 @@ function PersonalizedPage() {
     const handleSendMessage = async () => {
         if (!userMessage.trim()) return;
 
-        const formattedText = `Yêu cầu: ${userMessage}, loại doanh nghiệp: ${type}, giá tối đa: ${budget === 'Tự chọn...' ? customBudget : budget.replace(/,/g, '')}, đánh giá: ${rating} sao`;
+        const formattedText = `${userMessage}`;
 
         try {
             setIsLoadingPlaces(true);
@@ -48,6 +48,7 @@ function PersonalizedPage() {
             });
 
             const data = await res.json();
+            console.log("AI recommendation response:", data);
 
             if (Array.isArray(data) && data.length > 0) {
                 setBestPlaces(data.slice(0, 6));
@@ -230,9 +231,9 @@ function PersonalizedPage() {
                             <div className="discover-places-grid">
                                 {bestPlaces.map((place) => (
                                     <div
-                                        key={place._id}
+                                        key={place.business_id} // dùng business_id làm key
                                         className="discover-place-card"
-                                        onClick={() => navigate(`/business/${place._id}`)}
+                                        onClick={() => navigate(`/business/${place.business_id}`)} // navigate đúng id
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <div className="discover-place-image">
@@ -246,7 +247,7 @@ function PersonalizedPage() {
                                             />
                                         </div>
                                         <div className="discover-place-info">
-                                            <h3>{place.business_name}</h3>
+                                            <h3>{place.business_id}</h3>
                                             <p className="discover-place-location">{place.business_address}</p>
                                             <div className="discover-place-meta">
                                                 <span className={`discover-status ${place.business_status ? 'open' : 'closed'}`}>

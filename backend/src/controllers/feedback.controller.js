@@ -16,8 +16,8 @@ class FeedbackController {
             const feedback = await feedbackService.findFeedbackByBusinessId(businessId);
 
             if (!feedback || feedback.length === 0) {
-                return res.status(404).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
                     message: 'No feedback found for this business'
                 });
             }
@@ -40,8 +40,8 @@ class FeedbackController {
             const feedback = await feedbackService.findFeedbackByProductId(productId);
 
             if (!feedback || feedback.length === 0) {
-                return res.status(404).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
                     message: 'No feedback found for this product'
                 });
             }
@@ -117,9 +117,6 @@ class FeedbackController {
     async updateFeedbackResponse(req, res) {
         try {
             const { response } = req.body;
-            if (!response) {
-                return res.status(400).json({ message: 'Response is required' });
-            }
             const feedback = await feedbackService.updateFeedbackResponse(req.params.id, response);
             res.status(200).json({ message: 'Feedback response updated successfully', data: feedback });
         } catch (error) {

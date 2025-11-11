@@ -76,6 +76,34 @@ class BusinessRevenueController {
             res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     }
+
+   async deleteBusinessRevenue(req, res) {
+    try {
+      const { id } = req.params;
+
+      const deletedRevenue = await BusinessRevenueService.deleteRevenueById(id);
+
+      if (!deletedRevenue) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy doanh thu cần xóa',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Xóa doanh thu thành công',
+        data: deletedRevenue,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+   
 }
 
 module.exports = new BusinessRevenueController();

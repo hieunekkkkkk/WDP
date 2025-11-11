@@ -1,15 +1,15 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useUser } from "@clerk/clerk-react";
-import { toast } from "react-toastify";
-import "../../components/ai-support/style/KnowledgePage.css";
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
+import { toast } from 'react-toastify';
+import '../../components/ai-support/style/KnowledgePage.css';
 
 const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
   const { user } = useUser();
   const [form, setForm] = useState({
-    title: "",
-    content: "",
-    tags: "",
+    title: '',
+    content: '',
+    tags: '',
   });
   const [file, setFile] = useState(null);
 
@@ -23,49 +23,60 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
 
   const handleSubmit = async () => {
     if (!form.title.trim()) {
-      toast.error("Tên không được để trống");
+      toast.error('Tên không được để trống');
+      return;
+    }
+
+    if (!form.content.trim() && !file) {
+      toast.error('Vui lòng nhập nội dung hoặc tải lên file!');
       return;
     }
 
     try {
       const formData = new FormData();
-      formData.append("title", form.title);
+      formData.append('title', form.title);
 
       if (file) {
-        formData.append("file", file);
+        formData.append('file', file);
       } else {
-        formData.append("content", form.content);
+        formData.append('content', form.content);
       }
 
-      formData.append(
-        "tags",
-        JSON.stringify(
-          form.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        )
-      );
+      // Parse and filter tags
+      const tags = form.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-      formData.append("created_by", user.id);
+      formData.append('tags', JSON.stringify(tags));
+      formData.append('created_by', user.id);
 
       const response = await axios.post(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          validateStatus: (status) => status < 500, // Treat 4xx as valid responses
+        }
       );
 
-      console.log("✅ Created knowledge:", response.data);
-      toast.success("Tạo kiến thức thành công!");
+      if (!response.data.success && response.data.message) {
+        throw new Error(response.data.message);
+      }
+
+      toast.success('Tạo kiến thức thành công!');
 
       onSave();
       onClose();
     } catch (err) {
-      console.error(
-        "❌ Error creating knowledge:",
-        err.response?.data?.message
-      );
-      toast.error("Có lỗi khi tạo kiến thức");
+      console.error('❌ Error creating knowledge:', err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Có lỗi khi tạo kiến thức';
+      toast.error(errorMessage);
     }
   };
 
@@ -95,7 +106,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         <div className="form-group">
           <label>
             <span>📄 Nội dung</span>
-            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+            <small style={{ color: '#6b7280', fontWeight: 'normal' }}>
               (hoặc tải file ở bên dưới)
             </small>
           </label>
@@ -112,22 +123,22 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         <div className="form-group">
           <label>
             <span>📎 Tải tài liệu</span>
-            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+            <small style={{ color: '#6b7280', fontWeight: 'normal' }}>
               (PDF, Word, TXT)
             </small>
           </label>
           <div
             style={{
-              border: "2px dashed #e5e7eb",
-              borderRadius: "12px",
-              padding: "20px",
-              textAlign: "center",
-              background: "#f9fafb",
-              cursor: "pointer",
+              border: '2px dashed #e5e7eb',
+              borderRadius: '12px',
+              padding: '20px',
+              textAlign: 'center',
+              background: '#f9fafb',
+              cursor: 'pointer',
             }}
-            onClick={() => document.getElementById("file-input").click()}
+            onClick={() => document.getElementById('file-input').click()}
           >
-            <p style={{ margin: 0, color: "#6b7280" }}>
+            <p style={{ margin: 0, color: '#6b7280' }}>
               Kéo thả file vào đây hoặc click để chọn file
             </p>
             <input
@@ -135,18 +146,18 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
               type="file"
               accept=".pdf,.doc,.docx,.txt"
               onChange={handleFileChange}
-              style={{ display: "none" }}
+              style={{ display: 'none' }}
             />
             {file && (
               <div
                 style={{
-                  marginTop: "10px",
-                  color: "#059669",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
+                  marginTop: '10px',
+                  color: '#059669',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
                 }}
               >
                 ✅ Đã chọn: {file.name}
@@ -158,7 +169,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         <div className="form-group">
           <label>
             <span>🏷️ Tags</span>
-            <small style={{ color: "#6b7280", fontWeight: "normal" }}>
+            <small style={{ color: '#6b7280', fontWeight: 'normal' }}>
               (phân cách bằng dấu phẩy)
             </small>
           </label>

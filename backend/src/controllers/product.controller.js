@@ -54,6 +54,14 @@ class ProductController {
       res.status(400).json({ error: error.message });
     }
   }
+  async updateProductAmount(req, res) {
+    try {
+      const product = await ProductService.updateProductStock(req.params.id, req.body.amount);
+      res.status(200).json(product);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 
   async deleteProduct(req, res) {
     try {

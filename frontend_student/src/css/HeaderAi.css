@@ -17,12 +17,13 @@
   border-bottom-color: #374151;
 }
 
-.header-container {
+.header-ai-container {
   width: 100%;
   display: flex;
   justify-content: flex-end;      
   align-items: center;
   height: 100%;
+  margin-right: 100px;
 }
 
 .header-user-info {

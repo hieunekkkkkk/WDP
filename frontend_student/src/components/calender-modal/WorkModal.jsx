@@ -26,6 +26,26 @@ export default function WorkModal({
     onChange({ ...value, selectedDays: Array.from(set) });
   };
 
+  const handleSave = () => {
+    if (!value.task_name?.trim()) {
+      alert("Vui lòng nhập tên công việc.");
+      return;
+    }
+    if (!value.start_time || !value.end_time) {
+      alert("Vui lòng chọn thời gian bắt đầu và kết thúc.");
+      return;
+    }
+    if (value.start_time >= value.end_time) {
+      alert("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.");
+      return;
+    }
+    if (!value.selectedDays.length) {
+      alert("Vui lòng chọn ít nhất một ngày lặp lại.");
+      return;
+    }
+    onSave();
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -37,6 +57,7 @@ export default function WorkModal({
         </div>
 
         <div className="modal-body">
+          {/* Tên công việc */}
           <div className="form-group">
             <label>Tên công việc</label>
             <input
@@ -49,6 +70,7 @@ export default function WorkModal({
             />
           </div>
 
+          {/* Mô tả */}
           <div className="form-group">
             <label>Mô tả (tuỳ chọn)</label>
             <textarea
@@ -62,6 +84,7 @@ export default function WorkModal({
             />
           </div>
 
+          {/* Thời gian trong ngày */}
           <div className="form-row-2">
             <div className="form-group">
               <label>Từ</label>
@@ -75,9 +98,6 @@ export default function WorkModal({
                 dateFormat="HH:mm"
                 className="form-input"
                 locale={locale}
-                //  Không cho chọn giờ nhỏ hơn hiện tại (nếu chọn hôm nay)
-                minTime={new Date()}
-                maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
               />
             </div>
 
@@ -93,13 +113,13 @@ export default function WorkModal({
                 dateFormat="HH:mm"
                 className="form-input"
                 locale={locale}
-                //  Giờ kết thúc không được nhỏ hơn giờ bắt đầu
-                minTime={value.start_time || new Date()}
+                minTime={value.start_time}
                 maxTime={new Date(new Date().setHours(23, 55, 0, 0))}
               />
             </div>
           </div>
 
+          {/* Lặp lại các ngày */}
           <div className="form-group">
             <label>Lặp lại vào các ngày</label>
             <div className="weekday-chips">
@@ -123,7 +143,7 @@ export default function WorkModal({
           <button className="btn btn-secondary" onClick={onClose}>
             Hủy bỏ
           </button>
-          <button className="btn btn-primary" onClick={onSave}>
+          <button className="btn btn-primary" onClick={handleSave}>
             Lưu
           </button>
         </div>

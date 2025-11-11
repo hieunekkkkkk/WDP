@@ -472,7 +472,7 @@ const BusinessPage = () => {
       )}
 
       {/* Feedback Section - Use BusinessFeedback component */}
-      <BusinessFeedback businessId={id} />
+      <BusinessFeedback businessId={id} canDelete={true} />
 
       <ProductDetailModal
         showModal={showModal}
@@ -493,6 +493,7 @@ const BusinessPage = () => {
         <ChatBox
           onClose={() => setIsChatOpen(false)}
           businessName={business.business_name}
+          businessOwnerId={business.owner_id}
         />
       )}
       <Footer />

@@ -1,82 +1,151 @@
-import { useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useEffect, useRef, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import '../css/UserPayComplete.css';
 
 const UserPayComplete = () => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [statusText, setStatusText] = useState('Đang khởi tạo...');
+  const hasRunRef = useRef(false);
+
+  const be = import.meta.env.VITE_BE_URL;
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const provisionBusinessBot = async (userId) => {
+    const got = await axios.get(`${be}/api/aibot/owner/${userId}`);
+
+    if (Array.isArray(got.data) && got.data.length > 0) {
+      return got.data[0];
+    }
+
+    const created = await axios.post(`${be}/api/aibot`, {
+      owner_id: userId,
+      name: 'Bot tư vấn Doanh nghiệp',
+      description: 'Bot tư vấn tự động cho doanh nghiệp',
+      status: 'active',
+    });
+    return created.data;
+  };
+
+  const fetchPaymentWithRetry = async (userId, orderCode, attempts = 3) => {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        setStatusText(`Đang xác thực thanh toán (${i + 1}/${attempts})...`);
+        const resp = await axios.get(`${be}/api/payment/userid/${userId}`);
+        const payments = resp.data?.data || [];
+
+        const currentPayment = payments.find(
+          (p) => p.transaction_id === orderCode
+        );
+
+        if (!currentPayment) {
+          await wait(2000);
+          continue;
+        }
+
+        if (currentPayment.payment_status === 'completed') {
+          return currentPayment;
+        }
+
+        if (
+          currentPayment.payment_status === 'cancelled' ||
+          currentPayment.payment_status === 'failed'
+        ) {
+          return null;
+        }
+
+        await wait(2000);
+      } catch (err) {
+        console.error('Lỗi khi kiểm tra thanh toán:', err);
+        await wait(2000);
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
-    const verifyAndUpdatePlan = async () => {
-      if (!user || !user.id) {
-        console.log("Đang chờ thông tin user...");
+    const verifyAndProvision = async () => {
+      if (!user?.id) return;
+
+      const orderCode = searchParams.get('orderCode');
+      if (!orderCode) {
+        console.warn('Không tìm thấy orderCode trên URL');
+        navigate('/business-dashboard', { replace: true });
         return;
       }
 
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/payment/userid/${user.id}`
-        );
-        const payments = response.data.data || [];
-
-        const completedPayment = payments.find(
-          (payment) => payment.payment_status === "completed"
+        const completedPayment = await fetchPaymentWithRetry(
+          user.id,
+          orderCode
         );
 
         if (!completedPayment) {
-          navigate("/business-dashboard/my-ai");
+          navigate('/business-dashboard', {
+            replace: true,
+          });
           return;
         }
 
         const stackName =
           completedPayment.payment_stack?.stack_name?.toLowerCase();
 
-        if (stackName === "tăng view cho doanh nghiệp") {
-          console.log(
-            'Phát hiện gói "Tăng view cho doanh nghiệp", đang tìm business ID...'
-          );
+        if (stackName === 'tăng view cho doanh nghiệp') {
+          setStatusText('Đang nâng cấp gói ưu tiên...');
           try {
             const businessResponse = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/business/owner/${user.id}`
+              `${be}/api/business/owner/${user.id}`
             );
-
             const businesses = businessResponse.data;
+
             if (businesses && businesses.length > 0) {
               const businessId = businesses[0]._id;
-
               if (businessId) {
-                console.log(`Tìm thấy business ID: ${businessId}. Đang gọi API ưu tiên...`);
-                
                 await axios.post(
-                  `${import.meta.env.VITE_BE_URL}/api/business/${
-                    businessId
-                  }/increase-priority`
+                  `${be}/api/business/${businessId}/increase-priority`
                 );
-
-                console.log("Tăng độ ưu tiên cho business thành công!");
-              } else {
-                 console.warn("Không tìm thấy business ID trong đối tượng business.");
               }
             } else {
-              console.warn(`Không tìm thấy business nào được sở hữu bởi user ${user.id}.`);
+              console.warn(
+                `Không tìm thấy business nào được sở hữu bởi user ${user.id}.`
+              );
             }
           } catch (priorityError) {
-            console.error("Lỗi trong quá trình lấy business ID hoặc tăng độ ưu tiên:", priorityError);
+            console.error('Lỗi khi tăng độ ưu tiên:', priorityError);
           }
+        } else if (stackName === 'bot tư vấn viên') {
+          setStatusText('Đang thiết lập bot tư vấn...');
+          await provisionBusinessBot(user.id);
+        } else {
+          console.warn('Đã thanh toán stack không xác định:', stackName);
         }
-        navigate("/business-dashboard/my-ai");
+
+        setStatusText('Hoàn tất! Đang chuyển hướng...');
+        await wait(1000);
+        navigate('/business-dashboard', {
+          replace: true,
+        });
       } catch (err) {
-        console.error("Error verifying payment and updating plan:", err);
+        console.error('Lỗi nghiêm trọng trong quá trình xác minh:', err);
+        navigate('/business-dashboard', { replace: true });
       }
     };
 
-    verifyAndUpdatePlan();
-  }, [user, navigate]);
+    if (user?.id && !hasRunRef.current) {
+      hasRunRef.current = true;
+      verifyAndProvision();
+    }
+  }, [user?.id, navigate, searchParams, be]);
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h2>Đang xác nhận thanh toán...</h2>
+    <div className="payment-verify-container">
+      <div className="payment-verify-spinner" />
+      <h2 className="payment-verify-title">Đang xử lý thanh toán</h2>
+      <p className="payment-verify-text">{statusText}</p>
     </div>
   );
 };

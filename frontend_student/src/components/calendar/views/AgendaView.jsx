@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import{ levelColor } from "../../../utils/calendar-utils";
+import { levelColor } from "../../../utils/calendar-utils";
+import "../style/CalendarViews.css";
 
 export default function AgendaView({ tasks, currentDate }) {
   const calculateTaskDuration = (start, end) => {
@@ -64,7 +65,9 @@ export default function AgendaView({ tasks, currentDate }) {
                         minute: "2-digit",
                       })}
                     </div>
-                    <div className={`agenda-event-details agenda-event-${color}`}>
+                    <div
+                      className={`agenda-event-details agenda-event-${color}`}
+                    >
                       {task.task_name}
                       {isMultiDay && (
                         <span className="event-badge">({daysDuration}d)</span>
