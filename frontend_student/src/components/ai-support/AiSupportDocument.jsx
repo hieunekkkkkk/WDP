@@ -1,258 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import AiChatModal from "../ai-modal/AiChatModal";
+import SubjectAPI, { DataTransformer } from "../../api/SubjectAPI";
 import "./style/AiSupportDocument.css";
 
 const ALL_INDUSTRIES = ["SE", "MKT", "MC", "GD"];
-const ITEMS_PER_PAGE = 4; // Số lượng tài liệu hiển thị mỗi trang (4 cards mỗi row)
-
-const MOCK_DOCS = [
-  // --- TÀI LIỆU SỬ DỤNG NHIỀU NHẤT (used: true) ---
-
-  // Tài liệu Chung (Gán tạm SE/MKT để hiển thị)
-  {
-    id: 1,
-    title: "SSL101C",
-    desc: "Kĩ Năng Sống Cơ Bản",
-    author: "Nguyen",
-    date: "25/11/2025",
-    industry: "SE", // Chung
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1hFsJn1mqMPvNSkFdvKHyPuooHFWSPqnr?usp=sharing",
-  },
-  {
-    id: 2,
-    title: "ENW392C",
-    desc: "English Writing Practice",
-    author: "Nguyen",
-    date: "24/11/2025",
-    industry: "SE", // Chung
-    used: true,
-    driveUrl: "https://drive.google.com/drive/folders/ENW392C_FOLDER_ID",
-  },
-  {
-    id: 3,
-    title: "MLN111",
-    desc: "Triết học Mác - Lênin 1",
-    author: "Nguyen",
-    date: "23/11/2025",
-    industry: "SE", // Chung
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 4,
-    title: "HCM202",
-    desc: "Môn học Hồ Chí Minh",
-    author: "Nguyen",
-    date: "22/11/2025",
-    industry: "SE", // Chung
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-
-  // Tài liệu SE
-  {
-    id: 9,
-    title: "NWC203C",
-    desc: "Mạng máy tính cơ bản",
-    author: "Tran",
-    date: "21/11/2025",
-    industry: "SE",
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 10,
-    title: "MAE101",
-    desc: "Toán cao cấp 1",
-    author: "Le",
-    date: "20/11/2025",
-    industry: "SE",
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1EwnZq01QKYx3gZAElcE_zu7vDVmnke8O?usp=sharing",
-  },
-  {
-    id: 13,
-    title: "MAD101",
-    desc: "Toán rời rạc",
-    author: "Pham",
-    date: "19/11/2025",
-    industry: "SE",
-    used: true,
-    driveUrl:
-      "https://drive.google.com/drive/folders/13F44ly7_S1TQL_gYB1lGG7KYFULBcs4B?usp=drive_link",
-  },
-
-  // Tài liệu MKT
-  {
-    id: 14,
-    title: "WDU202C",
-    desc: "Thiết kế Web cơ bản",
-    author: "Hoang",
-    date: "18/11/2025",
-    industry: "MKT",
-    used: true,
-    driveUrl: "https://drive.google.com/drive/folders/WDU202C_FOLDER_ID",
-  },
-
-  // --- TÀI LIỆU MỚI NHẤT (used: false) ---
-
-  // Tài liệu Chung (Gán tạm SE/MKT để hiển thị)
-  {
-    id: 5,
-    title: "MLN122",
-    desc: "Triet hoc Mac Lenin",
-    author: "KhuyenDTV",
-    date: "17/11/2025",
-    industry: "SE", // Chung
-    used: false,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 6,
-    title: "MLN131",
-    desc: "Triết học Mác - Lênin nâng cao",
-    author: "Nguyen",
-    date: "16/11/2025",
-    industry: "SE", // Chung
-    used: false,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 7,
-    title: "VNR202",
-    desc: "Việt Nam Lịch Sử Đảng",
-    author: "Nguyen",
-    date: "15/11/2025",
-    industry: "MKT", // Chung
-    used: false,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 8,
-    title: "SSG101",
-    desc: "Kỹ năng mềm",
-    author: "Nguyen",
-    date: "14/11/2025",
-    industry: "MKT", // Chung
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/SSG101_FOLDER_ID",
-  },
-
-  // Tài liệu SE
-  {
-    id: 11,
-    title: "NWC204",
-    desc: "Hệ thống Mạng nâng cao",
-    author: "Dattt",
-    date: "13/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1ixPZ-LQ5MGuAg6rRxNQG5e4ag3SI_2vT?usp=sharing",
-  },
-  {
-    id: 12,
-    title: "MAS291",
-    desc: "Xác suất Thống kê",
-    author: "TruongLX",
-    date: "12/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl:
-      "https://drive.google.com/drive/folders/1hFsJn1mqMPvNSkFdvKHyPuooHFWSPqnr?usp=sharing",
-  },
-  {
-    id: 16,
-    title: "CEA201",
-    desc: "Kiến trúc máy tính",
-    author: "ANHKD",
-    date: "11/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/CEA201_FOLDER_ID",
-  },
-  {
-    id: 17,
-    title: "CSI101",
-    desc: "Nhập môn Công nghệ Thông tin",
-    author: "Tritd",
-    date: "10/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/CSI101_FOLDER_ID",
-  },
-  {
-    id: 19,
-    title: "WDU203C",
-    desc: "Thiết kế Figma nâng cao",
-    author: "Dang",
-    date: "08/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/WDU203C_FOLDER_ID",
-  },
-  {
-    id: 20,
-    title: "ENM301",
-    desc: "Tieng Anh Chuyen Nganh",
-    author: "Dang",
-    date: "07/11/2025",
-    industry: "SE",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/ENM301C_FOLDER_ID",
-  },
-
-  // Tài liệu MKT
-  {
-    id: 18,
-    title: "FIN202",
-    desc: "Tài chính Doanh nghiệp",
-    author: "Ngo",
-    date: "09/11/2025",
-    industry: "MKT",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/FIN202_FOLDER_ID",
-  },
-  {
-    id: 21,
-    title: "ACC101",
-    desc: "Kế toán Tài chính 1",
-    author: "Vo",
-    date: "06/11/2025",
-    industry: "MKT",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/ACC101_FOLDER_ID",
-  },
-  {
-    id: 22,
-    title: "ACC201",
-    desc: "Kế toán Quản trị",
-    author: "Vo",
-    date: "05/11/2025",
-    industry: "MKT",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/ACC201_FOLDER_ID",
-  },
-  {
-    id: 23,
-    title: "OBE101",
-    desc: "Hành vi Tổ chức",
-    author: "Vo",
-    date: "04/11/2025",
-    industry: "MKT",
-    used: false,
-    driveUrl: "https://drive.google.com/drive/folders/OBE101_FOLDER_ID",
-  },
-];
+const ITEMS_PER_PAGE = 4;
 
 // Icon Components
 const SearchIcon = () => (
@@ -297,23 +49,17 @@ const ChatIcon = () => (
   </svg>
 );
 
-const FolderIcon = () => (
+const ArrowIcon = ({ direction }) => (
   <svg
     width="16"
     height="16"
     viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
+    style={{
+      transform: direction === "left" ? "rotate(180deg)" : "none",
+    }}
   >
-    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-  </svg>
-);
-
-const ArrowIcon = ({ direction }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24">
     <path
-      d={direction === "left" ? "M15 6l-6 6 6 6" : "M9 18l6-6-6-6"}
+      d="M9 18l6-6-6-6"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -322,84 +68,98 @@ const ArrowIcon = ({ direction }) => (
   </svg>
 );
 
-// DocCard Component - Updated with Drive link
-const DocCard = React.memo(({ doc, onChat, onOpenDrive }) => (
-  <div className={`ai-card ${doc.used ? "ai-card-popular" : ""}`}>
-    <div
-      className="ai-card-head"
-      onClick={() => onOpenDrive(doc.driveUrl)}
-      style={{ cursor: "pointer" }}
-      title="Click để mở thư mục tài liệu trên Google Drive"
-    >
-      <div className="ai-card-badge">{doc.industry}</div>
-      <h4 className="ai-card-title">{doc.title}</h4>
-      <div className="ai-card-desc">{doc.desc}</div>
+const DriveIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+  </svg>
+);
+
+// DocCard Component - semantic markup + schema.org properties for SEO
+const DocCard = React.memo(({ doc, onChat }) => (
+  <article
+    className="ai-doc-card"
+    itemScope
+    itemType="https://schema.org/CreativeWork"
+    aria-labelledby={`doc-title-${doc.id || doc._id}`}
+  >
+    <div className="ai-doc-meta">
+      <span className="ai-doc-tag" itemProp="genre">
+        {doc.industry}
+      </span>
+      <span className="ai-doc-date" itemProp="datePublished">
+        {doc.date}
+      </span>
     </div>
 
-    <div className="ai-card-footer">
-      <div className="ai-meta">
-        <div className="ai-meta-item">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span>{doc.author}</span>
-        </div>
-        <div className="ai-meta-item">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <span>{doc.date}</span>
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: "8px" }}>
-        <button
-          className="ai-chat-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenDrive(doc.driveUrl);
-          }}
-          title="Mở thư mục Google Drive"
-          style={{
-            backgroundColor: "#4285f4",
-            minWidth: "auto",
-            padding: "8px 12px",
-          }}
+    {/* Title: use an internal crawlable link to improve indexability */}
+    <h4 className="ai-doc-title" id={`doc-title-${doc.id || doc._id}`}>
+      <a
+        href={`/documents/${doc.id || doc._id}`}
+        itemProp="url"
+        className="ai-doc-link"
+        title={doc.title}
+      >
+        <span itemProp="name">{doc.title}</span>
+      </a>
+    </h4>
+
+    <p className="ai-doc-desc" itemProp="description">
+      {doc.desc}
+    </p>
+
+    <div className="ai-doc-footer">
+      <span className="ai-doc-author" itemProp="author">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
         >
-          <FolderIcon />
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        {doc.author}
+      </span>
+
+      <div className="ai-doc-actions">
+        {/* Drive: external link should be crawlable but open in new tab */}
+        <a
+          className="ai-doc-drive-btn"
+          href={doc.driveUrl || "#"}
+          onClick={(e) => e.stopPropagation()}
+          title="Mở Google Drive"
+          target="_blank"
+          rel="noopener noreferrer"
+          itemProp="sameAs"
+        >
+          <DriveIcon />
           <span>Drive</span>
-        </button>
+        </a>
+
         <button
-          className="ai-chat-btn"
+          className="ai-doc-chat-btn"
           onClick={(e) => {
             e.stopPropagation();
             onChat(doc);
           }}
           title="Bắt đầu trò chuyện với AI về tài liệu này"
+          aria-label={`Chat AI về ${doc.title}`}
         >
           <ChatIcon />
           <span>Chat AI</span>
         </button>
       </div>
     </div>
-  </div>
+  </article>
 ));
 
 DocCard.displayName = "DocCard";
@@ -419,6 +179,38 @@ const EmptyHint = ({ text }) => (
     </svg>
     <p>{text}</p>
     <span>Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</span>
+  </div>
+);
+
+// LoadingSpinner Component
+const LoadingSpinner = () => (
+  <div className="ai-loading">
+    <div className="ai-spinner"></div>
+    <p>Đang tải tài liệu...</p>
+  </div>
+);
+
+// ErrorMessage Component
+const ErrorMessage = ({ message, onRetry }) => (
+  <div className="ai-error">
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <p>{message || "Không thể tải dữ liệu. Vui lòng thử lại."}</p>
+    {onRetry && (
+      <button className="ai-retry-btn" onClick={onRetry}>
+        Thử lại
+      </button>
+    )}
   </div>
 );
 
@@ -460,7 +252,6 @@ const FilterDropdown = ({
 
 // Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  // Luôn hiện pagination nếu có ít nhất 1 trang
   if (totalPages === 0) return null;
 
   return (
@@ -502,6 +293,38 @@ export default function AiSupportDocument() {
   const [currentPageMostUsed, setCurrentPageMostUsed] = useState(1);
   const [currentPageLatest, setCurrentPageLatest] = useState(1);
 
+  // API State
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch documents from API
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Lấy tất cả subjects từ API
+      const response = await SubjectAPI.getAllSubjects(100);
+      const subjects = response.subjects || [];
+
+      // Transform data từ BE format sang FE format
+      const documents = DataTransformer.toFrontendArray(subjects);
+
+      setAllDocuments(documents);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+      setError("Không thể tải dữ liệu từ server. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on component mount
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
   const toggleIndustry = (code) => {
     setSelectedIndustries((prev) =>
       prev.includes(code) ? prev.filter((x) => x !== code) : [...prev, code]
@@ -519,25 +342,21 @@ export default function AiSupportDocument() {
     setChatOpen(true);
   };
 
-  // Hàm mở Google Drive
-  const openDrive = (driveUrl) => {
-    window.open(driveUrl, "_blank", "noopener,noreferrer");
-  };
-
+  // Filter documents based on search and industry
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return MOCK_DOCS.filter((d) => {
+    return allDocuments.filter((d) => {
       const matchText =
         !q ||
-        d.title.toLowerCase().includes(q) ||
-        d.desc.toLowerCase().includes(q) ||
-        d.author.toLowerCase().includes(q);
+        d.title?.toLowerCase().includes(q) ||
+        d.desc?.toLowerCase().includes(q) ||
+        d.author?.toLowerCase().includes(q);
       const matchIndustry =
         selectedIndustries.length === 0 ||
         selectedIndustries.includes(d.industry);
       return matchText && matchIndustry;
     });
-  }, [search, selectedIndustries]);
+  }, [search, selectedIndustries, allDocuments]);
 
   const allMostUsed = useMemo(() => filtered.filter((d) => d.used), [filtered]);
   const allLatest = useMemo(() => filtered.filter((d) => !d.used), [filtered]);
@@ -565,10 +384,98 @@ export default function AiSupportDocument() {
   }, [allLatest, currentPageLatest]);
 
   // Reset về trang 1 khi search thay đổi
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPageMostUsed(1);
     setCurrentPageLatest(1);
   }, [search]);
+
+  // SEO: update document head (title, meta description, canonical) and inject JSON-LD
+  useEffect(() => {
+    if (loading || error) return;
+
+    const count = allDocuments.length || 0;
+    const title = `Tài Liệu Học Tập Thông Minh - ${count} tài liệu`;
+    try {
+      document.title = title;
+
+      let meta = document.querySelector('meta[name="description"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "description");
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute(
+        "content",
+        "Kho tài liệu học tập cộng đồng - tìm kiếm, truy cập thư mục Drive và trò chuyện với AI để hiểu sâu hơn về nội dung."
+      );
+
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement("link");
+        canonical.setAttribute("rel", "canonical");
+        document.head.appendChild(canonical);
+      }
+      canonical.setAttribute("href", window.location.href);
+
+      // JSON-LD for ItemList
+      const scriptId = "ai-docs-jsonld";
+      const prev = document.getElementById(scriptId);
+      if (prev) prev.remove();
+
+      const itemList = allDocuments.map((d, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${window.location.origin}/documents/${d.id}`,
+        item: {
+          "@type": "CreativeWork",
+          name: d.title,
+          description: d.desc,
+          author: d.author,
+          datePublished: d.date,
+          sameAs: d.driveUrl || undefined,
+        },
+      }));
+
+      const jsonld = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Tài Liệu Học Tập Thông Minh",
+        itemListElement: itemList,
+      };
+
+      const script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = scriptId;
+      script.text = JSON.stringify(jsonld);
+      document.head.appendChild(script);
+
+      return () => {
+        const s = document.getElementById(scriptId);
+        if (s) s.remove();
+      };
+    } catch (err) {
+      // ignore head-manipulation errors in environments without DOM
+      console.warn("[AiSupportDocument] head update failed", err);
+    }
+  }, [loading, error, allDocuments]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="ai-wrap">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="ai-wrap">
+        <ErrorMessage message={error} onRetry={fetchDocuments} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -624,12 +531,7 @@ export default function AiSupportDocument() {
           </h3>
           <div className="ai-grid">
             {mostUsed.map((d) => (
-              <DocCard
-                key={d.id}
-                doc={d}
-                onChat={openChat}
-                onOpenDrive={openDrive}
-              />
+              <DocCard key={d.id} doc={d} onChat={openChat} />
             ))}
             {mostUsed.length === 0 && allMostUsed.length === 0 && (
               <EmptyHint text="Không có tài liệu phù hợp với bộ lọc." />
@@ -658,12 +560,7 @@ export default function AiSupportDocument() {
           </h3>
           <div className="ai-grid">
             {latest.map((d) => (
-              <DocCard
-                key={d.id}
-                doc={d}
-                onChat={openChat}
-                onOpenDrive={openDrive}
-              />
+              <DocCard key={d.id} doc={d} onChat={openChat} />
             ))}
             {latest.length === 0 && allLatest.length === 0 && (
               <EmptyHint text="Chưa có tài liệu mới." />
