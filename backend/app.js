@@ -53,12 +53,9 @@ app.use(metricsMiddleware);
 // Middleware
 app.use(cors({
     origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'https://smearch.io.vn',
-        'http://smearch.io.vn',  // Nếu chưa có SSL
-        'http://react-app:5173',  // Docker container name
-        'http://frontend-react-app-1:5173'  // Docker compose service name
+        process.env.FRONTEND_BUSINESS_URL,
+        process.env.FRONTEND_STUDENT_URL,
+        process.env.BACKEND_URL
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],

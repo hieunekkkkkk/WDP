@@ -25,8 +25,8 @@ function DiscoverPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [currentServicePage, setCurrentServicePage] = useState(0);
-  const [direction, setDirection] = useState(0);
+  // const [currentServicePage, setCurrentServicePage] = useState(0);
+  // const [direction, setDirection] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -47,8 +47,7 @@ function DiscoverPage() {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_BE_URL
+        `${import.meta.env.VITE_BE_URL
         }/api/business/search?query=${encodeURIComponent(query)}`
       );
 
@@ -79,35 +78,9 @@ function DiscoverPage() {
         (b) => b.business_active === "active"
       );
 
-      const businessesWithRatings = await Promise.all(
-        activeBusinesses.map(async (b) => {
-          try {
-            const res = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
-            );
-
-            if (res.data?.success && Array.isArray(res.data.data)) {
-              const feedbacks = res.data.data;
-              const total = feedbacks.reduce(
-                (sum, fb) => sum + (fb.feedback_rating || 0),
-                0
-              );
-              const avg = feedbacks.length > 0 ? total / feedbacks.length : 0;
-              return { ...b, business_rating: avg };
-            }
-          } catch (err) {
-            console.error(
-              `Error fetching feedback for ${b.business_name}:`,
-              err
-            );
-          }
-          return { ...b, business_rating: 0 };
-        })
-      );
-
       setCategories(catRes.data.categories || []);
-      setBusinesses(businessesWithRatings);
-      setFilteredBusinessesByCategory(businessesWithRatings);
+      setBusinesses(activeBusinesses);
+      setFilteredBusinessesByCategory(activeBusinesses);
     } catch (err) {
       console.error("Fetch failed:", err);
       setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
@@ -245,7 +218,7 @@ function DiscoverPage() {
               <h3>{businessName}</h3>
               <p>{businessAddress}</p>
               <div className="rating-overlay">
-                ⭐ {business.business_rating?.toFixed(1) || "0.0"}
+                ⭐ {(business.avg_rating || 0).toFixed(1)}
               </div>
             </div>
           </div>
@@ -292,9 +265,8 @@ function DiscoverPage() {
             <div className="pills-container">
               <button
                 onClick={() => handleCategoryClick("all")}
-                className={`category-pill ${
-                  selectedCategory === "all" ? "active" : ""
-                }`}
+                className={`category-pill ${selectedCategory === "all" ? "active" : ""
+                  }`}
               >
                 <span className="pill-icon">🏠</span>
                 <span>Tất cả</span>
@@ -305,9 +277,8 @@ function DiscoverPage() {
                   onClick={() =>
                     handleSeeMore(category.category_name, category._id)
                   }
-                  className={`category-pill ${
-                    selectedCategory === category._id ? "active" : ""
-                  }`}
+                  className={`category-pill ${selectedCategory === category._id ? "active" : ""
+                    }`}
                 >
                   <span className="pill-icon">
                     {getCategoryIcon(category.icon, category.category_name)}
@@ -403,16 +374,15 @@ function DiscoverPage() {
                       </p>
                       <div className="discover-place-meta">
                         <span
-                          className={`discover-status ${
-                            business.business_status ? "open" : "closed"
-                          }`}
+                          className={`discover-status ${business.business_status ? "open" : "closed"
+                            }`}
                         >
                           {business.business_status
                             ? "Đang mở cửa"
                             : "Đã đóng cửa"}
                         </span>
                         <span className="discover-rating">
-                          ⭐ {business.business_rating || 0}
+                          ⭐ {(business.avg_rating || 0).toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -458,16 +428,15 @@ function DiscoverPage() {
                           </p>
                           <div className="discover-place-meta">
                             <span
-                              className={`discover-status ${
-                                business.business_status ? "open" : "closed"
-                              }`}
+                              className={`discover-status ${business.business_status ? "open" : "closed"
+                                }`}
                             >
                               {business.business_status
                                 ? "Đang mở cửa"
                                 : "Đã đóng cửa"}
                             </span>
                             <span className="discover-rating">
-                              ⭐ {business.business_rating || 0}
+                              ⭐ {(business.avg_rating || 0).toFixed(1)}
                             </span>
                           </div>
                         </div>

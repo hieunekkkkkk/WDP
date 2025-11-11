@@ -25,16 +25,50 @@ class BusinessService {
         try {
             const skip = (page - 1) * limit;
 
-            let sortOption = {};
-            if (sort === 'Newest') sortOption = { _id: -1 };
-            else if (sort === 'Oldest') sortOption = { _id: 1 };
+            // Aggregate pipeline to calculate average rating and sort
+            const pipeline = [
+                {
+                    $addFields: {
+                        avg_rating: {
+                            $cond: {
+                                if: { $gt: ['$business_total_vote', 0] },
+                                then: { $divide: ['$business_rating', '$business_total_vote'] },
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        business_priority: -1,
+                        avg_rating: -1,
+                        business_total_vote: -1,
+                        updated_at: -1
+                    }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $lookup: {
+                        from: 'categories',
+                        localField: 'business_category_id',
+                        foreignField: '_id',
+                        as: 'business_category_id'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$business_category_id',
+                        preserveNullAndEmptyArrays: true
+                    }
+                }
+            ];
 
-            const businesses = await Business.find()
-                .sort({ business_priority: -1, updated_at: -1 }, sortOption)
-                .skip(skip)
-                .limit(limit)
-                .populate('business_category_id')
-
+            const businesses = await Business.aggregate(pipeline);
             const total = await Business.countDocuments();
 
             return {
@@ -60,13 +94,55 @@ class BusinessService {
     async getAllBusinessesWithRating(page = 1, limit = 10) {
         try {
             const skip = (page - 1) * limit;
-            const businesses = await Business.find()
-                .skip(skip)
-                .limit(limit)
-                .populate('business_category_id')
-                .select('-__v') // Loại bỏ version key
-                .sort({ business_rating: -1 }); // Sắp xếp theo rating cao nhất
+
+            const pipeline = [
+                {
+                    $addFields: {
+                        avg_rating: {
+                            $cond: {
+                                if: { $gt: ['$business_total_vote', 0] },
+                                then: { $divide: ['$business_rating', '$business_total_vote'] },
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        avg_rating: -1,
+                        business_total_vote: -1
+                    }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $lookup: {
+                        from: 'categories',
+                        localField: 'business_category_id',
+                        foreignField: '_id',
+                        as: 'business_category_id'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$business_category_id',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $project: {
+                        __v: 0
+                    }
+                }
+            ];
+
+            const businesses = await Business.aggregate(pipeline);
             const total = await Business.countDocuments();
+
             return {
                 businesses,
                 totalPages: Math.ceil(total / limit),
@@ -123,16 +199,59 @@ class BusinessService {
     async getBusinessByCategory(categoryId, page = 1, limit = 10) {
         try {
             const skip = (page - 1) * limit;
-            const businesses = await Business.find({
-                business_category_id: categoryId
-            })
-                .sort({ business_priority: -1, updated_at: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate('business_category_id')
+
+            const pipeline = [
+                {
+                    $match: {
+                        business_category_id: new mongoose.Types.ObjectId(categoryId)
+                    }
+                },
+                {
+                    $addFields: {
+                        avg_rating: {
+                            $cond: {
+                                if: { $gt: ['$business_total_vote', 0] },
+                                then: { $divide: ['$business_rating', '$business_total_vote'] },
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        business_priority: -1,
+                        avg_rating: -1,
+                        business_total_vote: -1,
+                        updated_at: -1
+                    }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $lookup: {
+                        from: 'categories',
+                        localField: 'business_category_id',
+                        foreignField: '_id',
+                        as: 'business_category_id'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$business_category_id',
+                        preserveNullAndEmptyArrays: true
+                    }
+                }
+            ];
+
+            const businesses = await Business.aggregate(pipeline);
             const total = await Business.countDocuments({
                 business_category_id: categoryId
             });
+
             return {
                 businesses,
                 totalPages: Math.ceil(total / limit),
@@ -218,15 +337,58 @@ class BusinessService {
     async searchBusinesses(query, page = 1, limit = 10) {
         try {
             const skip = (page - 1) * limit;
-            const businesses = await Business.find({
-                business_name: { $regex: query, $options: 'i' }
-            })
-                .skip(skip)
-                .limit(limit)
-                .populate('business_category_id')
+
+            const pipeline = [
+                {
+                    $match: {
+                        business_name: { $regex: query, $options: 'i' }
+                    }
+                },
+                {
+                    $addFields: {
+                        avg_rating: {
+                            $cond: {
+                                if: { $gt: ['$business_total_vote', 0] },
+                                then: { $divide: ['$business_rating', '$business_total_vote'] },
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        business_priority: -1,
+                        avg_rating: -1,
+                        business_total_vote: -1
+                    }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $lookup: {
+                        from: 'categories',
+                        localField: 'business_category_id',
+                        foreignField: '_id',
+                        as: 'business_category_id'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$business_category_id',
+                        preserveNullAndEmptyArrays: true
+                    }
+                }
+            ];
+
+            const businesses = await Business.aggregate(pipeline);
             const total = await Business.countDocuments({
                 business_name: { $regex: query, $options: 'i' }
             });
+
             return {
                 businesses,
                 totalPages: Math.ceil(total / limit),

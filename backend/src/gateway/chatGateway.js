@@ -1,14 +1,24 @@
 const conversationService = require("../services/conversation.service");
 const redis = require("../utils/redis");
 
+
 let io;
+
+const allowedOrigins = [
+  process.env.FRONTEND_STUDENT_URL,
+  process.env.FRONTEND_BUSINESS_URL,
+  'http://localhost:5173',
+  'http://localhost:5174'
+];
+
 
 const chatGateway = {
   init: (server) => {
     io = require("socket.io")(server, {
       cors: {
-        origin: "*",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
+        credentials: true
       },
     });
 

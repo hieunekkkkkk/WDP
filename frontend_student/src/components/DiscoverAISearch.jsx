@@ -97,8 +97,8 @@ function PersonalizedPage() {
                         key={category.category_id}
                         onClick={() => setType(category.category_name)}
                         className={`personalized-filter-button ${type === category.category_name
-                            ? "personalized-active"
-                            : ""
+                          ? "personalized-active"
+                          : ""
                           }`}
                       >
                         {category.category_name}
@@ -206,9 +206,9 @@ function PersonalizedPage() {
               <div className="discover-places-grid">
                 {bestPlaces.map((place) => (
                   <div
-                    key={place._id}
+                    key={place.business_id}
                     className="discover-place-card"
-                    onClick={() => navigate(`/business/${place._id}`)}
+                    onClick={() => navigate(`/business/${place.business_id}`)}
                     style={{ cursor: "pointer" }}
                   >
                     <div className="discover-place-image">

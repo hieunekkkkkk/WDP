@@ -32,6 +32,11 @@ const businessSchema = new mongoose.Schema({
 });
 
 
-businessSchema.index({ business_location: '2dsphere' });
+businessSchema.index({
+  business_location: '2dsphere',
+  business_priority: -1,
+  business_rating: -1,
+  business_total_vote: -1
+});
 
 module.exports = mongoose.model('business', businessSchema);
