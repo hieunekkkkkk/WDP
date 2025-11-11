@@ -16,6 +16,8 @@ import LoadingScreen from "../../components/LoadingScreen";
 import MapModal from "../../components/MapModal";
 import MyBusinessFeedback from "../../components/MyBusinessFeedback";
 import { FaEye, FaTrash } from "react-icons/fa6";
+import { motion, AnimatePresence } from "framer-motion";
+import { RxCross2 } from "react-icons/rx";
 
 const MyBusinessPage = () => {
   const navigate = useNavigate();
@@ -41,6 +43,11 @@ const MyBusinessPage = () => {
   const [totalReviews, setTotalReviews] = useState("0 Đánh giá");
   const [averageRating, setAverageRating] = useState(0);
   const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [imageIndexToDelete, setImageIndexToDelete] = useState(null);
+  const [isProductDeleteModalOpen, setIsProductDeleteModalOpen] =
+    useState(false);
+  const [productIdToDelete, setProductIdToDelete] = useState(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -369,6 +376,21 @@ const MyBusinessPage = () => {
   const handleBlur = async (field, businessId) => {
     const newValue = editedValues[field];
 
+    if (field === "business_phone" && newValue) {
+      const phoneRegex = /^0\d{9}$/;
+      if (!phoneRegex.test(newValue)) {
+        toast.error(
+          "Số điện thoại không hợp lệ. Phải là 10 số, bắt đầu bằng 0."
+        );
+        setEditedValues((prev) => ({
+          ...prev,
+          [field]: business[field] || "",
+        }));
+        setEditFields((prev) => ({ ...prev, [field]: false }));
+        return;
+      }
+    }
+
     const isSame =
       field === "business_category_id"
         ? newValue === business.business_category_id?._id
@@ -414,12 +436,25 @@ const MyBusinessPage = () => {
 
     if (files.length === 0) return;
 
+    const toastId = toast.loading("Đang tải ảnh lên...");
+
     try {
       const uploadedUrls = await uploadToCloudinary(files);
       setNewImages((prev) => [...prev, ...uploadedUrls]);
       setError(null);
+      toast.update(toastId, {
+        render: "Tải ảnh lên thành công! Nhấn 'Lưu ảnh' bên dưới.",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (error) {
-      toast.error("Không thể tải ảnh lên Cloudinary");
+      toast.update(toastId, {
+        render: "Không thể tải ảnh lên Cloudinary",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -429,6 +464,7 @@ const MyBusinessPage = () => {
 
   const handleSaveImages = async () => {
     if (newImages.length > 0 && business) {
+      const toastId = toast.loading("Đang lưu ảnh...");
       try {
         const updatedImages = [
           ...(business.business_image || []),
@@ -443,56 +479,77 @@ const MyBusinessPage = () => {
 
         setBusiness((prev) => ({ ...prev, business_image: updatedImages }));
         setNewImages([]);
-        toast.success("Lưu ảnh thành công!");
+        toast.update(toastId, {
+          render: "Lưu ảnh thành công!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
       } catch (err) {
         console.error("Error saving images:", err);
         setError("Không thể lưu ảnh. Vui lòng kiểm tra kết nối.");
-        toast.error("Không thể lưu ảnh. Vui lòng thử lại.");
+        toast.update(toastId, {
+          render: "Không thể lưu ảnh. Vui lòng thử lại.",
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
       }
     }
   };
 
-  const handleDeleteImage = async (index) => {
+  const handleDeleteImage = (index) => {
     const allImages = [...(business.business_image || []), ...newImages];
-
     if (allImages.length === 1) {
       toast.warning("Bạn phải giữ lại ít nhất một ảnh.");
       return;
     }
-
-    const confirmDelete = window.confirm("Bạn có chắc muốn xóa ảnh này không?");
-    if (!confirmDelete) return;
-
+    setImageIndexToDelete(index);
+    setIsDeleteModalOpen(true);
+  };
+  const executeDeleteImage = async () => {
+    if (imageIndexToDelete === null) return;
+    const index = imageIndexToDelete;
+    const allImages = [...(business.business_image || []), ...newImages];
+    setIsDeleteModalOpen(false);
+    const toastId = toast.loading("Đang xóa ảnh...");
     try {
       const updatedImages = allImages.filter((_, i) => i !== index);
-
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
         { business_image: updatedImages },
         { headers: { "Content-Type": "application/json" } }
       );
-
       setBusiness((prev) => ({
         ...prev,
         business_image: updatedImages.filter(
           (_, i) => !newImages.includes(allImages[i])
         ),
       }));
-
       setNewImages((prev) =>
         prev.filter((_, i) => allImages[index] !== prev[i])
       );
-
       if (index === selectedImage) {
         setSelectedImage(0);
       } else if (index < selectedImage) {
         setSelectedImage((prev) => prev - 1);
       }
-
-      toast.success("Xóa ảnh thành công!");
+      toast.update(toastId, {
+        render: "Xóa ảnh thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (err) {
       console.error("Error deleting image:", err);
-      toast.error("Không thể xóa ảnh. Vui lòng thử lại.");
+      toast.update(toastId, {
+        render: "Không thể xóa ảnh. Vui lòng thử lại.",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
+    } finally {
+      setImageIndexToDelete(null);
     }
   };
 
@@ -515,66 +572,19 @@ const MyBusinessPage = () => {
     }
   };
 
-  const ConfirmDeleteToast = ({ closeToast, productId, deleteLogic }) => (
-    <div>
-      <p style={{ margin: "0.5rem 0", fontWeight: "500" }}>
-        Bạn có chắc muốn xóa sản phẩm này? <br />
-        Hành động này không thể hoàn tác.
-      </p>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "10px",
-          marginTop: "1rem",
-        }}
-      >
-        <button
-          onClick={closeToast}
-          style={{
-            background: "#718096",
-            color: "white",
-            border: "none",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          Hủy
-        </button>
-        <button
-          onClick={() => {
-            deleteLogic(productId); // Gọi logic xóa
-            closeToast(); // Và đóng toast
-          }}
-          style={{
-            background: "#E53E3E", // Màu đỏ
-            color: "white",
-            border: "none",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          Xác nhận Xóa
-        </button>
-      </div>
-    </div>
-  );
+  const executeDeleteProduct = async () => {
+    if (!productIdToDelete) return;
 
-  // 2. Logic xóa sản phẩm (tách ra từ hàm gốc)
-  const executeDeleteProduct = async (productId) => {
+    setIsProductDeleteModalOpen(false);
     const toastId = toast.loading("Đang xóa sản phẩm...");
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BE_URL}/api/product/${productId}`
+        `${import.meta.env.VITE_BE_URL}/api/product/${productIdToDelete}`
       );
 
       setProducts((prevProducts) =>
-        prevProducts.filter((p) => p._id !== productId)
+        prevProducts.filter((p) => p._id !== productIdToDelete)
       );
 
       toast.update(toastId, {
@@ -593,29 +603,14 @@ const MyBusinessPage = () => {
         isLoading: false,
         autoClose: 5000,
       });
+    } finally {
+      setProductIdToDelete(null);
     }
   };
 
   const handleDeleteProduct = (productId) => {
-    toast(
-      // Truyền component ConfirmDeleteToast vào toast
-      // 'closeToast' là một prop tự động được 'react-toastify' cung cấp
-      ({ closeToast }) => (
-        <ConfirmDeleteToast
-          closeToast={closeToast}
-          productId={productId}
-          deleteLogic={executeDeleteProduct}
-        />
-      ),
-      {
-        position: "top-center", // Hiển thị ở giữa trên cùng
-        autoClose: false, // Ngăn toast tự động đóng
-        closeOnClick: false, // Ngăn đóng khi nhấp vào toast
-        draggable: false, // Ngăn kéo thả
-        closeButton: false, // Ẩn nút đóng 'x' mặc định
-        style: { border: "2px solid #E53E3E", borderRadius: "8px" }, // Thêm viền đỏ
-      }
-    );
+    setProductIdToDelete(productId);
+    setIsProductDeleteModalOpen(true);
   };
 
   const renderStars = (rating) =>
@@ -782,12 +777,12 @@ const MyBusinessPage = () => {
                       <button
                         className="remove-image-btn"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent thumbnail click from triggering
+                          e.stopPropagation();
                           handleDeleteImage(idx);
                         }}
                         aria-label={`Delete image ${idx + 1}`}
                       >
-                        x
+                        <RxCross2 />
                       </button>
                     </div>
                   ))}
@@ -811,7 +806,6 @@ const MyBusinessPage = () => {
                         color: "white",
                         border: "none",
                         borderRadius: "4px",
-                        marginTop: "0.5rem",
                         cursor: "pointer",
                       }}
                     >
@@ -925,9 +919,21 @@ const MyBusinessPage = () => {
                       <strong>Số điện thoại:</strong>{" "}
                       {editFields["business_phone"] ? (
                         <input
-                          type="text"
+                          type="tel"
+                          maxLength="10"
                           value={editedValues["business_phone"] || ""}
-                          onChange={(e) => handleChange(e, "business_phone")}
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(
+                              /[^0-9]/g,
+                              ""
+                            );
+                            const finalValue = numericValue.slice(0, 10);
+
+                            const syntheticEvent = {
+                              target: { value: finalValue },
+                            };
+                            handleChange(syntheticEvent, "business_phone");
+                          }}
                           onBlur={() =>
                             handleBlur("business_phone", business._id)
                           }
@@ -985,6 +991,7 @@ const MyBusinessPage = () => {
                       <strong>Mô hình kinh doanh:</strong>{" "}
                       {editFields["business_category_id"] ? (
                         <select
+                          style={{ fontSize: "16px" }}
                           value={
                             editedValues["business_category_id"] ||
                             business.business_category_id?._id
@@ -1003,15 +1010,32 @@ const MyBusinessPage = () => {
                             -- Hãy chọn mô hình kinh doanh --
                           </option>
                           {categories.map((cat) => (
-                            <option key={cat._id} value={cat._id}>
+                            <option
+                              key={cat._id}
+                              value={cat._id}
+                              style={{ textTransform: "capitalize" }}
+                            >
                               {cat.category_name}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        business.business_category_id?.category_name || "..."
+                        <span style={{ textTransform: "capitalize" }}>
+                          {business.business_category_id?.category_name ||
+                            "..."}
+                        </span>
                       )}
                     </p>
+                    {!editFields["business_category_id"] && (
+                      <div className="edit-btn-group">
+                        <p
+                          className="edit-btn"
+                          onClick={() => handleEdit("business_category_id")}
+                        >
+                          <LuTextCursorInput />{" "}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1161,7 +1185,168 @@ const MyBusinessPage = () => {
         setProducts={setProducts}
         businessId={business?._id}
       />
-
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setIsDeleteModalOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0" }}>
+                Bạn có chắc chắn muốn xóa ảnh này không?
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                    transition: "background 0.2s",
+                  }}
+                  onMouseOver={(e) => (e.target.style.background = "#5a6268")}
+                  onMouseOut={(e) => (e.target.style.background = "#6c757d")}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={executeDeleteImage}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    fontWeight: "bold",
+                    borderRadius: "5px",
+                    transition: "background 0.2s",
+                  }}
+                  onMouseOver={(e) => (e.target.style.background = "#c82333")}
+                  onMouseOut={(e) => (e.target.style.background = "#dc3545")}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {" "}
+        {isProductDeleteModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setIsProductDeleteModalOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0", lineHeight: "1.5" }}>
+                Bạn có chắc muốn xóa sản phẩm này? <br />
+                Hành động này không thể hoàn tác.
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setIsProductDeleteModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                    transition: "background 0.2s",
+                  }}
+                  onMouseOver={(e) => (e.target.style.background = "#5a6268")}
+                  onMouseOut={(e) => (e.target.style.background = "#6c757d")}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={executeDeleteProduct}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    fontWeight: "bold",
+                    borderRadius: "5px",
+                    transition: "background 0.2s",
+                  }}
+                  onMouseOver={(e) => (e.target.style.background = "#c82333")}
+                  onMouseOut={(e) => (e.target.style.background = "#dc3545")}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <Footer />
     </>
   );

@@ -284,13 +284,13 @@ const Header = () => {
       <UserButton.MenuItems>
         {hasBusiness ? (
           <UserButton.Action
-            label="Xem doanh nghiệp"
+            label="Doanh nghiệp"
             labelIcon={<FaBuilding />}
             onClick={() => navigate("/my-business")}
           />
         ) : (
           <UserButton.Action
-            label="Đăng ký doanh nghiệp"
+            label="Doanh nghiệp"
             labelIcon={<FaBuilding />}
             onClick={() => navigate("/business-registration")}
           />

@@ -17,25 +17,22 @@ import '../../css/ManageBusinessPage.css';
 
 function ManageBusinessPage() {
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState([]); // Sẽ chứa TẤT CẢ doanh nghiệp
+  const [businesses, setBusinesses] = useState([]); 
   const [search, setSearch] = useState('');
   const [sortStatus, setSortStatus] = useState('Newest');
   const [currentPage, setCurrentPage] = useState(1);
-  // const [totalPages, setTotalPages] = useState(1); // <-- ĐÃ XÓA (sẽ tính ở frontend)
   const [banReason, setBanReason] = useState('');
-  const [selectedBusiness, setSelectedBusiness] = useState(null); // Sẽ lưu { id, name }
+  const [selectedBusiness, setSelectedBusiness] = useState(null); 
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [ownerNames, setOwnerNames] = useState({});
 
-  const limit = 5; // Số item mỗi trang
+  const limit = 5; 
   Modal.setAppElement('#root');
 
-  // --- THAY ĐỔI: Chỉ tải lại khi `sortStatus` thay đổi ---
   useEffect(() => {
     fetchBusinesses(sortStatus);
   }, [sortStatus]);
 
-  // --- THAY ĐỔI: Tải tất cả doanh nghiệp, không phân trang ---
   const fetchBusinesses = async (sort) => {
     try {
       const res = await axios.get(
@@ -67,22 +64,19 @@ function ManageBusinessPage() {
     }
   };
 
-  // --- THAY ĐỔI: Cập nhật bằng `businessId` thay vì `index` ---
   const updateBusinessStatus = async (businessId, name, newStatus) => {
     const loadingToastId = toast.loading(
       'Đang cập nhật trạng thái doanh nghiệp...'
     );
 
     try {
-      // const business = businesses[index]; // <-- Lỗi logic cũ
       await axios.put(
-        `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`, // <-- Dùng ID
+        `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`, 
         {
           business_active: newStatus,
         }
       );
 
-      // Cập nhật state cục bộ (cách an toàn)
       setBusinesses((prevBusinesses) =>
         prevBusinesses.map((b) =>
           b._id === businessId ? { ...b, business_active: newStatus } : b
@@ -102,23 +96,22 @@ function ManageBusinessPage() {
     }
   };
 
-  // --- THAY ĐỔI: Truyền `businessId` ---
   const handleBan = (businessId, name) =>
     updateBusinessStatus(businessId, name, 'inactive');
   const handleActivate = (businessId, name) =>
     updateBusinessStatus(businessId, name, 'active');
 
   const handleBanPending = (businessId, name) => {
-    setSelectedBusiness({ id: businessId, name }); // <-- Lưu ID
+    setSelectedBusiness({ id: businessId, name });
     setIsBanModalOpen(true);
   };
-  const handleEnterBusiness = (id) => navigate(`/business/${id}`); // <-- Đơn giản hóa
+  const handleEnterBusiness = (id) => navigate(`/business/${id}`); 
 
   const submitBanReason = async () => {
     if (!banReason.trim()) return toast.error('Vui lòng nhập lý do từ chối.');
 
-    const { id, name } = selectedBusiness; // <-- Lấy ID
-    const business = businesses.find((b) => b._id === id); // <-- Tìm bằng ID
+    const { id, name } = selectedBusiness;
+    const business = businesses.find((b) => b._id === id); 
 
     if (!business) return toast.error('Không tìm thấy doanh nghiệp.');
 
@@ -129,8 +122,6 @@ function ManageBusinessPage() {
         `${import.meta.env.VITE_BE_URL}/api/user/${business.owner_id}`
       );
 
-      // Ghi chú: API /api/user/:id của bạn dường như trả về 1 object, không phải { users: ... }
-      // Tôi sẽ dùng res.data trực tiếp.
       const owner = userRes.data;
 
       if (!owner?.email || !owner?.fullName) {
@@ -149,7 +140,7 @@ function ManageBusinessPage() {
       `,
       });
 
-      await updateBusinessStatus(id, name, 'inactive'); // <-- Dùng ID
+      await updateBusinessStatus(id, name, 'inactive'); 
 
       toast.dismiss(loadingToastId);
       toast.success(
@@ -162,7 +153,6 @@ function ManageBusinessPage() {
     } catch (err) {
       console.error(err);
       toast.dismiss(loadingToastId);
-      // Kiểm tra xem lỗi có phải từ API user không
       if (err.response && err.config.url.includes('/api/user/')) {
         toast.error('Lỗi: Không tìm thấy thông tin chủ sở hữu.');
       } else {
@@ -186,21 +176,16 @@ function ManageBusinessPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // 2. Reset trang về 1 khi filter
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // 3. Tính toán tổng số trang
   const totalPages = Math.ceil(filteredBusinesses.length / limit);
 
-  // 4. Cắt mảng để lấy item cho trang hiện tại
   const paginatedBusinesses = filteredBusinesses.slice(
     (currentPage - 1) * limit,
     currentPage * limit
   );
-
-  // --- KẾT THÚC LOGIC PHÂN TRANG ---
 
   return (
     <>
@@ -224,6 +209,7 @@ function ManageBusinessPage() {
             margin: 'auto',
             padding: '20px',
             borderRadius: '10px',
+            zIndex: 100
           },
           overlay: { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
         }}

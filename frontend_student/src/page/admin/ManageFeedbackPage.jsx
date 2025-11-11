@@ -24,9 +24,10 @@ function ManageFeedbackPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalComment, setModalComment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(5);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [feedbackToDeleteId, setFeedbackToDeleteId] = useState(null);
+  const [usernameMap, setUsernameMap] = useState({});
 
   useEffect(() => {
     fetchFeedbacks();
@@ -45,18 +46,13 @@ function ManageFeedbackPage() {
           )
         );
 
-        const usernameMap = {};
+        const newUsernameMap = {};
         userResponses.forEach((res) => {
           const user = res?.data;
-          if (user?.clerkId) usernameMap[user.clerkId] = user.fullName;
+          if (user?.clerkId) newUsernameMap[user.clerkId] = user.fullName;
         });
 
-        setFiltered((prev) =>
-          prev.map((fb) => ({
-            ...fb,
-            user_fullName: usernameMap[fb.user_id] || "Loading",
-          }))
-        );
+        setUsernameMap(newUsernameMap);
       } catch (err) {
         console.error("Failed to fetch usernames:", err);
       }
@@ -142,8 +138,24 @@ function ManageFeedbackPage() {
       return sortOrder === "desc" ? db - da : da - db;
     });
 
-    setFiltered(data);
-  }, [typeFilter, minRating, maxRating, sortOrder, search, feedbacks]);
+    const enrichedData = data.map((fb) => ({
+      ...fb, 
+      user_fullName: usernameMap[fb.user_id] || "...", 
+      product_name: productNameMap[fb.product_id] || "...",
+      business_name_of_product: productBusinessMap[fb.product_id] || "...",
+    })); 
+
+    setFiltered(enrichedData);
+  }, [
+    typeFilter,
+    minRating,
+    maxRating,
+    sortOrder,
+    search,
+    feedbacks,
+    usernameMap,
+    productNameMap, 
+  ]);
 
   const openCommentModal = (comment) => {
     setModalComment(comment);
@@ -300,6 +312,7 @@ function ManageFeedbackPage() {
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                     >
+                      {console.log(fb)}
                       <td>{fb.user_fullName || "Loading"}</td>
                       <td>{fb.feedback_type.toUpperCase()}</td>
                       <td>
@@ -317,7 +330,7 @@ function ManageFeedbackPage() {
                           fb.feedback_comment
                         ) : (
                           <>
-                            {fb.feedback_comment.slice(0, 20)}...
+                            {fb.feedback_comment.slice(0, 15)}...
                             <button
                               onClick={() =>
                                 openCommentModal(fb.feedback_comment)

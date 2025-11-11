@@ -23,26 +23,35 @@ function ManageAIBotPage() {
   const [isKnowledgeModalOpen, setIsKnowledgeModalOpen] = useState(false);
   const [selectedBotKnowledge, setSelectedBotKnowledge] = useState([]);
   const [selectedBotName, setSelectedBotName] = useState("");
+  const [allBots, setAllBots] = useState([]);
 
   const limit = 5;
   Modal.setAppElement("#root");
 
   useEffect(() => {
-    fetchBots();
+    fetchAllBotsAndNames();
   }, []);
 
-  const fetchBots = async () => {
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    setBots(allBots.slice(startIndex, endIndex));
+  }, [allBots, currentPage, limit]);
+
+  const fetchAllBotsAndNames = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_BE_URL}/api/aibot`);
       const botsData = res.data || [];
-
+      setAllBots(botsData);
       setTotalPages(Math.ceil(botsData.length / limit));
       setBots(botsData.slice(0, limit));
 
       const ownerIds = [...new Set(botsData.map((b) => b.ownerId))];
       const ownerResponses = await Promise.all(
         ownerIds.map((id) =>
-          axios.get(`${import.meta.env.VITE_BE_URL}/api/user/${id}`).catch(() => null)
+          axios
+            .get(`${import.meta.env.VITE_BE_URL}/api/user/${id}`)
+            .catch(() => null)
         )
       );
 
@@ -73,9 +82,16 @@ function ManageAIBotPage() {
       updated[index].status = newStatus;
       setBots(updated);
 
+      setAllBots((prevAllBots) =>
+        prevAllBots.map((b) =>
+          b.id === bot.id ? { ...b, status: newStatus } : b
+        )
+      );
+
       toast.dismiss(loadingToastId);
       toast.success(
-        `${newStatus === "active" ? "Kích hoạt" : "Vô hiệu hóa"
+        `${
+          newStatus === "active" ? "Kích hoạt" : "Vô hiệu hóa"
         } bot "${name}" thành công!`
       );
     } catch (err) {

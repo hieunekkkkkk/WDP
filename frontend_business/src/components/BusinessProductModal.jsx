@@ -8,6 +8,7 @@ import MyBusinessProductFeedback from "./MyBusinessProductFeedback";
 import { LuTextCursorInput } from "react-icons/lu";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { RxCross2 } from "react-icons/rx";
 
 const BusinessProductModal = ({
   showModal,
@@ -30,6 +31,8 @@ const BusinessProductModal = ({
   const [feedbacks, setFeedbacks] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [imageIndexToDelete, setImageIndexToDelete] = useState(null);
 
   // Field mapping to align frontend and backend field names
   const fieldMapping = {
@@ -65,7 +68,7 @@ const BusinessProductModal = ({
           }`
         );
 
-        if (res.data?.success) {
+        if (res.data?.success && Array.isArray(res.data.data)) {
           const data = res.data.data;
           setFeedbacks(data);
 
@@ -75,6 +78,9 @@ const BusinessProductModal = ({
           );
           const avg = data.length > 0 ? total / data.length : 0;
           setAverageRating(avg);
+        } else {
+          setFeedbacks([]);
+          setAverageRating(0);
         }
       } catch (err) {
         console.error("Error fetching feedbacks:", err);
@@ -173,13 +179,27 @@ const BusinessProductModal = ({
 
     if (files.length === 0) return;
 
+    const toastId = toast.loading("Đang xử lý ảnh...");
+
     try {
       const base64Images = await convertFilesToBase64(files);
       setNewImages((prevImages) => [...prevImages, ...base64Images]);
       setError(null);
+      toast.update(toastId, {
+        render: "Ảnh đã sẵn sàng! Nhấn 'Lưu ảnh' để xác nhận.",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (error) {
       console.error("Error converting images to base64:", error);
       setError("Không thể chuyển đổi ảnh. Vui lòng thử lại.");
+      toast.update(toastId, {
+        render: "Không thể xử lý ảnh. Vui lòng thử lại.",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -190,6 +210,8 @@ const BusinessProductModal = ({
   const handleSaveImages = async () => {
     if (newImages.length > 0 && selectedProduct) {
       setLoading(true);
+      const toastId = toast.loading("Đang lưu ảnh...");
+
       try {
         const updatedThumbnails = [
           ...(selectedProduct.thumbnails || []),
@@ -206,8 +228,6 @@ const BusinessProductModal = ({
         );
 
         if (!response.ok) throw new Error("Cập nhật ảnh thất bại");
-
-        const updatedProduct = await response.json();
 
         setSelectedProduct((prev) => ({
           ...prev,
@@ -226,29 +246,46 @@ const BusinessProductModal = ({
 
         setNewImages([]);
         setError(null);
-        toast.success("Lưu ảnh thành công!");
+        toast.update(toastId, {
+          render: "Lưu ảnh thành công!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
       } catch (err) {
         console.error("Error saving images:", err);
         setError(
           "Không thể lưu ảnh. Vui lòng kiểm tra kết nối hoặc liên hệ admin."
         );
-        toast.error("Không thể lưu ảnh. Vui lòng thử lại.");
+        toast.update(toastId, {
+          render: "Không thể lưu ảnh. Vui lòng thử lại.",
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const handleDeleteImage = async (index) => {
+  const handleDeleteImage = (index) => {
     if (allThumbnails.length === 1) {
       toast.warning("Sản phẩm phải có ít nhất một ảnh.");
       return;
     }
 
-    const confirmDelete = window.confirm("Bạn có chắc muốn xóa ảnh này không?");
-    if (!confirmDelete) return;
+    setImageIndexToDelete(index);
+    setIsDeleteModalOpen(true);
+  };
 
+  const executeDeleteImage = async () => {
+    if (imageIndexToDelete === null) return;
+    const index = imageIndexToDelete;
+
+    setIsDeleteModalOpen(false);
     setLoading(true);
+    const toastId = toast.loading("Đang xóa ảnh...");
 
     try {
       const updatedThumbnails = allThumbnails.filter((_, i) => i !== index);
@@ -297,13 +334,24 @@ const BusinessProductModal = ({
       }
 
       setError(null);
-      toast.success("Xóa ảnh thành công!");
+      toast.update(toastId, {
+        render: "Xóa ảnh thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (err) {
       console.error("Error deleting image:", err);
       setError("Không thể xóa ảnh. Vui lòng thử lại.");
-      toast.error("Không thể xóa ảnh. Vui lòng thử lại.");
+      toast.update(toastId, {
+        render: "Không thể xóa ảnh. Vui lòng thử lại.",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     } finally {
       setLoading(false);
+      setImageIndexToDelete(null);
     }
   };
 
@@ -314,285 +362,362 @@ const BusinessProductModal = ({
   const modalRoot = document.getElementById("modal-root") || document.body;
 
   return ReactDOM.createPortal(
-    <AnimatePresence>
-      {showModal && selectedProduct && (
-        <motion.div
-          className="modal-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          onClick={closeModal}
-        >
+    <>
+      <AnimatePresence>
+        {showModal && selectedProduct && (
           <motion.div
-            className="product-modal-content"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            className="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={closeModal}
           >
-            <button
-              className="modal-product-exit"
-              onClick={closeModal}
-              aria-label="Close modal"
+            <motion.div
+              className="product-modal-content"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              ✕
-            </button>
+              <button
+                className="modal-product-exit"
+                onClick={closeModal}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
 
-            <h1 className="modal-product-header">Chi tiết sản phẩm</h1>
-            <div className="business-content">
-              <div className="business-images">
-                <div className="main-image">
-                  <img
-                    src={allThumbnails[selectedImage] || "1.png"}
-                    alt={`${selectedProduct.name} main ${selectedImage + 1}`}
-                    className="main-img"
-                    onError={(e) => (e.target.src = "1.png")}
-                  />
-                </div>
-                <div className="thumbnail-images">
-                  {allThumbnails.length > 0 ? (
-                    allThumbnails.map((thumb, idx) => (
-                      <div
-                        key={idx}
-                        className={`thumbnail ${
-                          selectedImage === idx ? "active" : ""
-                        }`}
-                        style={{ position: "relative", cursor: "pointer" }}
-                        onClick={() => setSelectedImage(idx)}
-                      >
-                        <img
-                          src={thumb || "1.png"}
-                          alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                          onError={(e) => (e.target.src = "1.png")}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                        {enableEdit && (
-                          <button
-                            className="remove-image-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteImage(idx);
+              <h1 className="modal-product-header">Chi tiết sản phẩm</h1>
+              <div className="business-content">
+                <div className="business-images">
+                  <div className="main-image">
+                    <img
+                      src={allThumbnails[selectedImage] || "1.png"}
+                      alt={`${selectedProduct.name} main ${selectedImage + 1}`}
+                      className="main-img"
+                      onError={(e) => (e.target.src = "1.png")}
+                    />
+                  </div>
+                  <div className="thumbnail-images">
+                    {allThumbnails.length > 0 ? (
+                      allThumbnails.map((thumb, idx) => (
+                        <div
+                          key={idx}
+                          className={`thumbnail ${
+                            selectedImage === idx ? "active" : ""
+                          }`}
+                          style={{ position: "relative", cursor: "pointer" }}
+                          onClick={() => setSelectedImage(idx)}
+                        >
+                          <img
+                            src={thumb || "1.png"}
+                            alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
+                            onError={(e) => (e.target.src = "1.png")}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
                             }}
-                            aria-label={`Delete image ${idx + 1}`}
+                          />
+                          {enableEdit && (
+                            <button
+                              className="remove-image-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteImage(idx);
+                              }}
+                              aria-label={`Delete image ${idx + 1}`}
+                            >
+                              <RxCross2 />
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p>Không có ảnh nào để hiển thị.</p>
+                    )}
+                    {enableEdit && (
+                      <>
+                        <label className="thumbnail add-image">
+                          <FaPlus />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            ref={fileInputRef}
+                            onChange={handleAddImage}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                        {newImages.length > 0 && (
+                          <button
+                            className="business-modal-save-image"
+                            onClick={handleSaveImages}
+                            style={{
+                              padding: "0.5rem 1rem",
+                              background: "#4CAF50",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              marginTop: "0",
+                              cursor: loading ? "not-allowed" : "pointer",
+                            }}
+                            disabled={loading}
                           >
-                            x
+                            {loading ? "Đang lưu..." : "Lưu ảnh"}
                           </button>
                         )}
-                      </div>
-                    ))
-                  ) : (
-                    <p>Không có ảnh nào để hiển thị.</p>
-                  )}
-                  {enableEdit && (
-                    <>
-                      <label className="thumbnail add-image">
-                        <FaPlus />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          ref={fileInputRef}
-                          onChange={handleAddImage}
-                          style={{ display: "none" }}
-                        />
-                      </label>
-                      {newImages.length > 0 && (
-                        <button
-                          className="business-modal-save-image"
-                          onClick={handleSaveImages}
-                          style={{
-                            padding: "0.5rem 1rem",
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            marginTop: "0.5rem",
-                            cursor: loading ? "not-allowed" : "pointer",
-                          }}
-                          disabled={loading}
-                        >
-                          {loading ? "Đang lưu..." : "Lưu ảnh"}
-                        </button>
-                      )}
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="business-info">
-                <div
-                  className="editable-field"
-                  onMouseEnter={() =>
-                    enableEdit &&
-                    !editFields["name"] &&
-                    setEditFields((prev) => ({ ...prev, hoverName: true }))
-                  }
-                  onMouseLeave={() =>
-                    enableEdit &&
-                    !editFields["name"] &&
-                    setEditFields((prev) => ({ ...prev, hoverName: false }))
-                  }
-                >
-                  <h1 className="modal-product-title">
-                    {editFields["name"] ? (
-                      <input
-                        type="text"
-                        value={editedValues["name"] || ""}
-                        onChange={(e) => handleChange(e, "name")}
-                        onBlur={() => handleBlur("name")}
-                        onKeyDown={(e) => handleKeyDown(e, "name")}
-                        autoFocus
-                        disabled={loading}
-                      />
-                    ) : (
-                      selectedProduct.name
-                    )}
-                  </h1>
-                  {enableEdit &&
-                    !editFields["name"] &&
-                    editFields.hoverName && (
-                      <p
-                        className="edit-btn"
-                        onClick={() => handleEdit("name")}
-                      >
-                        <LuTextCursorInput />
-                      </p>
-                    )}
-                </div>
-                <div
-                  className="editable-field"
-                  onMouseEnter={() =>
-                    enableEdit &&
-                    !editFields["price"] &&
-                    setEditFields((prev) => ({ ...prev, hoverPrice: true }))
-                  }
-                  onMouseLeave={() =>
-                    enableEdit &&
-                    !editFields["price"] &&
-                    setEditFields((prev) => ({ ...prev, hoverPrice: false }))
-                  }
-                >
-                  <div className="business-status">
-                    <span className="modal-product-price">
-                      {editFields["price"] ? (
+                <div className="business-info">
+                  <div
+                    className="editable-field"
+                    onMouseEnter={() =>
+                      enableEdit &&
+                      !editFields["name"] &&
+                      setEditFields((prev) => ({ ...prev, hoverName: true }))
+                    }
+                    onMouseLeave={() =>
+                      enableEdit &&
+                      !editFields["name"] &&
+                      setEditFields((prev) => ({ ...prev, hoverName: false }))
+                    }
+                  >
+                    <h1 className="modal-product-title">
+                      {editFields["name"] ? (
                         <input
                           type="text"
-                          value={editedValues["price"] || ""}
-                          onChange={(e) => handleChange(e, "price")}
-                          onBlur={() => handleBlur("price")}
-                          onKeyDown={(e) => handleKeyDown(e, "price")}
+                          value={editedValues["name"] || ""}
+                          onChange={(e) => handleChange(e, "name")}
+                          onBlur={() => handleBlur("name")}
+                          onKeyDown={(e) => handleKeyDown(e, "name")}
                           autoFocus
                           disabled={loading}
-                          placeholder="Enter price (e.g., 1500000)"
                         />
                       ) : (
-                        selectedProduct.price
+                        selectedProduct.name
                       )}
-                    </span>
+                    </h1>
+                    {enableEdit &&
+                      !editFields["name"] &&
+                      editFields.hoverName && (
+                        <p
+                          className="edit-btn"
+                          onClick={() => handleEdit("name")}
+                        >
+                          <LuTextCursorInput />
+                        </p>
+                      )}
                   </div>
-                  {enableEdit &&
-                    !editFields["price"] &&
-                    editFields.hoverPrice && (
-                      <p
-                        className="edit-btn"
-                        onClick={() => handleEdit("price")}
-                      >
-                        <LuTextCursorInput />
-                      </p>
-                    )}
-                </div>
-                <p className="business-category">Đánh giá bởi người dùng</p>
-                <div className="rating-section">
-                  <div className="stars">{renderStars(averageRating)}</div>
-                  <div className="rating-count-toggle">
-                    <span className="rating-count">
-                      {showActiveOnly
-                        ? feedbacks.filter(
-                            (f) => f.feedback_status === "active"
-                          ).length
-                        : feedbacks.length}{" "}
-                      đánh giá
-                    </span>
-                    <label
-                      className="toggle-container"
-                      style={{ marginLeft: "0.5rem" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={showActiveOnly}
-                        onChange={() => setShowActiveOnly((prev) => !prev)}
-                        className="toggle-input"
-                      />
-                      <span className="toggle-slider"></span>
-                      <span className="status-text">
-                        {showActiveOnly ? "Chỉ active" : "Tất cả"}
+                  <div
+                    className="editable-field"
+                    onMouseEnter={() =>
+                      enableEdit &&
+                      !editFields["price"] &&
+                      setEditFields((prev) => ({ ...prev, hoverPrice: true }))
+                    }
+                    onMouseLeave={() =>
+                      enableEdit &&
+                      !editFields["price"] &&
+                      setEditFields((prev) => ({ ...prev, hoverPrice: false }))
+                    }
+                  >
+                    <div className="business-status">
+                      <span className="modal-product-price">
+                        {editFields["price"] ? (
+                          <input
+                            type="text"
+                            value={editedValues["price"] || ""}
+                            onChange={(e) => handleChange(e, "price")}
+                            onBlur={() => handleBlur("price")}
+                            onKeyDown={(e) => handleKeyDown(e, "price")}
+                            autoFocus
+                            disabled={loading}
+                            placeholder="Enter price (e.g., 1500000)"
+                          />
+                        ) : (
+                          selectedProduct.price
+                        )}
                       </span>
-                    </label>
+                    </div>
+                    {enableEdit &&
+                      !editFields["price"] &&
+                      editFields.hoverPrice && (
+                        <p
+                          className="edit-btn"
+                          onClick={() => handleEdit("price")}
+                        >
+                          <LuTextCursorInput />
+                        </p>
+                      )}
                   </div>
-                </div>
-                <div
-                  className="editable-field"
-                  onMouseEnter={() =>
-                    enableEdit &&
-                    !editFields["description"] &&
-                    setEditFields((prev) => ({
-                      ...prev,
-                      hoverDescription: true,
-                    }))
-                  }
-                  onMouseLeave={() =>
-                    enableEdit &&
-                    !editFields["description"] &&
-                    setEditFields((prev) => ({
-                      ...prev,
-                      hoverDescription: false,
-                    }))
-                  }
-                >
-                  <p className="business-description">
-                    {editFields["description"] ? (
-                      <textarea
-                        value={editedValues["description"] || ""}
-                        onChange={(e) => handleChange(e, "description")}
-                        onBlur={() => handleBlur("description")}
-                        onKeyDown={(e) => handleKeyDown(e, "description")}
-                        autoFocus
-                        disabled={loading}
-                      />
-                    ) : (
-                      selectedProduct.description
-                    )}
-                  </p>
-                  {enableEdit &&
-                    !editFields["description"] &&
-                    editFields.hoverDescription && (
-                      <p
-                        className="edit-btn"
-                        onClick={() => handleEdit("description")}
+                  <p className="business-category">Đánh giá bởi người dùng</p>
+                  <div className="rating-section">
+                    <div className="stars">{renderStars(averageRating)}</div>
+                    <div className="rating-count-toggle">
+                      <span className="rating-count">
+                        {showActiveOnly
+                          ? feedbacks.filter(
+                              (f) => f.feedback_status === "active"
+                            ).length
+                          : feedbacks.length}{" "}
+                        đánh giá
+                      </span>
+                      <label
+                        className="toggle-container"
+                        style={{ marginLeft: "0.5rem" }}
                       >
-                        <LuTextCursorInput />
-                      </p>
-                    )}
+                        <input
+                          type="checkbox"
+                          checked={showActiveOnly}
+                          onChange={() => setShowActiveOnly((prev) => !prev)}
+                          className="toggle-input"
+                        />
+                        <span className="toggle-slider"></span>
+                        <span className="status-text">
+                          {showActiveOnly ? "Chỉ active" : "Tất cả"}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div
+                    className="editable-field"
+                    onMouseEnter={() =>
+                      enableEdit &&
+                      !editFields["description"] &&
+                      setEditFields((prev) => ({
+                        ...prev,
+                        hoverDescription: true,
+                      }))
+                    }
+                    onMouseLeave={() =>
+                      enableEdit &&
+                      !editFields["description"] &&
+                      setEditFields((prev) => ({
+                        ...prev,
+                        hoverDescription: false,
+                      }))
+                    }
+                  >
+                    <p className="business-description">
+                      {editFields["description"] ? (
+                        <textarea
+                          value={editedValues["description"] || ""}
+                          onChange={(e) => handleChange(e, "description")}
+                          onBlur={() => handleBlur("description")}
+                          onKeyDown={(e) => handleKeyDown(e, "description")}
+                          autoFocus
+                          disabled={loading}
+                        />
+                      ) : (
+                        selectedProduct.description
+                      )}
+                    </p>
+                    {enableEdit &&
+                      !editFields["description"] &&
+                      editFields.hoverDescription && (
+                        <p
+                          className="edit-btn"
+                          onClick={() => handleEdit("description")}
+                        >
+                          <LuTextCursorInput />
+                        </p>
+                      )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <MyBusinessProductFeedback
-              productId={selectedProduct.id}
-              businessId={businessId}
-              canDelete={true}
-            />
-            {error && <p style={{ color: "red" }}>{error}</p>}
+              <MyBusinessProductFeedback
+                productId={selectedProduct.id}
+                businessId={businessId}
+                canDelete={true}
+              />
+              {error && <p style={{ color: "red" }}>{error}</p>}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
+        )}
+      </AnimatePresence>
+      ,
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div
+            style={{
+              position: "fixed", // Thêm 'position: "fixed"'
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+            onClick={() => setIsDeleteModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0" }}>
+                Bạn có chắc chắn muốn xóa ảnh này không?
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Hủy
+                </button>
+
+                <button
+                  onClick={executeDeleteImage}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>,
     modalRoot
   );
 };
