@@ -20,8 +20,13 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
       return;
     }
 
+    if (!form.content.trim()) {
+      toast.error("Nội dung không được để trống");
+      return;
+    }
+
     try {
-      await axios.put(
+      const response = await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledge._id}`,
         {
           title: form.title,
@@ -30,15 +35,26 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             .split(",")
             .map((t) => t.trim())
             .filter(Boolean),
+        },
+        {
+          validateStatus: (status) => status < 500, 
         }
       );
+
+      if (!response.data.success && response.data.message) {
+        throw new Error(response.data.message);
+      }
 
       toast.success("Cập nhật kiến thức thành công!");
       onSave();
       onClose();
     } catch (err) {
-      console.error(" Error updating knowledge:", err.response?.data || err);
-      toast.error("Có lỗi khi cập nhật kiến thức");
+      console.error("Error updating knowledge:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Có lỗi khi cập nhật kiến thức";
+      toast.error(errorMessage);
     }
   };
 

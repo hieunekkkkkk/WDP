@@ -1,18 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaHome, FaUserCog, FaBell } from "react-icons/fa";
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { io } from "socket.io-client";
-import "../css/Header.css";
-import AuthTokenReset from "../auth/AuthTokenReset";
-import { useUserRole } from "../contexts/UserRoleContext";
-import axios from "axios";
-import NotificationDropdown from "./NotificationDropdown";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaUserCircle, FaHome, FaUserCog, FaBell } from 'react-icons/fa';
+import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
+import { io } from 'socket.io-client';
+import '../css/Header.css';
+import AuthTokenReset from '../auth/AuthTokenReset';
+import { useUserRole } from '../contexts/UserRoleContext';
+import axios from 'axios';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAdminPage = location.pathname.startsWith('/admin');
   const { role } = useUserRole();
   const { user } = useUser();
 
@@ -29,7 +29,7 @@ const Header = () => {
 
   // Fetch unread notifications từ API
   const fetchUnreadNotifications = useCallback(async () => {
-    if (!user?.id || role === "admin") return;
+    if (!user?.id || role === 'admin') return;
 
     try {
       const res = await axios.get(
@@ -87,7 +87,7 @@ const Header = () => {
               unreadCount: chat.unreadCount,
             };
           } catch (err) {
-            console.error("Error fetching business info:", err);
+            console.error('Error fetching business info:', err);
             return {
               id: chat.chatId,
               chatId: chat.chatId,
@@ -105,13 +105,13 @@ const Header = () => {
       setNotifications(notificationsWithUserInfo);
       setTotalUnread(totalUnread);
     } catch (err) {
-      console.error("Error fetching unread notifications:", err);
+      console.error('Error fetching unread notifications:', err);
     }
   }, [user, role, userCache]);
 
   // Setup Socket.io listener - fetch notifications khi có tin nhắn mới
   useEffect(() => {
-    if (!user?.id || role === "admin") return;
+    if (!user?.id || role === 'admin') return;
 
     // Fetch lần đầu khi mount
     fetchUnreadNotifications();
@@ -119,16 +119,15 @@ const Header = () => {
     // Setup socket connection
     if (!socketRef.current) {
       socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
-        transports: ["websocket"],
+        transports: ['websocket'],
       });
 
-      socketRef.current.emit("join", user.id);
+      socketRef.current.emit('join', user.id);
 
       // Lắng nghe tin nhắn mới từ BẤT KỲ chat nào
-      socketRef.current.on("receive_message", (msg) => {
+      socketRef.current.on('receive_message', (msg) => {
         // Chỉ fetch lại nếu tin nhắn KHÔNG phải của mình
         if (msg.sender_id !== user.id) {
-          console.log("📬 Received new message, refreshing notifications...");
           fetchUnreadNotifications();
         }
       });
@@ -136,7 +135,7 @@ const Header = () => {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.off("receive_message");
+        socketRef.current.off('receive_message');
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -156,16 +155,16 @@ const Header = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
   const handleMarkAsRead = async (notificationId) => {
     const notiToOpen = notifications.find((noti) => noti.id === notificationId);
     if (!notiToOpen) {
-      console.error("Không tìm thấy thông báo!");
+      console.error('Không tìm thấy thông báo!');
       return;
     }
 
@@ -182,7 +181,7 @@ const Header = () => {
       // Refresh notifications sau khi mark as read
       fetchUnreadNotifications();
     } catch (err) {
-      console.error("Error marking chat as read:", err);
+      console.error('Error marking chat as read:', err);
     }
 
     setShowNotifications(false);
@@ -212,7 +211,7 @@ const Header = () => {
       // Refresh notifications sau khi clear all
       fetchUnreadNotifications();
     } catch (err) {
-      console.error("Error clearing all notifications:", err);
+      console.error('Error clearing all notifications:', err);
     }
   };
 
@@ -226,7 +225,7 @@ const Header = () => {
       <Link
         to="/admin/users"
         className={`header-nav-link ${
-          isActive("/admin/users", true) ? "active" : ""
+          isActive('/admin/users', true) ? 'active' : ''
         }`}
       >
         Người dùng
@@ -234,7 +233,7 @@ const Header = () => {
       <Link
         to="/admin/businesses"
         className={`header-nav-link ${
-          isActive("/admin/businesses", true) ? "active" : ""
+          isActive('/admin/businesses', true) ? 'active' : ''
         }`}
       >
         Doanh nghiệp
@@ -242,7 +241,7 @@ const Header = () => {
       <Link
         to="/admin/transactions"
         className={`header-nav-link ${
-          isActive("/admin/transactions", true) ? "active" : ""
+          isActive('/admin/transactions', true) ? 'active' : ''
         }`}
       >
         Giao dịch
@@ -250,7 +249,7 @@ const Header = () => {
       <Link
         to="/admin/feedback"
         className={`header-nav-link ${
-          isActive("/admin/feedback", true) ? "active" : ""
+          isActive('/admin/feedback', true) ? 'active' : ''
         }`}
       >
         Doanh nghiệp phản hồi
@@ -258,7 +257,7 @@ const Header = () => {
       <Link
         to="/admin/aibots"
         className={`header-nav-link ${
-          isActive("/admin/aibots", true) ? "active" : ""
+          isActive('/admin/aibots', true) ? 'active' : ''
         }`}
       >
         AI Bot
@@ -267,19 +266,19 @@ const Header = () => {
   );
 
   const renderUserMenu = () => (
-    <nav className={`header-nav ${isMenuOpen ? "active" : ""}`}>
-      {role !== "admin" && (
+    <nav className={`header-nav ${isMenuOpen ? 'active' : ''}`}>
+      {role !== 'admin' && (
         <>
           <Link
             to="/"
-            className={`header-nav-link ${isActive("/", true) ? "active" : ""}`}
+            className={`header-nav-link ${isActive('/', true) ? 'active' : ''}`}
           >
             Trang chủ
           </Link>
           <Link
             to="/discover"
             className={`header-nav-link ${
-              isActive("/discover") ? "active" : ""
+              isActive('/discover') ? 'active' : ''
             }`}
           >
             Kết nối doanh nghiệp
@@ -287,7 +286,7 @@ const Header = () => {
           <Link
             to="/dashboard"
             className={`header-nav-link ${
-              isActive("/dashboard") ? "active" : ""
+              isActive('/dashboard') ? 'active' : ''
             }`}
           >
             Hỗ trợ học tập
@@ -298,20 +297,20 @@ const Header = () => {
   );
 
   const renderUserButtonMenu = () => {
-    if (role === "admin") {
+    if (role === 'admin') {
       return (
         <UserButton.MenuItems>
           {isAdminPage ? (
             <UserButton.Action
               label="Trang chủ"
               labelIcon={<FaHome />}
-              onClick={() => navigate("/")}
+              onClick={() => navigate('/')}
             />
           ) : (
             <UserButton.Action
               label="Quản trị hệ thống"
               labelIcon={<FaUserCog />}
-              onClick={() => navigate("/admin/users")}
+              onClick={() => navigate('/admin/users')}
             />
           )}
         </UserButton.MenuItems>
@@ -322,11 +321,11 @@ const Header = () => {
 
   const renderMenu = () => {
     // Nếu là admin và đang ở homepage, không hiển thị menu
-    if (role === "admin" && !isAdminPage) {
+    if (role === 'admin' && !isAdminPage) {
       return null;
     }
     // Nếu là admin và đang ở admin page, hiển thị admin menu
-    if (role === "admin" && isAdminPage) {
+    if (role === 'admin' && isAdminPage) {
       return renderAdminMenu();
     }
     // Các trường hợp khác hiển thị user menu
@@ -372,7 +371,7 @@ const Header = () => {
 
         <SignedIn>
           <div className="header-user-info">
-            {role !== "admin" && (
+            {role !== 'admin' && (
               <div className="notification-wrapper" ref={notificationRef}>
                 <button
                   className="header-icon-btn"
@@ -382,7 +381,7 @@ const Header = () => {
                   <FaBell size={20} />
                   {totalUnread > 0 && (
                     <span className="notification-badge">
-                      {totalUnread > 99 ? "99+" : totalUnread}
+                      {totalUnread > 99 ? '99+' : totalUnread}
                     </span>
                   )}
                 </button>

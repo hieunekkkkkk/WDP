@@ -1,10 +1,10 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
-import { getCurrentUserRole } from "../utils/useCurrentUserRole";
-import "../css/UserPayComplete.css";
+import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { getCurrentUserRole } from '../utils/useCurrentUserRole';
+import '../css/UserPayComplete.css';
 
 /**
  * Trang này là đích BE redirect sau PayOS callback:
@@ -18,16 +18,16 @@ const UserPayComplete = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [verifyStep, setVerifyStep] = useState("Đang kiểm tra thanh toán...");
+  const [verifyStep, setVerifyStep] = useState('Đang kiểm tra thanh toán...');
 
   // Check URL params immediately
   useEffect(() => {
-    const status = searchParams.get("status");
-    const orderCode = searchParams.get("orderCode");
+    const status = searchParams.get('status');
+    const orderCode = searchParams.get('orderCode');
 
     // If cancelled or failed status in URL, redirect immediately
-    if (status === "CANCELLED" || status === "FAILED") {
-      navigate("/my-ai?payment=failed", { replace: true });
+    if (status === 'CANCELLED' || status === 'FAILED') {
+      navigate('/my-ai?payment=failed', { replace: true });
       return;
     }
   }, [searchParams, navigate]);
@@ -43,9 +43,9 @@ const UserPayComplete = () => {
     // Chưa có -> tạo mới
     const created = await axios.post(`${be}/api/aibot`, {
       owner_id: userId,
-      name: "AI học tập của tôi",
-      description: "Trợ lý AI hỗ trợ học tập cho sinh viên",
-      status: "active",
+      name: 'AI học tập của tôi',
+      description: 'Trợ lý AI hỗ trợ học tập cho sinh viên',
+      status: 'active',
     });
     return created.data;
   };
@@ -66,16 +66,16 @@ const UserPayComplete = () => {
       // Tạo 1 knowledge mặc định
       await axios.post(`${be}/api/botknowledge`, {
         aibot_id: botId,
-        title: "Bắt đầu học hiệu quả với My AI",
+        title: 'Bắt đầu học hiệu quả với My AI',
         content:
-          "• Giới thiệu môn/lớp để AI gợi ý phù hợp.\n" +
-          "• Hỏi theo mẫu: “Giải thích khái niệm … như cho học sinh lớp …”.\n" +
-          "• Yêu cầu ví dụ, bài tập, đề cương theo từng chương.\n" +
-          "• Tải tài liệu học lên phần Knowledge để AI tham chiếu.",
-        tags: ["onboarding", "student", "guide"],
+          '• Giới thiệu môn/lớp để AI gợi ý phù hợp.\n' +
+          '• Hỏi theo mẫu: “Giải thích khái niệm … như cho học sinh lớp …”.\n' +
+          '• Yêu cầu ví dụ, bài tập, đề cương theo từng chương.\n' +
+          '• Tải tài liệu học lên phần Knowledge để AI tham chiếu.',
+        tags: ['onboarding', 'student', 'guide'],
       });
     } catch (err) {
-      console.error("create default knowledge error:", err);
+      console.error('create default knowledge error:', err);
     }
   };
 
@@ -84,7 +84,7 @@ const UserPayComplete = () => {
 
     const fetchPaymentWithRetry = async (userId, attempts = 3) => {
       const be = import.meta.env.VITE_BE_URL;
-      const orderCode = searchParams.get("orderCode");
+      const orderCode = searchParams.get('orderCode');
 
       for (let i = 0; i < attempts; i++) {
         try {
@@ -98,29 +98,25 @@ const UserPayComplete = () => {
           );
 
           if (!currentPayment) {
-            console.log(" Payment not found, retrying...");
             await wait(1500);
             continue;
           }
 
           // Check payment status
-          if (currentPayment.payment_status === "completed") {
-            console.log(" Payment completed!");
+          if (currentPayment.payment_status === 'completed') {
             return true;
           }
 
           if (
-            currentPayment.payment_status === "cancelled" ||
-            currentPayment.payment_status === "failed"
+            currentPayment.payment_status === 'cancelled' ||
+            currentPayment.payment_status === 'failed'
           ) {
-            console.log(" Payment was cancelled or failed");
             return false;
           }
 
-          console.log(" Payment pending, retrying...");
           await wait(1500);
         } catch (err) {
-          console.error(" Lỗi khi kiểm tra thanh toán:", err);
+          console.error(' Lỗi khi kiểm tra thanh toán:', err);
           await wait(1500);
         }
       }
@@ -131,26 +127,23 @@ const UserPayComplete = () => {
       try {
         if (!user?.id) return;
 
-        console.log(" Bắt đầu xác minh thanh toán...");
         const isPaid = await fetchPaymentWithRetry(user.id, 3);
 
         if (!isPaid) {
-          console.log(" Thanh toán chưa thành công sau retry");
-          navigate("/dashboard/my-ai?payment=failed", { replace: true });
+          navigate('/dashboard/my-ai?payment=failed', { replace: true });
           return;
         }
 
         await wait(1500);
 
-        setVerifyStep("Đang thiết lập trợ lý AI của bạn...");
+        setVerifyStep('Đang thiết lập trợ lý AI của bạn...');
         const bot = await ensureStudentBot(user.id);
         await ensureDefaultKnowledge(bot._id || bot.id);
 
-        console.log(" DONE — chuyển trang");
-        navigate("/dashboard/my-ai?payment=success", { replace: true });
+        navigate('/dashboard/my-ai?payment=success', { replace: true });
       } catch (err) {
-        console.error(" Lỗi xác minh thanh toán sau retry:", err);
-        navigate("/dashboard/my-ai?payment=error", { replace: true });
+        console.error(' Lỗi xác minh thanh toán sau retry:', err);
+        navigate('/dashboard/my-ai?payment=error', { replace: true });
       }
     };
 

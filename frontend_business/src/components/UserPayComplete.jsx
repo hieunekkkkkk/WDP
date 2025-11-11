@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
-import "../css/UserPayComplete.css";
+import { useEffect, useRef, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import '../css/UserPayComplete.css';
 
 const UserPayComplete = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [statusText, setStatusText] = useState("Đang khởi tạo...");
+  const [statusText, setStatusText] = useState('Đang khởi tạo...');
   const hasRunRef = useRef(false);
 
   const be = import.meta.env.VITE_BE_URL;
@@ -24,9 +24,9 @@ const UserPayComplete = () => {
 
     const created = await axios.post(`${be}/api/aibot`, {
       owner_id: userId,
-      name: "Bot tư vấn Doanh nghiệp",
-      description: "Bot tư vấn tự động cho doanh nghiệp",
-      status: "active",
+      name: 'Bot tư vấn Doanh nghiệp',
+      description: 'Bot tư vấn tự động cho doanh nghiệp',
+      status: 'active',
     });
     return created.data;
   };
@@ -43,28 +43,24 @@ const UserPayComplete = () => {
         );
 
         if (!currentPayment) {
-          console.log("Chưa tìm thấy payment, đang thử lại...");
           await wait(2000);
           continue;
         }
 
-        if (currentPayment.payment_status === "completed") {
-          console.log("Thanh toán đã hoàn tất!");
+        if (currentPayment.payment_status === 'completed') {
           return currentPayment;
         }
 
         if (
-          currentPayment.payment_status === "cancelled" ||
-          currentPayment.payment_status === "failed"
+          currentPayment.payment_status === 'cancelled' ||
+          currentPayment.payment_status === 'failed'
         ) {
-          console.log("Thanh toán đã thất bại hoặc bị hủy");
           return null;
         }
 
-        console.log("Thanh toán đang chờ xử lý, thử lại...");
         await wait(2000);
       } catch (err) {
-        console.error("Lỗi khi kiểm tra thanh toán:", err);
+        console.error('Lỗi khi kiểm tra thanh toán:', err);
         await wait(2000);
       }
     }
@@ -75,10 +71,10 @@ const UserPayComplete = () => {
     const verifyAndProvision = async () => {
       if (!user?.id) return;
 
-      const orderCode = searchParams.get("orderCode");
+      const orderCode = searchParams.get('orderCode');
       if (!orderCode) {
-        console.warn("Không tìm thấy orderCode trên URL");
-        navigate("/business-dashboard", { replace: true });
+        console.warn('Không tìm thấy orderCode trên URL');
+        navigate('/business-dashboard', { replace: true });
         return;
       }
 
@@ -89,8 +85,7 @@ const UserPayComplete = () => {
         );
 
         if (!completedPayment) {
-          console.log("Thanh toán chưa thành công sau khi retry");
-          navigate("/business-dashboard", {
+          navigate('/business-dashboard', {
             replace: true,
           });
           return;
@@ -99,8 +94,8 @@ const UserPayComplete = () => {
         const stackName =
           completedPayment.payment_stack?.stack_name?.toLowerCase();
 
-        if (stackName === "tăng view cho doanh nghiệp") {
-          setStatusText("Đang nâng cấp gói ưu tiên...");
+        if (stackName === 'tăng view cho doanh nghiệp') {
+          setStatusText('Đang nâng cấp gói ưu tiên...');
           try {
             const businessResponse = await axios.get(
               `${be}/api/business/owner/${user.id}`
@@ -120,23 +115,23 @@ const UserPayComplete = () => {
               );
             }
           } catch (priorityError) {
-            console.error("Lỗi khi tăng độ ưu tiên:", priorityError);
+            console.error('Lỗi khi tăng độ ưu tiên:', priorityError);
           }
-        } else if (stackName === "bot tư vấn viên") {
-          setStatusText("Đang thiết lập bot tư vấn...");
+        } else if (stackName === 'bot tư vấn viên') {
+          setStatusText('Đang thiết lập bot tư vấn...');
           await provisionBusinessBot(user.id);
         } else {
-          console.warn("Đã thanh toán stack không xác định:", stackName);
+          console.warn('Đã thanh toán stack không xác định:', stackName);
         }
 
-        setStatusText("Hoàn tất! Đang chuyển hướng...");
-        await wait(1000); 
-        navigate("/business-dashboard", {
+        setStatusText('Hoàn tất! Đang chuyển hướng...');
+        await wait(1000);
+        navigate('/business-dashboard', {
           replace: true,
         });
       } catch (err) {
-        console.error("Lỗi nghiêm trọng trong quá trình xác minh:", err);
-        navigate("/business-dashboard", { replace: true });
+        console.error('Lỗi nghiêm trọng trong quá trình xác minh:', err);
+        navigate('/business-dashboard', { replace: true });
       }
     };
 

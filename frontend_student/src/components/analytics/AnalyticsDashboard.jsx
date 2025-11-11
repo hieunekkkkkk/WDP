@@ -1,31 +1,31 @@
 // src/components/analytics/AnalyticsDashboard.jsx
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useAuth } from "@clerk/clerk-react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-import StatCard from "./StatCard";
-import DashboardTabs from "./DashboardTabs";
-import OverviewTab from "./OverviewTab";
-import ReportTab from "./ReportTab";
-import ProgressTab from "./ProgressTab";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
+import StatCard from './StatCard';
+import DashboardTabs from './DashboardTabs';
+import OverviewTab from './OverviewTab';
+import ReportTab from './ReportTab';
+import ProgressTab from './ProgressTab';
 
-import "./style/AnalyticsDashboard.css";
+import './style/AnalyticsDashboard.css';
 import {
   FaArrowLeft,
   FaChartLine,
   FaClipboardList,
   FaExclamationTriangle,
   FaTasks,
-} from "react-icons/fa";
+} from 'react-icons/fa';
 
 const AnalyticsDashboard = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,15 +52,14 @@ const AnalyticsDashboard = () => {
           }
         );
 
-        console.log("analytics raw response:", response?.data);
         setAnalyticsData(response?.data?.data || null);
       } catch (error) {
         console.error(
-          "Failed to fetch analytics data",
+          'Failed to fetch analytics data',
           error?.response || error
         );
         const msg =
-          error?.response?.data?.message || "Không thể tải dữ liệu phân tích.";
+          error?.response?.data?.message || 'Không thể tải dữ liệu phân tích.';
         toast.error(msg);
         setAnalyticsData(null);
       } finally {
@@ -89,11 +88,11 @@ const AnalyticsDashboard = () => {
     };
 
     switch (activeTab) {
-      case "overview":
+      case 'overview':
         return <OverviewTab data={overview} />;
-      case "report":
+      case 'report':
         return <ReportTab data={reportData} />;
-      case "progress":
+      case 'progress':
         return <ProgressTab data={progress} />;
       default:
         return <ReportTab data={reportData} />;
@@ -106,7 +105,7 @@ const AnalyticsDashboard = () => {
       <header className="analytics-header">
         {/* THÊM NÚT BACK TẠI ĐÂY */}
         <button
-          onClick={() => navigate("/dashboard/tasks")}
+          onClick={() => navigate('/dashboard/tasks')}
           className="back-button"
         >
           <FaArrowLeft />

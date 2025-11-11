@@ -4,38 +4,38 @@ import React, {
   useCallback,
   useMemo,
   useRef,
-} from "react";
-import axios from "axios";
-import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { useLocation } from "react-router-dom";
-import "./style/MyAi.css";
+} from 'react';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useLocation } from 'react-router-dom';
+import './style/MyAi.css';
 
 // Constants
 const SUGGESTIONS = [
-  "Xin gợi ý lộ trình ôn thi nhanh",
-  "Giải thích định lý Pythagoras dễ hiểu",
-  "Tóm tắt chương 1 Vật lý 10",
-  "Gợi ý từ khoá để làm đề cương",
+  'Xin gợi ý lộ trình ôn thi nhanh',
+  'Giải thích định lý Pythagoras dễ hiểu',
+  'Tóm tắt chương 1 Vật lý 10',
+  'Gợi ý từ khoá để làm đề cương',
 ];
 const DEFAULT_AVATAR =
-  "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
+  'https://cdn-icons-png.flaticon.com/512/4712/4712035.png';
 const AI_AVATAR =
-  "https://icdn.dantri.com.vn/a3HWDOlTcvMNT73KRccc/Image/2013/05/3-904f5.jpg";
+  'https://icdn.dantri.com.vn/a3HWDOlTcvMNT73KRccc/Image/2013/05/3-904f5.jpg';
 
 const currencyVND = (n) =>
-  Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+  Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 });
 
 const pickStudentPersonalStack = (stacks = []) => {
   const exact = stacks.find(
-    (s) => (s.stack_name || "").trim().toLowerCase() === "bot hỗ trợ cá nhân"
+    (s) => (s.stack_name || '').trim().toLowerCase() === 'bot hỗ trợ cá nhân'
   );
 
   if (exact) return exact;
   return stacks.find((s) => {
-    const name = (s.stack_name || "").toLowerCase();
-    return name.includes("cá nhân") || name.includes("sinh viên");
+    const name = (s.stack_name || '').toLowerCase();
+    return name.includes('cá nhân') || name.includes('sinh viên');
   });
 };
 
@@ -46,13 +46,13 @@ const Loading = () => (
       <div className="myai-center">
         <div
           style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontSize: "1.2rem",
-            color: "#666",
+            padding: '2rem',
+            textAlign: 'center',
+            fontSize: '1.2rem',
+            color: '#666',
           }}
         >
-          <div className="loading-spinner" style={{ marginBottom: "1rem" }} />
+          <div className="loading-spinner" style={{ marginBottom: '1rem' }} />
           Đang tải My AI...
         </div>
       </div>
@@ -94,11 +94,11 @@ const NoBotView = ({ stack, onActivate, isLoading }) => (
             <div className="stack-feature">✓ Giải đáp 24/7</div>
             <div className="stack-feature">✓ Gợi ý ôn tập</div>
             <div className="stack-feature">
-              ✓ Phản hồi chuẩn theo kiến thức{" "}
+              ✓ Phản hồi chuẩn theo kiến thức{' '}
             </div>
           </div>
           <p className="stack-description">
-            {stack.stack_detail || "Trợ lý AI cho học tập"}
+            {stack.stack_detail || 'Trợ lý AI cho học tập'}
           </p>
           <div className="stack-price">
             {currencyVND(stack.stack_price)}₫
@@ -141,18 +141,18 @@ const AISidebar = ({ bot, onNavigate }) => {
     };
     const mu = () => {
       setIsResizing(false);
-      document.body.style.cursor = "default";
-      document.body.style.userSelect = "auto";
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
     };
     if (isResizing) {
-      document.addEventListener("mousemove", mm);
-      document.addEventListener("mouseup", mu);
-      document.body.style.cursor = "ew-resize";
-      document.body.style.userSelect = "none";
+      document.addEventListener('mousemove', mm);
+      document.addEventListener('mouseup', mu);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
     }
     return () => {
-      document.removeEventListener("mousemove", mm);
-      document.removeEventListener("mouseup", mu);
+      document.removeEventListener('mousemove', mm);
+      document.removeEventListener('mouseup', mu);
     };
   }, [isResizing]);
 
@@ -182,9 +182,9 @@ const AISidebar = ({ bot, onNavigate }) => {
         <div className="ai-bot-mini__head">
           <img src={bot?.avatar || AI_AVATAR} alt="bot" />
           <div className="ai-bot-mini__meta">
-            <div className="ai-bot-mini__name">{bot?.name || "My AI"}</div>
+            <div className="ai-bot-mini__name">{bot?.name || 'My AI'}</div>
             <div className="ai-bot-mini__desc">
-              {(bot?.description || "").slice(0, 64)}
+              {(bot?.description || '').slice(0, 64)}
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ const AISidebar = ({ bot, onNavigate }) => {
 
       <button
         className="button save-button"
-        style={{ marginTop: "auto" }}
+        style={{ marginTop: 'auto' }}
         onClick={onNavigate}
       >
         📚 My AI Knowledge
@@ -204,7 +204,7 @@ const AISidebar = ({ bot, onNavigate }) => {
 // Khu vực chính khi đã có bot
 const AIMainContent = ({ bot, user }) => {
   const displayName = useMemo(
-    () => user?.fullName || user?.username || "User",
+    () => user?.fullName || user?.username || 'User',
     [user]
   );
   const onPick = useCallback((s) => toast.info(`Đã chọn: ${s}`), []);
@@ -213,12 +213,12 @@ const AIMainContent = ({ bot, user }) => {
       <div className="ai-avatar">
         <img src={bot?.avatar || AI_AVATAR} alt="AI avatar" />
       </div>
-      <h2 className="ai-title">{bot?.name || "My AI"}</h2>
+      <h2 className="ai-title">{bot?.name || 'My AI'}</h2>
       <p className="ai-subtitle">
         {displayName} <span title="Thông tin người dùng">ⓘ</span>
       </p>
       <p className="ai-desc">
-        {bot?.description || "Bạn có thể hỏi mọi thứ liên quan học tập."}
+        {bot?.description || 'Bạn có thể hỏi mọi thứ liên quan học tập.'}
       </p>
       <div className="ai-suggestions">
         {SUGGESTIONS.map((s) => (
@@ -259,7 +259,7 @@ export default function MyAi() {
           return;
         }
       } catch (botErr) {
-        console.warn("Lỗi khi tìm bot (coi như chưa có bot):", botErr.message);
+        console.warn('Lỗi khi tìm bot (coi như chưa có bot):', botErr.message);
       }
       const stackRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/stack`
@@ -269,8 +269,8 @@ export default function MyAi() {
       const personal = pickStudentPersonalStack(stacks || []);
       setStack(personal || null);
     } catch (err) {
-      console.error("Lỗi tải My AI (lỗi khi tải stack):", err);
-      toast.error("Không thể tải My AI");
+      console.error('Lỗi tải My AI (lỗi khi tải stack):', err);
+      toast.error('Không thể tải My AI');
     } finally {
       setLoading(false);
     }
@@ -278,12 +278,12 @@ export default function MyAi() {
 
   useEffect(() => {
     const p = new URLSearchParams(location.search);
-    if (p.get("payment") === "failed")
-      toast.error("Thanh toán thất bại hoặc đã hủy.");
-    if (p.get("payment") === "success")
-      toast.success("Kích hoạt gói thành công! Bot đã sẵn sàng.");
-    if (p.get("payment") === "error")
-      toast.error("Có lỗi khi xác thực thanh toán, vui lòng thử lại.");
+    if (p.get('payment') === 'failed')
+      toast.error('Thanh toán thất bại hoặc đã hủy.');
+    if (p.get('payment') === 'success')
+      toast.success('Kích hoạt gói thành công! Bot đã sẵn sàng.');
+    if (p.get('payment') === 'error')
+      toast.error('Có lỗi khi xác thực thanh toán, vui lòng thử lại.');
 
     fetchData();
   }, [fetchData, location.search]);
@@ -294,32 +294,17 @@ export default function MyAi() {
       try {
         setPaymentLoading(true);
         // 1) Log bắt đầu function
-        console.log("[MyAi] handleActivateStack called with:", selectedStack);
 
         // 2) Kiểm tra VITE_BE_URL
         const be = import.meta.env.VITE_BE_URL;
-        console.log("[MyAi] Backend URL:", be);
 
         if (!be) {
-          throw new Error("Thiếu cấu hình máy chủ (VITE_BE_URL)");
+          throw new Error('Thiếu cấu hình máy chủ (VITE_BE_URL)');
         }
-
-        // 3) Kiểm tra user và stack
-        console.log("[MyAi] User info:", {
-          id: user?.id,
-          firstName: user?.firstName,
-          lastName: user?.lastName,
-        });
-
-        console.log("[MyAi] Stack info:", {
-          id: selectedStack?._id,
-          name: selectedStack?.stack_name,
-          price: selectedStack?.stack_price,
-        });
 
         if (!user?.id || !selectedStack?._id) {
           throw new Error(
-            `Thiếu thông tin ${!user?.id ? "người dùng" : "gói đăng ký"}`
+            `Thiếu thông tin ${!user?.id ? 'người dùng' : 'gói đăng ký'}`
           );
         }
 
@@ -330,36 +315,23 @@ export default function MyAi() {
           stack_id: selectedStack._id,
         };
 
-        console.log("[MyAi] Calling payment API:", {
-          url: paymentUrl,
-          data: paymentData,
-        });
-
         const res = await axios.post(paymentUrl, paymentData);
-
-        // 5) Log response đầy đủ
-        console.log("[MyAi] Payment API full response:", {
-          status: res.status,
-          headers: res.headers,
-          data: res.data,
-        });
 
         // 6) Validate response URL
         if (!res.data?.url) {
-          console.error("[MyAi] Invalid response format:", res.data);
+          console.error('[MyAi] Invalid response format:', res.data);
           throw new Error(
-            "Không nhận được link thanh toán từ máy chủ. " +
-              "Response data: " +
+            'Không nhận được link thanh toán từ máy chủ. ' +
+              'Response data: ' +
               JSON.stringify(res.data)
           );
         }
 
         // 7) Chuyển hướng với window.open
-        console.log("[MyAi] Redirecting to payment URL:", res.data.url);
         window.location.href = res.data.url;
       } catch (err) {
         // 8) Log lỗi chi tiết
-        console.error("[MyAi] Payment initiation failed:", {
+        console.error('[MyAi] Payment initiation failed:', {
           error: err,
           response: err.response,
           stack: err.stack,
@@ -369,13 +341,13 @@ export default function MyAi() {
         const message =
           err.response?.data?.message ||
           err.message ||
-          "Không thể khởi tạo thanh toán";
+          'Không thể khởi tạo thanh toán';
         toast.error(message);
 
         // 10) Thông báo thêm nếu là lỗi CORS
-        if (err.message.includes("CORS")) {
+        if (err.message.includes('CORS')) {
           toast.error(
-            "Lỗi kết nối tới máy chủ. Vui lòng kiểm tra CORS settings."
+            'Lỗi kết nối tới máy chủ. Vui lòng kiểm tra CORS settings.'
           );
         }
       }

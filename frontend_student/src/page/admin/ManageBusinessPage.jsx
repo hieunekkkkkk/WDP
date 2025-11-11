@@ -1,34 +1,34 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import Modal from "react-modal";
-import { toast } from "react-toastify";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import Modal from 'react-modal';
+import { toast } from 'react-toastify';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import Header from "../../components/Header";
-import HeroSectionAdmin from "../../components/HeroSectionAdmin";
-import { sendEmail } from "../../utils/sendEmail";
+import Header from '../../components/Header';
+import HeroSectionAdmin from '../../components/HeroSectionAdmin';
+import { sendEmail } from '../../utils/sendEmail';
 
-import { FaRegCircleCheck } from "react-icons/fa6";
-import { IoBanSharp } from "react-icons/io5";
-import { RiLoginCircleLine } from "react-icons/ri";
+import { FaRegCircleCheck } from 'react-icons/fa6';
+import { IoBanSharp } from 'react-icons/io5';
+import { RiLoginCircleLine } from 'react-icons/ri';
 
-import "../../css/ManageBusinessPage.css";
+import '../../css/ManageBusinessPage.css';
 
 function ManageBusinessPage() {
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState([]); // Sẽ chứa TẤT CẢ doanh nghiệp
-  const [search, setSearch] = useState("");
-  const [sortStatus, setSortStatus] = useState("Newest");
+  const [search, setSearch] = useState('');
+  const [sortStatus, setSortStatus] = useState('Newest');
   const [currentPage, setCurrentPage] = useState(1);
   // const [totalPages, setTotalPages] = useState(1); // <-- ĐÃ XÓA (sẽ tính ở frontend)
-  const [banReason, setBanReason] = useState("");
+  const [banReason, setBanReason] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState(null); // Sẽ lưu { id, name }
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [ownerNames, setOwnerNames] = useState({});
 
   const limit = 5; // Số item mỗi trang
-  Modal.setAppElement("#root");
+  Modal.setAppElement('#root');
 
   // --- THAY ĐỔI: Chỉ tải lại khi `sortStatus` thay đổi ---
   useEffect(() => {
@@ -63,14 +63,14 @@ function ManageBusinessPage() {
       setOwnerNames(nameMap);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to fetch businesses or owner info");
+      toast.error('Failed to fetch businesses or owner info');
     }
   };
 
   // --- THAY ĐỔI: Cập nhật bằng `businessId` thay vì `index` ---
   const updateBusinessStatus = async (businessId, name, newStatus) => {
     const loadingToastId = toast.loading(
-      "Đang cập nhật trạng thái doanh nghiệp..."
+      'Đang cập nhật trạng thái doanh nghiệp...'
     );
 
     try {
@@ -92,11 +92,11 @@ function ManageBusinessPage() {
       toast.dismiss(loadingToastId);
       toast.success(
         `${
-          newStatus === "active" ? "Kích hoạt" : "Vô hiệu hóa"
+          newStatus === 'active' ? 'Kích hoạt' : 'Vô hiệu hóa'
         } doanh nghiệp "${name}" thành công!`
       );
     } catch (err) {
-      console.error("PUT error:", err);
+      console.error('PUT error:', err);
       toast.dismiss(loadingToastId);
       toast.error(`Không thể cập nhật trạng thái cho "${name}"`);
     }
@@ -104,10 +104,10 @@ function ManageBusinessPage() {
 
   // --- THAY ĐỔI: Truyền `businessId` ---
   const handleBan = (businessId, name) =>
-    updateBusinessStatus(businessId, name, "inactive");
+    updateBusinessStatus(businessId, name, 'inactive');
   const handleActivate = (businessId, name) =>
-    updateBusinessStatus(businessId, name, "active");
-  
+    updateBusinessStatus(businessId, name, 'active');
+
   const handleBanPending = (businessId, name) => {
     setSelectedBusiness({ id: businessId, name }); // <-- Lưu ID
     setIsBanModalOpen(true);
@@ -115,35 +115,33 @@ function ManageBusinessPage() {
   const handleEnterBusiness = (id) => navigate(`/business/${id}`); // <-- Đơn giản hóa
 
   const submitBanReason = async () => {
-    if (!banReason.trim()) return toast.error("Vui lòng nhập lý do từ chối.");
+    if (!banReason.trim()) return toast.error('Vui lòng nhập lý do từ chối.');
 
     const { id, name } = selectedBusiness; // <-- Lấy ID
-    const business = businesses.find(b => b._id === id); // <-- Tìm bằng ID
+    const business = businesses.find((b) => b._id === id); // <-- Tìm bằng ID
 
-    if (!business) return toast.error("Không tìm thấy doanh nghiệp.");
+    if (!business) return toast.error('Không tìm thấy doanh nghiệp.');
 
-    const loadingToastId = toast.loading("Đang xử lý từ chối doanh nghiệp...");
+    const loadingToastId = toast.loading('Đang xử lý từ chối doanh nghiệp...');
 
     try {
       const userRes = await axios.get(
         `${import.meta.env.VITE_BE_URL}/api/user/${business.owner_id}`
       );
-      
+
       // Ghi chú: API /api/user/:id của bạn dường như trả về 1 object, không phải { users: ... }
       // Tôi sẽ dùng res.data trực tiếp.
-      const owner = userRes.data; 
+      const owner = userRes.data;
 
       if (!owner?.email || !owner?.fullName) {
         toast.dismiss(loadingToastId);
-        return toast.error("Không tìm thấy thông tin người dùng.");
+        return toast.error('Không tìm thấy thông tin người dùng.');
       }
-
-      console.log(owner.email, owner.fullName);
 
       await sendEmail(import.meta.env.VITE_EMAILJS_TEMPLATE_REJECT_ID, {
         email: owner.email,
         owner_name: owner.fullName,
-        subject: "Doanh nghiệp bị từ chối phê duyệt",
+        subject: 'Doanh nghiệp bị từ chối phê duyệt',
         message_body: `
         <p>Chúng tôi xin thông báo rằng doanh nghiệp <strong>"${business.business_name}"</strong> của bạn đã <strong>không được phê duyệt</strong> trên nền tảng Local Assistant HOLA.</p>
         <p><strong>Lý do từ chối:</strong><br />${banReason}</p>
@@ -151,7 +149,7 @@ function ManageBusinessPage() {
       `,
       });
 
-      await updateBusinessStatus(id, name, "inactive"); // <-- Dùng ID
+      await updateBusinessStatus(id, name, 'inactive'); // <-- Dùng ID
 
       toast.dismiss(loadingToastId);
       toast.success(
@@ -159,16 +157,16 @@ function ManageBusinessPage() {
       );
 
       setIsBanModalOpen(false);
-      setBanReason("");
+      setBanReason('');
       setSelectedBusiness(null);
     } catch (err) {
       console.error(err);
       toast.dismiss(loadingToastId);
       // Kiểm tra xem lỗi có phải từ API user không
       if (err.response && err.config.url.includes('/api/user/')) {
-        toast.error("Lỗi: Không tìm thấy thông tin chủ sở hữu.");
+        toast.error('Lỗi: Không tìm thấy thông tin chủ sở hữu.');
       } else {
-        toast.error("Từ chối doanh nghiệp hoặc gửi email thất bại");
+        toast.error('Từ chối doanh nghiệp hoặc gửi email thất bại');
       }
     }
   };
@@ -177,11 +175,13 @@ function ManageBusinessPage() {
     const matchesSearch =
       b.business_name.toLowerCase().includes(search.toLowerCase()) ||
       b.owner_id.toLowerCase().includes(search.toLowerCase()) ||
-      (ownerNames[b.owner_id] || "").toLowerCase().includes(search.toLowerCase());
+      (ownerNames[b.owner_id] || '')
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-    const matchesStatus = ["Active", "Inactive", "Pending"].includes(sortStatus)
+    const matchesStatus = ['Active', 'Inactive', 'Pending'].includes(sortStatus)
       ? b.business_active === sortStatus.toLowerCase()
-      : true; 
+      : true;
 
     return matchesSearch && matchesStatus;
   });
@@ -199,7 +199,7 @@ function ManageBusinessPage() {
     (currentPage - 1) * limit,
     currentPage * limit
   );
-  
+
   // --- KẾT THÚC LOGIC PHÂN TRANG ---
 
   return (
@@ -219,18 +219,18 @@ function ManageBusinessPage() {
         contentLabel="Từ chối doanh nghiệp"
         style={{
           content: {
-            maxWidth: "700px",
-            maxHeight: "300px",
-            margin: "auto",
-            padding: "20px",
-            borderRadius: "10px",
+            maxWidth: '700px',
+            maxHeight: '300px',
+            margin: 'auto',
+            padding: '20px',
+            borderRadius: '10px',
           },
-          overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+          overlay: { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
         }}
       >
         <h2 className="business-ban-title">Từ chối doanh nghiệp</h2>
         <p>
-          Nhập lý do từ chối doanh nghiệp{" "}
+          Nhập lý do từ chối doanh nghiệp{' '}
           <strong>"{selectedBusiness?.name}"</strong>:
         </p>
         <textarea
@@ -241,7 +241,7 @@ function ManageBusinessPage() {
           className="business-ban-text-area"
         ></textarea>
 
-        <div style={{ marginTop: "20px", textAlign: "right" }}>
+        <div style={{ marginTop: '20px', textAlign: 'right' }}>
           <button
             onClick={() => setIsBanModalOpen(false)}
             className="business-ban-modal-btn cancel"
@@ -304,36 +304,36 @@ function ManageBusinessPage() {
                     transition={{ duration: 0.25 }}
                   >
                     <td>{b.business_name}</td>
-                    <td>{ownerNames[b.owner_id] || "Loading..."}</td>
+                    <td>{ownerNames[b.owner_id] || 'Loading...'}</td>
                     <td>{b.business_category_id?.category_name}</td>
                     <td>
                       <span
                         className={`manage-business-status ${b.business_active.toLowerCase()}`}
                       >
-                        {b.business_active === "active" && <p>Hoạt động</p>}
-                        {b.business_active === "pending" && (
+                        {b.business_active === 'active' && <p>Hoạt động</p>}
+                        {b.business_active === 'pending' && (
                           <p>Chờ kiểm duyệt</p>
                         )}
-                        {b.business_active === "inactive" && <p>Bị khóa</p>}
+                        {b.business_active === 'inactive' && <p>Bị khóa</p>}
                       </span>
                     </td>
                     <td className="manage-business-actions-icons">
                       {/* --- THAY ĐỔI: Sử dụng b._id thay vì i --- */}
-                      {b.business_active === "inactive" && (
+                      {b.business_active === 'inactive' && (
                         <FaRegCircleCheck
                           className="manage-business-actions action-check"
                           onClick={() => handleActivate(b._id, b.business_name)}
                           title="Kích hoạt doanh nghiệp"
                         />
                       )}
-                      {b.business_active === "active" && (
+                      {b.business_active === 'active' && (
                         <IoBanSharp
                           className="manage-business-actions action-ban"
                           onClick={() => handleBan(b._id, b.business_name)}
                           title="Vô hiệu hóa doanh nghiệp"
                         />
                       )}
-                      {b.business_active === "pending" && (
+                      {b.business_active === 'pending' && (
                         <>
                           <FaRegCircleCheck
                             className="manage-business-actions action-check"
@@ -376,7 +376,7 @@ function ManageBusinessPage() {
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
-              className={`page-btn ${currentPage === i + 1 ? "active" : ""}`}
+              className={`page-btn ${currentPage === i + 1 ? 'active' : ''}`}
               onClick={() => setCurrentPage(i + 1)}
             >
               {i + 1}
