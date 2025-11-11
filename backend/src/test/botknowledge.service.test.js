@@ -1,6 +1,7 @@
 /**
  * @file src/test/botknowledge.service.test.js
  */
+require('dotenv').config({ path: '.env.dev' });
 const mongoose = require('mongoose');
 const botKnowledgeModel = require('../entity/module/botknowledge.model');
 const botKnowledgeService = require('../services/botknowledge.service');
