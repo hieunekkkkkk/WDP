@@ -1,5 +1,5 @@
 services:
-   # MongoDB
+  # MongoDB
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -31,7 +31,6 @@ services:
       - ./qdrant_data:/qdrant/storage
     networks:
       - sdn_network
-
 
   redis:
     image: redis:latest

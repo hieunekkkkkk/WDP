@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaBuilding, FaBell } from "react-icons/fa";
-import { IoNotificationsOutline } from "react-icons/io5";
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import { io } from "socket.io-client";
 import axios from "axios";
 import "../css/Header.css";
 import AuthTokenReset from "../auth/AuthTokenReset";
@@ -12,13 +12,129 @@ import NotificationDropdown from "./NotificationDropdown";
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useUser();
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen,] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [hasBusiness, setHasBusiness] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const accountRef = useRef(null);
+  const [userCache, setUserCache] = useState({});
   const notificationRef = useRef(null);
+  const accountRef = useRef(null);
+
+  const [notifications, setNotifications] = useState([]);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const socketRef = useRef(null);
+
+  // Fetch unread notifications từ API (chỉ gọi khi cần)
+  const fetchUnreadNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/conversation/user/${user.id}/unread-notifications`
+      );
+
+      const { totalUnread, chats } = res.data;
+
+      // Fetch thông tin user cho mỗi chat
+      const notificationsWithUserInfo = await Promise.all(
+        chats.slice(0, 5).map(async (chat) => {
+          const otherUserId = chat.otherUserId;
+
+          // Check cache
+          if (userCache[otherUserId]) {
+            return {
+              id: chat.chatId,
+              chatId: chat.chatId,
+              sender_id: otherUserId,
+              sender_name: userCache[otherUserId].name,
+              sender_image: userCache[otherUserId].image,
+              message: chat.lastMessage.message,
+              timestamp: chat.lastMessage.ts,
+              unreadCount: chat.unreadCount,
+            };
+          }
+
+          // Fetch user info
+          try {
+            const userRes = await axios.get(
+              `${import.meta.env.VITE_BE_URL}/api/user/${otherUserId}`
+            );
+
+            const userName = userRes.data?.fullName || otherUserId;
+            const userImage = userRes.data?.imageUrl || null;
+
+            setUserCache((prev) => ({
+              ...prev,
+              [otherUserId]: { name: userName, image: userImage },
+            }));
+
+            return {
+              id: chat.chatId,
+              chatId: chat.chatId,
+              sender_id: otherUserId,
+              sender_name: userName,
+              sender_image: userImage,
+              message: chat.lastMessage.message,
+              timestamp: chat.lastMessage.ts,
+              unreadCount: chat.unreadCount,
+            };
+          } catch (err) {
+            console.error("Error fetching user info:", err);
+            return {
+              id: chat.chatId,
+              chatId: chat.chatId,
+              sender_id: otherUserId,
+              sender_name: otherUserId,
+              sender_image: null,
+              message: chat.lastMessage.message,
+              timestamp: chat.lastMessage.ts,
+              unreadCount: chat.unreadCount,
+            };
+          }
+        })
+      );
+
+      setNotifications(notificationsWithUserInfo);
+      setTotalUnread(totalUnread);
+    } catch (err) {
+      console.error("Error fetching unread notifications:", err);
+    }
+  }, [user, userCache]);
+
+  // Setup Socket.io listener - fetch notifications khi có tin nhắn mới
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Fetch lần đầu khi mount
+    fetchUnreadNotifications();
+
+    // Setup socket connection
+    if (!socketRef.current) {
+      socketRef.current = io(`${import.meta.env.VITE_BE_URL}`, {
+        transports: ["websocket"],
+      });
+
+      socketRef.current.emit("join", user.id);
+
+      // Lắng nghe tin nhắn mới từ BẤT KỲ chat nào
+      socketRef.current.on("receive_message", (msg) => {
+        // Chỉ fetch lại nếu tin nhắn KHÔNG phải của mình
+        if (msg.sender_id !== user.id) {
+          fetchUnreadNotifications();
+        }
+      });
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off("receive_message");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [user, fetchUnreadNotifications]);
 
   useEffect(() => {
     const fetchBusinessStatus = async () => {
@@ -62,6 +178,58 @@ const Header = () => {
     };
   }, []);
 
+  const handleMarkAsRead = async (notificationId) => {
+    const notiToOpen = notifications.find((noti) => noti.id === notificationId);
+
+    if (!notiToOpen) {
+      console.error("Không tìm thấy thông báo!");
+      return;
+    }
+
+    const chatId = notiToOpen.chatId;
+
+    // Call API mark as read
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_BE_URL}/api/conversation/${chatId}/mark-read`,
+        { userId: user.id }
+      );
+
+      // Refresh notifications sau khi mark as read
+      fetchUnreadNotifications();
+    } catch (err) {
+      console.error("Error marking chat as read:", err);
+    }
+
+    setShowNotifications(false);
+
+    // Navigate tới messages
+    navigate(`/business-dashboard/messages`);
+  };
+
+  const toggleNotifications = () => {
+    setShowNotifications((prev) => !prev);
+  };
+
+  const handleClearAll = async () => {
+    // Mark tất cả chats là đã đọc
+    try {
+      await Promise.all(
+        notifications.map((noti) =>
+          axios.post(
+            `${import.meta.env.VITE_BE_URL}/api/conversation/${noti.chatId}/mark-read`,
+            { userId: user.id }
+          )
+        )
+      );
+
+      // Refresh notifications sau khi clear all
+      fetchUnreadNotifications();
+    } catch (err) {
+      console.error("Error clearing all notifications:", err);
+    }
+  };
+
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
@@ -86,18 +254,16 @@ const Header = () => {
       {hasBusiness ? (
         <Link
           to="/my-business"
-          className={`header-nav-link ${
-            isActive("/my-business", true) ? "active" : ""
-          }`}
+          className={`header-nav-link ${isActive("/my-business", true) ? "active" : ""
+            }`}
         >
           Doanh nghiệp của tôi
         </Link>
       ) : (
         <Link
           to="/business-registration"
-          className={`header-nav-link ${
-            isActive("/business-registration", true) ? "active" : ""
-          }`}
+          className={`header-nav-link ${isActive("/business-registration", true) ? "active" : ""
+            }`}
         >
           Đăng ký doanh nghiệp
         </Link>
@@ -105,9 +271,8 @@ const Header = () => {
 
       <Link
         to="/business-dashboard"
-        className={`header-nav-link ${
-          isActive("/business-dashboard") ? "active" : ""
-        }`}
+        className={`header-nav-link ${isActive("/business-dashboard") ? "active" : ""
+          }`}
       >
         Hỗ trợ doanh nghiệp
       </Link>
@@ -179,13 +344,24 @@ const Header = () => {
             <div className="notification-wrapper" ref={notificationRef}>
               <button
                 className="header-icon-btn"
-                onClick={() => setShowNotifications((prev) => !prev)}
-                title="Thông báo"
+                onClick={toggleNotifications}
+                title="Thông báo tin nhắn"
               >
                 <FaBell size={20} />
+                {totalUnread > 0 && (
+                  <span className="notification-badge">
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
               </button>
 
-              <NotificationDropdown isOpen={showNotifications} />
+              <NotificationDropdown
+                isOpen={showNotifications}
+                notifications={notifications}
+                totalUnread={totalUnread}
+                onMarkAsRead={handleMarkAsRead}
+                onClearAll={handleClearAll}
+              />
             </div>
 
             <div className="header-user-info">

@@ -476,6 +476,8 @@
   color: #d1d5db;
   cursor: pointer;
   transition: color 0.2s ease;
+  background: none;
+  border: none;
 }
 
 .rating-star.active {

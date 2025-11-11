@@ -5,17 +5,15 @@ const multer = require("multer");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Tạo kiến thức mới
-router.post("/:aibot_id", upload.single("file"), (req, res) =>
-  BotKnowledgeController.createKnowledge(req, res)
-);
-
 // Lấy danh sách kiến thức (tất cả bot)
 router.get("/", (req, res) => BotKnowledgeController.getKnowledges(req, res));
-
 // Sau đó mới tới GET theo bot cụ thể
 router.get("/:aibot_id", (req, res) =>
   BotKnowledgeController.getKnowledgeByBotId(req, res)
+);
+// Tạo kiến thức mới
+router.post("/:aibot_id", upload.single("file"), (req, res) =>
+  BotKnowledgeController.createKnowledge(req, res)
 );
 
 // Cập nhật kiến thức

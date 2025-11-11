@@ -1,7 +1,15 @@
-// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import { CiTrash } from "react-icons/ci";
 
+/**
+ * NotificationDropdown Component
+ * 
+ * Hiển thị thông báo tin nhắn real-time từ Socket.io
+ * - Hiển thị 5 thông báo gần nhất
+ * - Badge cho tin chưa đọc
+ * - Click để đánh dấu đã đọc và chuyển tới chat
+ * - Xóa tất cả thông báo
+ */
 const NotificationDropdown = ({
   isOpen,
   notifications = [],

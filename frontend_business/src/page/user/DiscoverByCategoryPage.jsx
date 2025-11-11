@@ -29,6 +29,7 @@ function DiscoverByCategoryPage() {
 
   const [filters, setFilters] = useState({
     distance: 50,
+    searchByLocation: true, // <-- THÊM MỚI: Trạng thái cho công tắc
     price: {
       cheapest: false,
       mostExpensive: false,
@@ -68,13 +69,19 @@ function DiscoverByCategoryPage() {
 
         const { latitude, longitude } = storedLocation;
 
+        // --- THAY ĐỔI LOGIC KHOẢNG CÁCH ---
+        // Quyết định giá trị maxDistance dựa trên công tắc
+        const maxDistanceValue = filters.searchByLocation
+          ? filters.distance * 1000 // Chuyển km sang mét
+          : 99999999; // Giá trị lớn để tìm kiếm tất cả
+
         const response = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/business/near`,
           {
             params: {
               latitude,
               longitude,
-              maxDistance: filters.distance * 1000,
+              maxDistance: maxDistanceValue, // <-- SỬ DỤNG GIÁ TRỊ MỚI
               categoryId: categoryId,
             },
             timeout: 10000,
@@ -143,7 +150,7 @@ function DiscoverByCategoryPage() {
     };
 
     fetchBusinesses();
-  }, [categoryId, filters.distance]);
+  }, [categoryId, filters.distance, filters.searchByLocation]); // <-- THÊM MỚI: dependency
 
   // Local filtering for price and rating
   const filteredBusinesses = businesses.filter((b) => {
@@ -152,20 +159,40 @@ function DiscoverByCategoryPage() {
     const { cheapest, mostExpensive, opening, closed } = filters.price;
     const { lowest, highest, fourStars, fiveStars } = filters.rating;
 
-    let pricePass =
-      (!cheapest || price <= 50000) &&
-      (!mostExpensive || price >= 50000) &&
-      (!opening || status === "Đang mở cửa") &&
-      (!closed || status === "Đã đóng cửa");
+    // Lọc giá và trạng thái (đã được kết hợp trong state)
+    let pricePass = true;
+    const priceFiltersActive = cheapest || mostExpensive;
+    if (priceFiltersActive) {
+      pricePass = (cheapest && price <= 50000) || (mostExpensive && price >= 50000);
+    }
+    
+    let statusPass = true;
+    const statusFiltersActive = opening || closed;
+    if (statusFiltersActive) {
+        statusPass = (opening && status === "Đang mở cửa") || (closed && status === "Đã đóng cửa");
+    }
 
-    let ratingPass =
-      (!lowest || rating <= 2) &&
-      (!highest || rating >= 4) &&
-      (!fourStars || rating == 4) &&
-      (!fiveStars || rating == 5);
-
-    return pricePass && ratingPass;
-  });
+    // Lọc đánh giá
+    let ratingPass = true;
+    const ratingFiltersActive = lowest || highest || fourStars || fiveStars;
+    if (ratingFiltersActive) {
+        ratingPass = (lowest && rating <= 2) ||
+                     (highest && rating >= 4) ||
+                     (fourStars && rating >= 4 && rating < 5) || // Điều chỉnh logic 4 sao
+                     (fiveStars && rating === 5);
+    }
+    
+    // Nếu không có filter nào được check, pass = true (hiển thị tất cả)
+    if (!priceFiltersActive && !statusFiltersActive && !ratingFiltersActive) {
+      return true;
+    }
+    
+    // Logic: Nếu filter được kích hoạt, nó phải pass.
+    // Nếu filter không kích hoạt, nó cũng được xem là "pass" (không cản trở).
+    return (!priceFiltersActive || pricePass) && 
+           (!statusFiltersActive || statusPass) && 
+           (!ratingFiltersActive || ratingPass);
+});
 
   const handleFilterChange = (type, value) => {
     setFilters((prev) => ({
@@ -258,7 +285,7 @@ function DiscoverByCategoryPage() {
                     </div>
                     <div className="place-info">
                       <h3>{b.business_name}</h3>
-                      <p style={{flex: 1}}>{b.business_address}</p>
+                      <p style={{ flex: 1 }}>{b.business_address}</p>
                       <div className="place-meta">
                         <span
                           className={`place-status ${

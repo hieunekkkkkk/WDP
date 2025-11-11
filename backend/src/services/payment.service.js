@@ -1,14 +1,14 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const Payment = require("../entity/module/payment.model");
 const Stack = require("../entity/module/stack.model");
 const payOS = require("../utils/payos");
-require("dotenv").config({
-  path: process.env.NODE_ENV === "production" ? ".env.prod" : ".env.dev",
-});
 
 class PaymentService {
-  async createPayment(stack_id, user_id, type = "student") {
+  async createPayment(stack_id, user_id, type) {
     if (!stack_id) throw new Error("Stack ID is required");
+
+    type = type || "student";
 
     const stack = await Stack.findById(stack_id);
     if (!stack) throw new Error("Stack not found");
@@ -38,14 +38,14 @@ class PaymentService {
       amount: parseInt(stack.stack_price),
       description: description,
       returnUrl: `${process.env.BACKEND_URL}/api/payment/callback/${type}`,
-      cancelUrl: `${process.env.BACKEND_URL}/api/payment/callback/${type}`,
+      cancelUrl: `${process.env.BACKEND_URL}/api/payment/callback/${type}?status=CANCELLED`,
     };
 
     const response = await payOS.createPaymentLink(body);
     return {
       error: 0,
       message: "Payment created",
-      url: response.checkoutUrl,
+      url: response.checkoutUrl || response.data?.checkoutUrl,
       payment_id: payment._id,
       transaction_id: transactionId,
     };
@@ -61,7 +61,12 @@ class PaymentService {
 
     // Update payment status based on PayOS response
     if (payment.payment_status === "pending") {
-      payment.payment_status = status === "PAID" ? "completed" : "failed";
+      payment.payment_status =
+        status === "PAID"
+          ? "completed"
+          : status === "CANCELLED"
+          ? "cancelled"
+          : "failed";
       payment.payment_date = new Date();
       await payment.save();
 

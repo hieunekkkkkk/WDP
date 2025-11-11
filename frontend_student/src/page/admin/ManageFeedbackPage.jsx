@@ -8,6 +8,7 @@ import HeroSectionAdmin from "../../components/HeroSectionAdmin";
 import "../../css/ManageAIBotsPage.css";
 import { RiLoginCircleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { FaTrash } from "react-icons/fa";
 
 function ManageFeedbackPage() {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ function ManageFeedbackPage() {
   const [modalComment, setModalComment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [feedbackToDeleteId, setFeedbackToDeleteId] = useState(null);
 
   useEffect(() => {
     fetchFeedbacks();
@@ -153,6 +156,43 @@ function ManageFeedbackPage() {
   };
 
   const handleEnterBusiness = (id) => navigate(`/business/${id}`);
+
+  const confirmDeleteFeedback = (id) => {
+    setFeedbackToDeleteId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  // Hàm xử lý logic xóa (Không còn window.confirm)
+  const handleDeleteFeedback = async () => {
+    if (!feedbackToDeleteId) return;
+
+    // Đóng modal xác nhận ngay lập tức
+    setDeleteConfirmOpen(false);
+
+    try {
+      const promise = axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackToDeleteId}`
+      );
+
+      await toast.promise(promise, {
+        pending: "Đang xóa phản hồi...",
+        success: "Đã xóa phản hồi thành công!",
+        error: "Không thể xóa phản hồi. Vui lòng thử lại.",
+      });
+
+      // Cập nhật state sau khi promise thành công
+      setFeedbacks((prev) =>
+        prev.filter((fb) => fb._id !== feedbackToDeleteId)
+      );
+      setFiltered((prev) => prev.filter((fb) => fb._id !== feedbackToDeleteId));
+      setCurrentPage(1);
+    } catch (err) {
+      // Lỗi đã được toast.promise xử lý, chỉ cần log
+      console.error("Lỗi khi xóa phản hồi:", err);
+    } finally {
+      setFeedbackToDeleteId(null);
+    }
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -304,10 +344,17 @@ function ManageFeedbackPage() {
                           timeStyle: "short",
                         })}
                       </td>
-                      <td>
+                      <td style={{ display: "flex", alignItems: "center" }}>
+                        <FaTrash
+                          className="manage-business-actions delete"
+                          onClick={() => confirmDeleteFeedback(fb._id)}
+                          title="Xóa phản hồi"
+                        />
                         <RiLoginCircleLine
                           className="manage-business-actions enter"
-                          onClick={() => handleEnterBusiness(fb?.business_id?._id)}
+                          onClick={() =>
+                            handleEnterBusiness(fb?.business_id?._id)
+                          }
                           title="Truy cập doanh nghiệp"
                         />
                       </td>
@@ -396,6 +443,71 @@ function ManageFeedbackPage() {
             <button className="modal-close-button" onClick={closeCommentModal}>
               Đóng
             </button>
+          </motion.div>
+        </div>
+      )}
+      {deleteConfirmOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setDeleteConfirmOpen(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#fff",
+              padding: "30px",
+              borderRadius: "10px",
+              maxWidth: "350px",
+              width: "90%",
+              textAlign: "center",
+            }}
+          >
+            <h3>Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa phản hồi này không?</p>
+            <div style={{ marginTop: "20px" }}>
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                style={{
+                  marginRight: "10px",
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  background: "#ccc",
+                  border: "none",
+                  borderRadius: "5px",
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteFeedback}
+                style={{
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  background: "red",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                }}
+              >
+                Xóa
+              </button>
+            </div>
           </motion.div>
         </div>
       )}

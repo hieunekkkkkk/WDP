@@ -55,7 +55,6 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      console.log("✅ Created knowledge:", response.data);
       toast.success("Tạo kiến thức thành công!");
 
       onSave();

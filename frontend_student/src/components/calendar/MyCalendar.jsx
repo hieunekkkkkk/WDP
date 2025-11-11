@@ -149,7 +149,7 @@ export default function MyCalendar() {
         setTasks(Array.from(byId.values()));
       } catch (e) {
         console.error("Fetch tasks error:", e);
-        toast.error("Không thể tải dữ liệu lịch");
+        alert("Không thể tải dữ liệu lịch");
       } finally {
         setLoading(false);
       }
@@ -225,7 +225,7 @@ export default function MyCalendar() {
       });
 
       if (res.data?.isConflict) {
-        toast.error(" Thời gian này đã có công việc khác!");
+        alert("Thời gian này đã có công việc khác!");
         return true; // Có trùng
       }
 
@@ -233,26 +233,35 @@ export default function MyCalendar() {
     } catch (err) {
       console.error("Lỗi khi kiểm tra trùng lịch:", err?.response || err);
       const msg = err.response?.data?.message || "Không thể kiểm tra lịch!";
-      toast.error(msg);
+      alert(msg);
       return true; // Báo trùng giả định nếu lỗi
     }
   };
 
   // ====== POST TASK ======
   const postTask = async (payload) => {
-    if (!userId) return toast.error("Không tìm thấy ID người dùng.");
+    if (!userId) {
+      alert("Không tìm thấy ID người dùng.");
+      return;
+    }
 
     const start = new Date(payload.start_time);
     const end = new Date(payload.end_time);
     const now = new Date();
 
     // Validate cơ bản
-    if (isNaN(start) || isNaN(end))
-      return toast.error("Thời gian không hợp lệ!");
-    if (start < now)
-      return toast.error("Thời gian bắt đầu không được nhỏ hơn hiện tại!");
-    if (end <= start)
-      return toast.error("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+    if (isNaN(start) || isNaN(end)) {
+      alert("Thời gian không hợp lệ!");
+      return;
+    }
+    if (start < now) {
+      alert("Thời gian bắt đầu không được nhỏ hơn hiện tại!");
+      return;
+    }
+    if (end <= start) {
+      alert("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+      return;
+    }
 
     //  Kiểm tra trùng lịch
     const hasConflict = await checkCalendarConflict(userId, start, end);
@@ -276,7 +285,7 @@ export default function MyCalendar() {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.success("Tạo Task thành công!");
+      alert("Tạo Task thành công!");
       setOpenTaskModal(false);
 
       // Refresh task list
@@ -287,28 +296,27 @@ export default function MyCalendar() {
       setTasks(list.map(normalizeItem));
     } catch (err) {
       console.error("POST task failed", err?.response || err);
-      toast.error("Tạo Task thất bại");
+      alert("Tạo Task thất bại");
     }
   };
 
   // ====== POST WORK ======
   const saveWork = async (payload) => {
-    if (!userId) return toast.error("Không tìm thấy ID người dùng.");
-    if (!payload.task_name?.trim()) return toast.error("Nhập tên công việc.");
-    if (!payload.selectedDays?.length)
-      return toast.error("Chọn ít nhất một ngày lặp.");
+    if (!userId) {
+      alert("Không tìm thấy ID người dùng.");
+      return;
+    }
+    if (!payload.task_name?.trim()) {
+      alert("Nhập tên công việc.");
+      return;
+    }
+    if (!payload.selectedDays?.length) {
+      alert("Chọn ít nhất một ngày lặp.");
+      return;
+    }
 
     const start = new Date(payload.start_time);
     const end = new Date(payload.end_time);
-    const now = new Date();
-
-    // Validate thời gian
-    if (isNaN(start) || isNaN(end))
-      return toast.error("Thời gian không hợp lệ!");
-    if (start < now)
-      return toast.error("Giờ bắt đầu không được nhỏ hơn hiện tại!");
-    if (end <= start)
-      return toast.error("Giờ kết thúc phải lớn hơn giờ bắt đầu!");
 
     //  Kiểm tra trùng lịch (nếu có task khác trong cùng ngày)
     const hasConflict = await checkCalendarConflict(userId, start, end);
@@ -340,7 +348,7 @@ export default function MyCalendar() {
 
     try {
       await Promise.all(requests);
-      toast.success("Tạo Work thành công!");
+      alert("Tạo Work thành công!");
       setOpenWorkModal(false);
 
       // Refresh lại danh sách
@@ -352,7 +360,7 @@ export default function MyCalendar() {
     } catch (err) {
       console.error("POST work failed", err?.response || err);
       const errorMsg = err.response?.data?.message || "Không thể tạo Work!";
-      toast.error(errorMsg);
+      alert(errorMsg);
     }
   };
 
