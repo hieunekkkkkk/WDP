@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import '../../css/DashboardPage.css';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FaPlusCircle } from 'react-icons/fa';
+import { FaPlusCircle, FaEdit, FaTrash } from 'react-icons/fa';
 
 const BACKEND_URL = import.meta.env.VITE_BE_URL;
 
@@ -116,6 +116,7 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
               name="revenue_date"
               value={formData.revenue_date}
               onChange={handleChange}
+              max={formatDateForInput(new Date())}
               required
             />
           </div>
@@ -146,6 +147,162 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    revenue_name: '',
+    revenue_amount: '',
+    revenue_description: '',
+    revenue_date: '',
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 1. Lấy dữ liệu revenue cũ khi modal mở
+  useEffect(() => {
+    if (isOpen && revenueId) {
+      setIsLoading(true);
+      // Dùng API GET /:id/business_revenue (số ít)
+      axios
+        .get(`${BACKEND_URL}/api/business/${revenueId}/business_revenue`)
+        .then((res) => {
+          const data = res.data;
+          setFormData({
+            revenue_name: data.revenue_name || '',
+            revenue_amount: data.revenue_amount || '',
+            revenue_description: data.revenue_description || '',
+            revenue_date: data.revenue_date
+              ? formatDateForInput(new Date(data.revenue_date))
+              : '',
+          });
+        })
+        .catch((err) => {
+          console.error('Failed to fetch revenue:', err);
+          toast.error('Không thể tải dữ liệu để sửa');
+          onClose();
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [isOpen, revenueId, onClose]);
+
+  if (!isOpen) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 2. Gửi dữ liệu cập nhật
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (
+      !formData.revenue_name ||
+      !formData.revenue_amount ||
+      !formData.revenue_date
+    ) {
+      toast.error('Vui lòng nhập Tên, Doanh thu và Ngày.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Dùng API PUT /:id/business_revenue (số ít)
+      await axios.put(
+        `${BACKEND_URL}/api/business/${revenueId}/business_revenue`,
+        {
+          ...formData,
+          revenue_amount: Number(formData.revenue_amount),
+        }
+      );
+      toast.success('Cập nhật doanh thu thành công!');
+      onSuccess(); // Tải lại bảng
+      onClose(); // Đóng modal
+    } catch (err) {
+      console.error('Failed to update revenue:', err);
+      toast.error(err.response?.data?.error || 'Lỗi khi cập nhật doanh thu');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        {isLoading ? (
+          <p>Đang tải dữ liệu...</p>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <h2>Sửa doanh thu</h2>
+            <div className="form-group">
+              <label htmlFor="revenue_name_edit">Tên</label>
+              <input
+                type="text"
+                id="revenue_name_edit"
+                name="revenue_name"
+                value={formData.revenue_name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="revenue_amount_edit">Doanh thu (VND)</label>
+              <input
+                type="number"
+                id="revenue_amount_edit"
+                name="revenue_amount"
+                value={formData.revenue_amount}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="revenue_date_edit">Ngày/Tháng</label>
+              <input
+                type="date"
+                id="revenue_date_edit"
+                name="revenue_date"
+                value={formData.revenue_date}
+                onChange={handleChange}
+                max={formatDateForInput(new Date())}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="revenue_description_edit">Mô tả</label>
+              <textarea
+                id="revenue_description_edit"
+                name="revenue_description"
+                value={formData.revenue_description}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary dashboard-btn"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                className="btn-primary dashboard-btn"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -205,8 +362,9 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
           ))}
 
           <li
-            className={`page-item ${currentPage === totalPages ? 'disabled' : ''
-              }`}
+            className={`page-item ${
+              currentPage === totalPages ? 'disabled' : ''
+            }`}
           >
             <a
               onClick={() => paginate(totalPages)}
@@ -385,6 +543,8 @@ const DashboardPage = () => {
   const [isStackModalOpen, setIsStackModalOpen] = useState(false);
   const [tangViewStack, setTangViewStack] = useState(null);
   const [isActivating, setIsActivating] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRevenueId, setSelectedRevenueId] = useState(null);
   const { userId } = useAuth();
 
   useEffect(() => {
@@ -738,6 +898,12 @@ const DashboardPage = () => {
     if (pageNumber > totalPages) pageNumber = totalPages;
     setCurrentPage(pageNumber);
   };
+
+  const handleOpenEditModal = (revenueId) => {
+    setSelectedRevenueId(revenueId);
+    setIsEditModalOpen(true);
+  };
+
   const renderTableBody = () => {
     if (isLoadingTable) {
       return (
@@ -765,12 +931,18 @@ const DashboardPage = () => {
           <td>{formatDate(row.revenue_date)}</td>
           <td>{formatCurrency(row.revenue_amount)}</td>
           <td>{row.revenue_description}</td>
-          <td>
+          <td className="stock-action-buttons">
             <button
-              className="delete-btn"
+              className="stock-action-btn edit"
+              onClick={() => handleOpenEditModal(row._id)}
+            >
+              <FaEdit />
+            </button>
+            <button
+              className="stock-action-btn delete"
               onClick={() => handleDeleteRevenue(row._id)}
             >
-              Xóa
+              <FaTrash />
             </button>
           </td>
         </tr>
@@ -801,7 +973,7 @@ const DashboardPage = () => {
       const x =
         chartPaddingX +
         (i / (lineChartData.length - 1 || 1)) *
-        (chartWidth - chartPaddingX * 2);
+          (chartWidth - chartPaddingX * 2);
 
       const y =
         chartHeight -
@@ -823,6 +995,15 @@ const DashboardPage = () => {
         businessId={businessId}
         onSuccess={fetchTableData}
       />
+      {createPortal(
+        <EditRevenueModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          revenueId={selectedRevenueId}
+          onSuccess={fetchTableData}
+        />,
+        document.body
+      )}
       {createPortal(
         <StackModal
           isOpen={isStackModalOpen}
@@ -880,7 +1061,7 @@ const DashboardPage = () => {
                   marginLeft: '10px',
                   backgroundColor: '#ffc107',
                   color: '#000',
-                  fontWeight: '500'
+                  fontWeight: '500',
                 }}
               >
                 Tải file doanh thu mẫu

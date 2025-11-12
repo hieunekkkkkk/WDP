@@ -18,6 +18,13 @@ import { getCurrentUserId } from '../../utils/useCurrentUserId';
 import ChatBox from '../../components/ChatBox';
 import MyBusinessFeedback from '../../components/MyBusinessFeedback';
 
+const formatPrice = (price) => {
+  if (!price) return 'Chưa cập nhật';
+  const numPrice = parseInt(String(price).replace(/[^0-9]/g, ''), 10);
+  if (isNaN(numPrice)) return price;
+  return numPrice.toLocaleString('vi-VN');
+};
+
 const BusinessPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -353,7 +360,7 @@ const BusinessPage = () => {
                       <div className="product-info">
                         <h3 className="product-name">{product.product_name}</h3>
                         <div className="product-price">
-                          {product.product_price} VND
+                          {formatPrice(product.product_price)} ₫
                         </div>
                         <div className="product-rating">
                           <div className="stars">
