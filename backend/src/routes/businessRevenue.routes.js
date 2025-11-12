@@ -17,6 +17,12 @@ router.get('/:id/business_revenues/range', (req, res) => BusinessRevenueControll
 // Import revenue từ file Excel
 router.post('/:id/business_revenues/import', upload.single('file'), (req, res) => BusinessRevenueController.importRevenues(req, res));
 
+// Lấy 1 revenue theo ID
+router.get('/:id/business_revenue', (req, res) => BusinessRevenueController.getRevenueById(req, res));
+
+// Cập nhật 1 revenue theo ID
+router.put('/:id/business_revenue', (req, res) => BusinessRevenueController.updateRevenue(req, res));
+
 // delete
 router.delete('/:id/business_revenues', BusinessRevenueController.deleteBusinessRevenue);
 

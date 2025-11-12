@@ -36,6 +36,7 @@ import HistoryCalendar from "./components/calendar/TaskHistory.jsx";
 import AnalyticsDashboard from "./components/analytics/AnalyticsDashboard.jsx";
 import ManageAIBotPage from "./page/admin/ManageAIBotPage.jsx";
 import ManageFeedbackPage from "./page/admin/ManageFeedbackPage.jsx";
+import ManageSubjectPage from "./page/admin/ManageSubjectPage.jsx";
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -60,15 +61,15 @@ const AppRoutes = () => {
           <Route
             path="/dashboard/bot-knowledge/:botId"
             element={
-            <>
-              <SignedIn>
-                <KnowledgePage />
-              </SignedIn>
-              <SignedOut>
-                <LoginPage />
-              </SignedOut>
-            </>
-          }
+              <>
+                <SignedIn>
+                  <KnowledgePage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
           />
           <Route path="/dashboard/calendar" element={<MyCalendar />} />
           <Route path="/dashboard/tasks" element={<TaskCalendar />} />
@@ -187,6 +188,14 @@ const AppRoutes = () => {
           element={
             <AdminRoute>
               <ManageAIBotPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/subjects"
+          element={
+            <AdminRoute>
+              <ManageSubjectPage />
             </AdminRoute>
           }
         />

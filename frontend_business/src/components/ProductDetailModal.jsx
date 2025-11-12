@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import ProductFeedback from "./MyBusinessProductFeedback";
-import ImageZoomModal from "./ImageZoomModal";
-import "../css/ProductDetailModal.css";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import ProductFeedback from './MyBusinessProductFeedback';
+import ImageZoomModal from './ImageZoomModal';
+import '../css/ProductDetailModal.css';
+import axios from 'axios';
+
 
 const ProductDetailModal = ({
   showModal,
   setShowModal,
   selectedProduct,
   setSelectedProduct,
-  businessId,
   renderStars,
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   // Image zoom state
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState("");
+  const [zoomedImageUrl, setZoomedImageUrl] = useState('');
   const [feedbacks, setFeedbacks] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
 
@@ -48,8 +48,8 @@ const ProductDetailModal = ({
           setAverageRating(0);
         }
       } catch (err) {
-        console.error("Error fetching feedbacks:", err);
-        toast.error("Không thể tải đánh giá sản phẩm");
+        console.error('Error fetching feedbacks:', err);
+        toast.error('Không thể tải đánh giá sản phẩm');
       }
     };
 
@@ -69,16 +69,16 @@ const ProductDetailModal = ({
 
   const closeImageZoom = () => {
     setIsImageZoomOpen(false);
-    setZoomedImageUrl("");
+    setZoomedImageUrl('');
   };
 
   useEffect(() => {
-    if (showModal) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => (document.body.style.overflow = "");
+    if (showModal) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => (document.body.style.overflow = '');
   }, [showModal]);
 
-  const modalRoot = document.getElementById("modal-root") || document.body;
+  const modalRoot = document.getElementById('modal-root') || document.body;
 
   return ReactDOM.createPortal(
     <AnimatePresence>
@@ -116,12 +116,12 @@ const ProductDetailModal = ({
                     src={selectedProduct.thumbnails[selectedImage]}
                     alt={`${selectedProduct.name} main ${selectedImage + 1}`}
                     className="main-img"
-                    style={{ cursor: "zoom-in" }}
+                    style={{ cursor: 'zoom-in' }}
                     onClick={() =>
                       handleImageZoom(selectedProduct.thumbnails[selectedImage])
                     }
                     onError={(e) => {
-                      e.target.src = "/1.png";
+                      e.target.src = '/1.png';
                     }}
                   />
                 </div>
@@ -130,20 +130,20 @@ const ProductDetailModal = ({
                     <div
                       key={idx}
                       className={`thumbnail ${
-                        selectedImage === idx ? "active" : ""
+                        selectedImage === idx ? 'active' : ''
                       }`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setSelectedImage(idx);
                       }}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: 'pointer' }}
                     >
                       <img
                         src={thumb}
                         alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
                         onError={(e) => {
-                          e.target.src = "/1.png";
+                          e.target.src = '/1.png';
                         }}
                       />
                     </div>

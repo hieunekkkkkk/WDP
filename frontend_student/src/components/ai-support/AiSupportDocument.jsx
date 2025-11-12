@@ -1,12 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AiChatModal from "../ai-modal/AiChatModal";
 import SubjectAPI, { DataTransformer } from "../../api/SubjectAPI";
 import "./style/AiSupportDocument.css";
 
-const ALL_INDUSTRIES = ["SE", "MKT", "MC", "GD"];
-const ITEMS_PER_PAGE = 4;
-
-// Icon Components
+// === Icon Components ===
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
     <path
@@ -18,7 +15,6 @@ const SearchIcon = () => (
     />
   </svg>
 );
-
 const ChevronIcon = ({ isOpen }) => (
   <svg
     width="16"
@@ -35,7 +31,6 @@ const ChevronIcon = ({ isOpen }) => (
     />
   </svg>
 );
-
 const ChatIcon = () => (
   <svg
     width="16"
@@ -48,26 +43,6 @@ const ChatIcon = () => (
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   </svg>
 );
-
-const ArrowIcon = ({ direction }) => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    style={{
-      transform: direction === "left" ? "rotate(180deg)" : "none",
-    }}
-  >
-    <path
-      d="M9 18l6-6-6-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
 const DriveIcon = () => (
   <svg
     width="16"
@@ -81,168 +56,60 @@ const DriveIcon = () => (
   </svg>
 );
 
-// DocCard Component - semantic markup + schema.org properties for SEO
-const DocCard = React.memo(({ doc, onChat }) => (
-  <article
-    className="ai-doc-card"
-    itemScope
-    itemType="https://schema.org/CreativeWork"
-    aria-labelledby={`doc-title-${doc.id || doc._id}`}
-  >
+// === Components ===
+const DocCard = ({ doc, onChat }) => (
+  <article className="ai-doc-card">
     <div className="ai-doc-meta">
-      <span className="ai-doc-tag" itemProp="genre">
-        {doc.industry}
-      </span>
-      <span className="ai-doc-date" itemProp="datePublished">
-        {doc.date}
-      </span>
+      <span className="ai-doc-tag">{doc.industry}</span>
+      <span className="ai-doc-date">{doc.date}</span>
     </div>
-
-    {/* Title: use an internal crawlable link to improve indexability */}
-    <h4 className="ai-doc-title" id={`doc-title-${doc.id || doc._id}`}>
-      <a
-        href={`/documents/${doc.id || doc._id}`}
-        itemProp="url"
-        className="ai-doc-link"
-        title={doc.title}
-      >
-        <span itemProp="name">{doc.title}</span>
-      </a>
-    </h4>
-
-    <p className="ai-doc-desc" itemProp="description">
-      {doc.desc}
-    </p>
-
+    <h4 className="ai-doc-title">{doc.title}</h4>
+    <p className="ai-doc-desc">{doc.desc}</p>
     <div className="ai-doc-footer">
-      <span className="ai-doc-author" itemProp="author">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-        {doc.author}
-      </span>
-
+      <span className="ai-doc-author">{doc.author}</span>
       <div className="ai-doc-actions">
-        {/* Drive: external link should be crawlable but open in new tab */}
-        <a
-          className="ai-doc-drive-btn"
-          href={doc.driveUrl || "#"}
-          onClick={(e) => e.stopPropagation()}
-          title="Mở Google Drive"
-          target="_blank"
-          rel="noopener noreferrer"
-          itemProp="sameAs"
-        >
-          <DriveIcon />
-          <span>Drive</span>
-        </a>
-
-        <button
-          className="ai-doc-chat-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onChat(doc);
-          }}
-          title="Bắt đầu trò chuyện với AI về tài liệu này"
-          aria-label={`Chat AI về ${doc.title}`}
-        >
-          <ChatIcon />
-          <span>Chat AI</span>
+        {doc.driveUrl && (
+          <a
+            className="ai-doc-drive-btn"
+            href={doc.driveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <DriveIcon /> Drive
+          </a>
+        )}
+        <button className="ai-doc-chat-btn" onClick={() => onChat(doc)}>
+          <ChatIcon /> Chat AI
         </button>
       </div>
     </div>
   </article>
-));
-
-DocCard.displayName = "DocCard";
-
-// EmptyHint Component
-const EmptyHint = ({ text }) => (
-  <div className="ai-empty">
-    <svg
-      width="64"
-      height="64"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-    <p>{text}</p>
-    <span>Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</span>
-  </div>
 );
 
-// LoadingSpinner Component
-const LoadingSpinner = () => (
-  <div className="ai-loading">
-    <div className="ai-spinner"></div>
-    <p>Đang tải tài liệu...</p>
-  </div>
-);
-
-// ErrorMessage Component
-const ErrorMessage = ({ message, onRetry }) => (
-  <div className="ai-error">
-    <svg
-      width="64"
-      height="64"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-    <p>{message || "Không thể tải dữ liệu. Vui lòng thử lại."}</p>
-    {onRetry && (
-      <button className="ai-retry-btn" onClick={onRetry}>
-        Thử lại
-      </button>
-    )}
-  </div>
-);
-
-// FilterDropdown Component
 const FilterDropdown = ({
   isOpen,
-  selectedIndustries,
+  selected,
   onToggle,
-  onToggleIndustry,
+  onToggleCategory,
+  categories,
 }) => (
   <div className="ai-filter">
-    <button
-      className="ai-filter-btn"
-      onClick={onToggle}
-      aria-haspopup="menu"
-      aria-expanded={isOpen}
-    >
-      <span>Chọn ngành</span>
+    <button className="ai-filter-btn" onClick={onToggle}>
+      <span>Chọn môn học</span>
       <ChevronIcon isOpen={isOpen} />
     </button>
-
     {isOpen && (
-      <div className="ai-filter-menu" role="menu">
-        <div className="ai-filter-title">Ngành</div>
-        {ALL_INDUSTRIES.map((ind) => (
-          <label key={ind} className="ai-filter-item">
+      <div className="ai-filter-menu">
+        <div className="ai-filter-title">Môn học</div>
+        {categories.length === 0 && <p>Không có danh mục</p>}
+        {categories.map((cat) => (
+          <label key={cat} className="ai-filter-item">
             <input
               type="checkbox"
-              checked={selectedIndustries.includes(ind)}
-              onChange={() => onToggleIndustry(ind)}
+              checked={selected.includes(cat)}
+              onChange={() => onToggleCategory(cat)}
             />
-            <span>{ind}</span>
+            <span>{cat}</span>
           </label>
         ))}
       </div>
@@ -250,258 +117,157 @@ const FilterDropdown = ({
   </div>
 );
 
-// Pagination Component
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages === 0) return null;
+const LoadingSpinner = () => (
+  <div className="ai-loading">
+    <div className="ai-spinner"></div>
+    <p>Đang tải tài liệu...</p>
+  </div>
+);
 
-  return (
-    <div className="ai-pagination">
-      <button
-        className="ai-pagination-btn"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        aria-label="Trang trước"
-      >
-        <ArrowIcon direction="left" />
-        <span>Trước</span>
-      </button>
+const ITEMS_PER_PAGE = 4;
 
-      <span className="ai-pagination-info">
-        Trang {currentPage} / {totalPages}
-      </span>
-
-      <button
-        className="ai-pagination-btn"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        aria-label="Trang sau"
-      >
-        <span>Sau</span>
-        <ArrowIcon direction="right" />
-      </button>
-    </div>
-  );
-};
-
-// Main Component
 export default function AiSupportDocument() {
   const [search, setSearch] = useState("");
   const [openFilter, setOpenFilter] = useState(false);
-  const [selectedIndustries, setSelectedIndustries] = useState(["SE"]);
+  const [categories, setCategories] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
-  const [currentPageMostUsed, setCurrentPageMostUsed] = useState(1);
-  const [currentPageLatest, setCurrentPageLatest] = useState(1);
 
-  // API State
-  const [allDocuments, setAllDocuments] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [latestDocs, setLatestDocs] = useState([]);
+
+  const [pageMost, setPageMost] = useState(1);
+  const [pageLatest, setPageLatest] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch documents from API
-  const fetchDocuments = async () => {
+  // === FETCH HAY DÙNG ===
+  const fetchSubjects = async (reset = true) => {
     try {
       setLoading(true);
-      setError(null);
+      const res = await SubjectAPI.getAllSubjects(30);
+      const subjects = res.subjects || [];
+      const active = subjects.filter((s) => s.used === true);
+      const uniqueCats = [
+        ...new Set(active.map((s) => s.category).filter(Boolean)),
+      ];
+      setCategories(uniqueCats);
 
-      // Lấy tất cả subjects từ API
-      const response = await SubjectAPI.getAllSubjects(100);
-      const subjects = response.subjects || [];
+      const filtered =
+        selected.length > 0
+          ? active.filter((s) => selected.includes(s.category))
+          : active;
 
-      // Transform data từ BE format sang FE format
-      const documents = DataTransformer.toFrontendArray(subjects);
-
-      setAllDocuments(documents);
+      const transformed = DataTransformer.toFrontendArray(filtered);
+      setDocuments(reset ? transformed : [...documents, ...transformed]);
     } catch (err) {
-      console.error("Error fetching documents:", err);
-      setError("Không thể tải dữ liệu từ server. Vui lòng thử lại sau.");
+      console.error("Error fetching subjects:", err);
+      setError("Không thể tải dữ liệu.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch on component mount
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
+  // === FETCH MỚI NHẤT ===
+  const fetchLatest = async () => {
+    try {
+      const res = await SubjectAPI.getLatestSubjects(30);
+      const active = (Array.isArray(res) ? res : res.subjects || []).filter(
+        (s) => s.used === true
+      );
+      setLatestDocs(DataTransformer.toFrontendArray(active));
+    } catch (err) {
+      console.error("Error fetching latest:", err);
+    }
+  };
 
-  const toggleIndustry = (code) => {
-    setSelectedIndustries((prev) =>
-      prev.includes(code) ? prev.filter((x) => x !== code) : [...prev, code]
+  useEffect(() => {
+    fetchSubjects(true);
+    fetchLatest();
+  }, [selected]);
+
+  // === SEARCH BACKEND ===
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!search.trim()) {
+        fetchSubjects(true);
+        fetchLatest();
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await SubjectAPI.searchByTitle(search);
+        const data = Array.isArray(res) ? res : res.subjects || [];
+        const active = data.filter((s) => s.used === true);
+        const filtered =
+          selected.length > 0
+            ? active.filter((s) => selected.includes(s.category))
+            : active;
+        const transformed = DataTransformer.toFrontendArray(filtered);
+        setDocuments(transformed);
+        setLatestDocs([]); // khi tìm kiếm chỉ hiện 1 danh sách
+      } catch (err) {
+        console.error("Search failed:", err);
+        setError("Không thể tìm kiếm dữ liệu từ server.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const delay = setTimeout(fetchSearch, 500);
+    return () => clearTimeout(delay);
+  }, [search, selected]);
+
+  const toggleCategory = (cat) => {
+    setSelected((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
-    // Reset về trang 1 khi thay đổi filter
-    setCurrentPageMostUsed(1);
-    setCurrentPageLatest(1);
   };
 
   const openChat = (doc) => {
-    setSelectedDoc({
-      ...doc,
-      industry: doc.industry,
-    });
+    setSelectedDoc(doc);
     setChatOpen(true);
   };
 
-  // Filter documents based on search and industry
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allDocuments.filter((d) => {
-      const matchText =
-        !q ||
-        d.title?.toLowerCase().includes(q) ||
-        d.desc?.toLowerCase().includes(q) ||
-        d.author?.toLowerCase().includes(q);
-      const matchIndustry =
-        selectedIndustries.length === 0 ||
-        selectedIndustries.includes(d.industry);
-      return matchText && matchIndustry;
-    });
-  }, [search, selectedIndustries, allDocuments]);
-
-  const allMostUsed = useMemo(() => filtered.filter((d) => d.used), [filtered]);
-  const allLatest = useMemo(() => filtered.filter((d) => !d.used), [filtered]);
-
-  // Pagination logic
-  const totalPagesMostUsed = Math.max(
-    1,
-    Math.ceil(allMostUsed.length / ITEMS_PER_PAGE)
-  );
-  const totalPagesLatest = Math.max(
-    1,
-    Math.ceil(allLatest.length / ITEMS_PER_PAGE)
-  );
-
-  const mostUsed = useMemo(() => {
-    const start = (currentPageMostUsed - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    return allMostUsed.slice(start, end);
-  }, [allMostUsed, currentPageMostUsed]);
-
-  const latest = useMemo(() => {
-    const start = (currentPageLatest - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    return allLatest.slice(start, end);
-  }, [allLatest, currentPageLatest]);
-
-  // Reset về trang 1 khi search thay đổi
-  useEffect(() => {
-    setCurrentPageMostUsed(1);
-    setCurrentPageLatest(1);
-  }, [search]);
-
-  useEffect(() => {
-    if (loading || error) return;
-
-    const count = allDocuments.length || 0;
-    const title = `Tài Liệu Học Tập Thông Minh - ${count} tài liệu`;
-    try {
-      document.title = title;
-
-      let meta = document.querySelector('meta[name="description"]');
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.setAttribute("name", "description");
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute(
-        "content",
-        "Kho tài liệu học tập cộng đồng - tìm kiếm, truy cập thư mục Drive và trò chuyện với AI để hiểu sâu hơn về nội dung."
-      );
-
-      let canonical = document.querySelector('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement("link");
-        canonical.setAttribute("rel", "canonical");
-        document.head.appendChild(canonical);
-      }
-      canonical.setAttribute("href", window.location.href);
-
-      const scriptId = "ai-docs-jsonld";
-      const prev = document.getElementById(scriptId);
-      if (prev) prev.remove();
-
-      const itemList = allDocuments.map((d, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        url: `${window.location.origin}/documents/${d.id}`,
-        item: {
-          "@type": "CreativeWork",
-          name: d.title,
-          description: d.desc,
-          author: d.author,
-          datePublished: d.date,
-          sameAs: d.driveUrl || undefined,
-        },
-      }));
-
-      const jsonld = {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        name: "Tài Liệu Học Tập Thông Minh",
-        itemListElement: itemList,
-      };
-
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.id = scriptId;
-      script.text = JSON.stringify(jsonld);
-      document.head.appendChild(script);
-
-      return () => {
-        const s = document.getElementById(scriptId);
-        if (s) s.remove();
-      };
-    } catch (err) {
-      // ignore head-manipulation errors in environments without DOM
-      console.warn("[AiSupportDocument] head update failed", err);
-    }
-  }, [loading, error, allDocuments]);
-
-  // Show loading state
-  if (loading) {
+  if (loading) return <LoadingSpinner />;
+  if (error)
     return (
       <div className="ai-wrap">
-        <LoadingSpinner />
+        <p>{error}</p>
       </div>
     );
-  }
 
-  // Show error state
-  if (error) {
-    return (
-      <div className="ai-wrap">
-        <ErrorMessage message={error} onRetry={fetchDocuments} />
-      </div>
-    );
-  }
+  // pagination client-side
+  const totalMost = Math.ceil(documents.length / ITEMS_PER_PAGE);
+  const totalLatest = Math.ceil(latestDocs.length / ITEMS_PER_PAGE);
+  const pagedMost = documents.slice(
+    (pageMost - 1) * ITEMS_PER_PAGE,
+    pageMost * ITEMS_PER_PAGE
+  );
+  const pagedLatest = latestDocs.slice(
+    (pageLatest - 1) * ITEMS_PER_PAGE,
+    pageLatest * ITEMS_PER_PAGE
+  );
 
   return (
     <>
       <div className="ai-wrap">
-        {/* Header Section */}
         <div className="ai-header">
           <h1 className="ai-main-title">Tài Liệu Học Tập Thông Minh</h1>
           <p className="ai-subtitle">
-            Trò chuyện với AI để tìm hiểu sâu hơn về các tài liệu học tập
-          </p>
-          <p
-            className="ai-subtitle"
-            style={{ fontSize: "0.9em", opacity: 0.8 }}
-          >
-            💡 Click vào card để mở thư mục Google Drive với tài liệu cộng đồng
-            đóng góp
+            Trò chuyện với AI để hiểu sâu hơn về tài liệu học tập
           </p>
         </div>
 
         {/* Search + Filter */}
         <div className="ai-toolbar">
           <div className="ai-search">
-            <span className="ai-search-icon" aria-hidden="true">
+            <span className="ai-search-icon">
               <SearchIcon />
             </span>
             <input
-              aria-label="Tìm kiếm tài liệu"
-              placeholder="Tìm kiếm theo tên tài liệu, mô tả hoặc tác giả..."
+              placeholder="Tìm kiếm theo tên, mô tả hoặc tác giả..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -509,69 +275,78 @@ export default function AiSupportDocument() {
 
           <FilterDropdown
             isOpen={openFilter}
-            selectedIndustries={selectedIndustries}
+            selected={selected}
             onToggle={() => setOpenFilter((s) => !s)}
-            onToggleIndustry={toggleIndustry}
+            onToggleCategory={toggleCategory}
+            categories={categories}
           />
         </div>
 
         {/* Section 1: Most Used */}
         <div className="ai-section">
-          <h3 className="ai-section-title">
-            Được sử dụng nhiều nhất
-            {allMostUsed.length > 0 && (
-              <span
-                style={{ fontSize: "0.8em", opacity: 0.7, marginLeft: "8px" }}
-              >
-                ({allMostUsed.length} tài liệu)
-              </span>
-            )}
-          </h3>
+          <h3 className="ai-section-title">Được sử dụng nhiều nhất</h3>
           <div className="ai-grid">
-            {mostUsed.map((d) => (
+            {pagedMost.map((d) => (
               <DocCard key={d.id} doc={d} onChat={openChat} />
             ))}
-            {mostUsed.length === 0 && allMostUsed.length === 0 && (
-              <EmptyHint text="Không có tài liệu phù hợp với bộ lọc." />
-            )}
+            {pagedMost.length === 0 && <p>Không có tài liệu phù hợp.</p>}
           </div>
-          {allMostUsed.length > 0 && (
-            <Pagination
-              currentPage={currentPageMostUsed}
-              totalPages={totalPagesMostUsed}
-              onPageChange={setCurrentPageMostUsed}
-            />
+
+          {totalMost > 1 && (
+            <div className="ai-pagination">
+              <button
+                onClick={() => setPageMost((p) => Math.max(p - 1, 1))}
+                disabled={pageMost === 1}
+              >
+                Trước
+              </button>
+              <span>
+                Trang {pageMost}/{totalMost}
+              </span>
+              <button
+                onClick={() => setPageMost((p) => Math.min(p + 1, totalMost))}
+                disabled={pageMost === totalMost}
+              >
+                Sau
+              </button>
+            </div>
           )}
         </div>
 
         {/* Section 2: Latest */}
-        <div className="ai-section">
-          <h3 className="ai-section-title">
-            Mới nhất
-            {allLatest.length > 0 && (
-              <span
-                style={{ fontSize: "0.8em", opacity: 0.7, marginLeft: "8px" }}
-              >
-                ({allLatest.length} tài liệu)
-              </span>
-            )}
-          </h3>
-          <div className="ai-grid">
-            {latest.map((d) => (
-              <DocCard key={d.id} doc={d} onChat={openChat} />
-            ))}
-            {latest.length === 0 && allLatest.length === 0 && (
-              <EmptyHint text="Chưa có tài liệu mới." />
+        {latestDocs.length > 0 && (
+          <div className="ai-section">
+            <h3 className="ai-section-title">Mới nhất</h3>
+            <div className="ai-grid">
+              {pagedLatest.map((d) => (
+                <DocCard key={d.id} doc={d} onChat={openChat} />
+              ))}
+              {pagedLatest.length === 0 && <p>Không có tài liệu mới.</p>}
+            </div>
+
+            {totalLatest > 1 && (
+              <div className="ai-pagination">
+                <button
+                  onClick={() => setPageLatest((p) => Math.max(p - 1, 1))}
+                  disabled={pageLatest === 1}
+                >
+                  Trước
+                </button>
+                <span>
+                  Trang {pageLatest}/{totalLatest}
+                </span>
+                <button
+                  onClick={() =>
+                    setPageLatest((p) => Math.min(p + 1, totalLatest))
+                  }
+                  disabled={pageLatest === totalLatest}
+                >
+                  Sau
+                </button>
+              </div>
             )}
           </div>
-          {allLatest.length > 0 && (
-            <Pagination
-              currentPage={currentPageLatest}
-              totalPages={totalPagesLatest}
-              onPageChange={setCurrentPageLatest}
-            />
-          )}
-        </div>
+        )}
       </div>
 
       <AiChatModal
