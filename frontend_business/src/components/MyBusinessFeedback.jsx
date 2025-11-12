@@ -536,7 +536,7 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
           <h2 className="feedback-title">Đánh giá từ khách hàng</h2>
 
           {/* Overall Rating */}
-          <div className="overall-rating">
+          <div className="my-business-overall-rating">
             <div className="rating-section">
               <div className="rating-score">
                 <span className="score">{overallRating.toFixed(1)}</span>

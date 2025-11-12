@@ -615,13 +615,8 @@ input {
 }
 
 /* Overall Rating */
-.overall-rating {
-  display: flex;
+.my-business-overall-rating {
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 2rem 0;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 2rem;
 }
 
 .rating-score {

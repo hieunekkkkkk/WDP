@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import ProductFeedback from "./ProductFeedback";
 import ImageZoomModal from "./ImageZoomModal";
 import "../css/ProductDetailModal.css";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const ProductDetailModal = ({
   showModal,
@@ -13,6 +14,7 @@ const ProductDetailModal = ({
   setSelectedProduct,
   businessId,
   renderStars,
+  onProductFeedbackUpdated,
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -22,43 +24,50 @@ const ProductDetailModal = ({
   const [feedbacks, setFeedbacks] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
 
-  useEffect(() => {
-    const fetchFeedbacks = async () => {
-      if (!selectedProduct?.id) return;
+  const fetchFeedbacks = useCallback(async () => {
+    if (!selectedProduct?.id) return;
 
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
-            selectedProduct.id
-          }`
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
+          selectedProduct.id
+        }`
+      );
+
+      if (res.data?.success) {
+        const data = res.data.data;
+
+        // Only active feedbacks
+        const activeFeedbacks = data.filter(
+          (f) => f.feedback_status !== "inactive"
         );
 
-        if (res.data?.success) {
-          const data = res.data.data;
+        setFeedbacks(activeFeedbacks);
 
-          // Only active feedbacks
-          const activeFeedbacks = data.filter(
-            (f) => f.feedback_status !== "inactive"
-          );
-
-          setFeedbacks(activeFeedbacks);
-
-          const total = activeFeedbacks.reduce(
-            (sum, f) => sum + (f.feedback_rating || 0),
-            0
-          );
-          const avg =
-            activeFeedbacks.length > 0 ? total / activeFeedbacks.length : 0;
-          setAverageRating(avg);
-        }
-      } catch (err) {
-        console.error("Error fetching feedbacks:", err);
-        toast.error("Không thể tải đánh giá sản phẩm");
+        const total = activeFeedbacks.reduce(
+          (sum, f) => sum + (f.feedback_rating || 0),
+          0
+        );
+        const avg =
+          activeFeedbacks.length > 0 ? total / activeFeedbacks.length : 0;
+        setAverageRating(avg);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching feedbacks:", err);
+      toast.error("Không thể tải đánh giá sản phẩm");
+    }
+  }, [selectedProduct?.id]);
 
+  useEffect(() => {
     fetchFeedbacks();
-  }, [selectedProduct]);
+  }, [fetchFeedbacks]);
+
+  const handleFeedbackUpdate = useCallback(() => {
+    fetchFeedbacks();
+    if (onProductFeedbackUpdated) {
+      onProductFeedbackUpdated();
+    }
+  }, [fetchFeedbacks, onProductFeedbackUpdated]);
 
   const closeModal = () => {
     setShowModal(false);
@@ -159,7 +168,10 @@ const ProductDetailModal = ({
                 <h1 className="modal-product-title">{selectedProduct.name}</h1>
                 <div className="business-status">
                   <span className="modal-product-price">
-                    {selectedProduct.price} VND
+                    {parseFloat(selectedProduct.price).toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })}
                   </span>
                 </div>
                 <p className="business-category">Đánh giá bởi người dùng</p>
@@ -180,6 +192,7 @@ const ProductDetailModal = ({
               productId={selectedProduct.id}
               businessId={businessId}
               canDelete={true}
+              onFeedbackUpdated={handleFeedbackUpdate}
             />
           </motion.div>
         </motion.div>

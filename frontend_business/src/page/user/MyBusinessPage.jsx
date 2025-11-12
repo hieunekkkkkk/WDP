@@ -1089,7 +1089,13 @@ const MyBusinessPage = () => {
                   <div className="product-info">
                     <h3 className="product-name">{product.product_name}</h3>
                     <div className="product-price">
-                      {product.product_price || "0"}
+                      {parseFloat(product.product_price || "0").toLocaleString(
+                        "vi-VN",
+                        {
+                          style: "currency",
+                          currency: "VND",
+                        }
+                      )}
                     </div>
                     <div className="product-rating">
                       <div className="stars">

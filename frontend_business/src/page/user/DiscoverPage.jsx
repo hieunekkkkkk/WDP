@@ -25,8 +25,6 @@ function DiscoverPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  // const [currentServicePage, setCurrentServicePage] = useState(0);
-  // const [direction, setDirection] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -283,7 +281,9 @@ function DiscoverPage() {
                   <span className="pill-icon">
                     {getCategoryIcon(category.icon, category.category_name)}
                   </span>
-                  <span>{category.category_name}</span>
+                  <span style={{ textTransform: "capitalize" }}>
+                    {category.category_name}
+                  </span>
                 </button>
               ))}
             </div>

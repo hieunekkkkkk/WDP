@@ -8,7 +8,7 @@ import Chart from "chart.js/auto";
 import Header from "../../components/Header";
 import { FaTrash, FaXmark } from "react-icons/fa6";
 import LoadingScreen from "../../components/LoadingScreen";
-import axios from "axios"; // Added axios
+import axios from "axios"; 
 
 function ManageTransactionPage() {
   const [payments, setPayments] = useState([]);

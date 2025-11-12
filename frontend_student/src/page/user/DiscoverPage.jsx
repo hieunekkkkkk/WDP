@@ -282,7 +282,9 @@ function DiscoverPage() {
                   <span className="pill-icon">
                     {getCategoryIcon(category.icon, category.category_name)}
                   </span>
-                  <span>{category.category_name}</span>
+                  <span style={{ textTransform: "capitalize" }}>
+                    {category.category_name}
+                  </span>
                 </button>
               ))}
             </div>

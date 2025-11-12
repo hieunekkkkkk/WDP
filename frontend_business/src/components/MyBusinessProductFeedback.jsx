@@ -483,7 +483,7 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
           {!isModal && <h2 className="feedback-title">Đánh giá sản phẩm</h2>}
 
           {/* Overall Rating */}
-          <div className="overall-rating">
+          <div className="my-business-overall-rating">
             <div className="rating-section">
               <div className="rating-score">
                 <span className="score">{overallRating.toFixed(1)}</span>
