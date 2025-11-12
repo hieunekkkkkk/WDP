@@ -97,6 +97,37 @@ class BusinessRevenueService {
     }
   }
 
+  // Lấy 1 revenue theo ID
+  async getRevenueById(id) {
+    try {
+      const revenue = await BusinessRevenue.findById(id);
+      if (!revenue) {
+        throw new Error('Revenue not found');
+      }
+      return revenue;
+    } catch (err) {
+      console.error('Error getting revenue by ID:', err);
+      throw err;
+    }
+  }
+
+  // Cập nhật revenue
+  async updateRevenue(id, data) {
+    try {
+      const updatedRevenue = await BusinessRevenue.findByIdAndUpdate(
+        id,
+        { $set: data },
+        { new: true, runValidators: true } 
+      );
+      if (!updatedRevenue) {
+        throw new Error('Revenue not found for update');
+      }
+      return updatedRevenue;
+    } catch (err) {
+      console.error('Error updating revenue:', err);
+      throw err;
+    }
+  }
   
 }
 
