@@ -100,12 +100,7 @@ const DocCard = React.memo(({ doc, onChat }) => (
 
     {/* Title: use an internal crawlable link to improve indexability */}
     <h4 className="ai-doc-title" id={`doc-title-${doc.id || doc._id}`}>
-      <a
-        href={`/documents/${doc.id || doc._id}`}
-        itemProp="url"
-        className="ai-doc-link"
-        title={doc.title}
-      >
+      <a href={`#`} itemProp="url" className="ai-doc-link" title={doc.title}>
         <span itemProp="name">{doc.title}</span>
       </a>
     </h4>
@@ -304,14 +299,23 @@ export default function AiSupportDocument() {
       setLoading(true);
       setError(null);
 
-      // Lấy tất cả subjects từ API
-      const response = await SubjectAPI.getAllSubjects(100);
-      const subjects = response.subjects || [];
+      let documents = [];
+      if (selectedIndustries.length > 0) {
+        // Fetch documents by selected categories
+        const promises = selectedIndustries.map((category) =>
+          SubjectAPI.getByCategory(category)
+        );
+        const results = await Promise.all(promises);
+        documents = results.flat(); // Combine results from all categories
+      } else {
+        // Fetch all documents if no category is selected
+        const response = await SubjectAPI.getAllSubjects(100);
+        documents = response.subjects || [];
+      }
 
-      // Transform data từ BE format sang FE format
-      const documents = DataTransformer.toFrontendArray(subjects);
-
-      setAllDocuments(documents);
+      // Transform data from backend to frontend format
+      const transformedDocuments = DataTransformer.toFrontendArray(documents);
+      setAllDocuments(transformedDocuments);
     } catch (err) {
       console.error("Error fetching documents:", err);
       setError("Không thể tải dữ liệu từ server. Vui lòng thử lại sau.");
@@ -323,7 +327,7 @@ export default function AiSupportDocument() {
   // Fetch on component mount
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [selectedIndustries]);
 
   const toggleIndustry = (code) => {
     setSelectedIndustries((prev) =>
@@ -342,24 +346,14 @@ export default function AiSupportDocument() {
     setChatOpen(true);
   };
 
-  // Filter documents based on search and industry
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return allDocuments.filter((d) => {
-      const matchText =
-        !q ||
-        d.title?.toLowerCase().includes(q) ||
-        d.desc?.toLowerCase().includes(q) ||
-        d.author?.toLowerCase().includes(q);
-      const matchIndustry =
-        selectedIndustries.length === 0 ||
-        selectedIndustries.includes(d.industry);
-      return matchText && matchIndustry;
-    });
-  }, [search, selectedIndustries, allDocuments]);
-
-  const allMostUsed = useMemo(() => filtered.filter((d) => d.used), [filtered]);
-  const allLatest = useMemo(() => filtered.filter((d) => !d.used), [filtered]);
+  const allMostUsed = useMemo(
+    () => allDocuments.filter((d) => d.used),
+    [allDocuments]
+  );
+  const allLatest = useMemo(
+    () => allDocuments.filter((d) => !d.used),
+    [allDocuments]
+  );
 
   // Pagination logic
   const totalPagesMostUsed = Math.max(
