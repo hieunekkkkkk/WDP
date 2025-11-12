@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Mở cổng 5173 (port cho frontend Vite dev server)
-EXPOSE 5173
+EXPOSE 5174
 
 # Lệnh khởi động ứng dụng Vite
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
