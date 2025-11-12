@@ -1,6 +1,7 @@
 import React from "react";
 import { levelColor } from "../../../utils/calendar-utils";
-import "../style/CalendarViews.css";
+import "../style/WeekView.css";
+
 const calculatePosition = (event) => {
   const start = new Date(event.start_time);
   const end = new Date(event.end_time);
@@ -21,7 +22,7 @@ const DayColumn = ({ tasks, date }) => {
   };
 
   return (
-    <div className="day-column">
+    <div className="week-day-column">
       {tasks
         .filter(
           (task) =>
@@ -43,17 +44,17 @@ const DayColumn = ({ tasks, date }) => {
           return (
             <div
               key={task._id}
-              className={`event-slot calendar-event-${color}`}
+              className={`week-event-slot week-event-${color}`}
               style={calculatePosition(task)}
             >
-              <div className="event-slot-title">{task.task_name}</div>
-              <div className="event-slot-time">
-                {new Date(task.start_time).toLocaleTimeString([], {
+              <div className="week-event-slot-title">{task.task_name}</div>
+              <div className="week-event-slot-time">
+                {new Date(task.start_time).toLocaleTimeString("vi-VN", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
                 {isMultiDay && (
-                  <span className="event-badge">({daysDuration}d)</span>
+                  <span className="week-event-badge">({daysDuration}d)</span>
                 )}
               </div>
             </div>
@@ -78,43 +79,54 @@ export default function WeekView({ tasks, currentDate }) {
 
   const weekDays = getWeekDays(currentDate);
   const hours = Array.from({ length: 24 }, (_, i) => i);
+  const today = new Date();
 
   return (
-    <div className="time-grid-container">
-      <div className="time-labels">
-        {hours.map((hour) => (
-          <div
-            key={hour}
-            className="time-label"
-            style={{ top: `${hour * 60}px` }}
-          >
-            {new Date(0, 0, 0, hour).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
-        ))}
+    <div className="week-view-container">
+      <div className="week-day-headers">
+        {weekDays.map((day, idx) => {
+          const isToday = day.toDateString() === today.toDateString();
+          return (
+            <div
+              key={idx}
+              className={`week-day-header ${isToday ? "today" : ""}`}
+            >
+              <div>{day.toLocaleDateString("vi-VN", { weekday: "short" })}</div>
+              <div style={{ fontSize: "1.2rem", marginTop: "4px" }}>
+                {day.getDate()}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="event-grid-wrapper">
-        <div className="week-day-headers">
-          {weekDays.map((day, idx) => (
-            <div key={idx} className="week-day-header">
-              {day.toLocaleDateString([], { weekday: "short" })} {day.getDate()}
+      <div className="week-grid-wrapper">
+        <div className="week-time-labels">
+          {hours.map((hour) => (
+            <div key={hour} className="week-time-label">
+              {hour.toString().padStart(2, "0")}:00
             </div>
           ))}
         </div>
-        <div className="event-grid-container">
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className="hour-line"
-              style={{ top: `${hour * 60}px` }}
-            ></div>
-          ))}
-          {weekDays.map((day, idx) => (
-            <DayColumn key={idx} tasks={tasks} date={day} />
-          ))}
+
+        <div className="week-events-wrapper">
+          <div className="week-events-grid">
+            {hours.map((hour) => (
+              <React.Fragment key={hour}>
+                <div
+                  className="week-hour-line"
+                  style={{ top: `${hour * 60}px` }}
+                />
+                <div
+                  className="week-hour-line half-hour"
+                  style={{ top: `${hour * 60 + 30}px` }}
+                />
+              </React.Fragment>
+            ))}
+            {weekDays.map((day, idx) => (
+              <DayColumn key={idx} tasks={tasks} date={day} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

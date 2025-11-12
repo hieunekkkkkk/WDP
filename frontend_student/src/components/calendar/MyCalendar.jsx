@@ -7,6 +7,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import TaskModal from "../../components/calender-modal/TaskModal.jsx";
 import WorkModal from "../../components/calender-modal/WorkModal.jsx";
+import ConflictModal from "../../components/calender-modal/ConflictModal.jsx";
 import WeekView from "./views/WeekView.jsx";
 import DayView from "./views/DayView.jsx";
 import AgendaView from "./views/AgendaView.jsx";
@@ -67,6 +68,9 @@ export default function MyCalendar() {
   const [openWorkModal, setOpenWorkModal] = useState(false);
   const [workDraft, setWorkDraft] = useState({ selectedDays: [] });
   const [expandedDay, setExpandedDay] = useState(null); // Track which day's popup is open
+  const [conflicts, setConflicts] = useState([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // Lưu action cần thực hiện sau khi xác nhận
   const days = useMemo(() => getDaysInMonth(currentDate), [currentDate]);
 
   // URL API để lấy task theo creator_id
@@ -215,49 +219,26 @@ export default function MyCalendar() {
     setOpenTaskModal(true);
   };
 
-  //  Hàm kiểm tra trùng lịch bằng API /calendar/check
-  const checkWorkConflict = async (
-    creator_id,
-    start_time,
-    end_time,
-    selectedDays
-  ) => {
+  // ✅ Hàm kiểm tra trùng lịch chung
+  const checkConflict = async (checkData) => {
     try {
-      for (const dayCode of selectedDays) {
-        const fullName = DAY_CODE_TO_FULL_NAME[dayCode];
-        if (!fullName) continue;
+      const res = await axios.post(`${CALENDAR_URL}/check`, checkData);
 
-        const res = await axios.post(`${CALENDAR_URL}/check`, {
-          creator_id,
-          start_time: start_time.toISOString(),
-          end_time: end_time.toISOString(),
-          task_mode: "hàng ngày",
-          task_day: fullName,
-        });
-
-        // Nếu BE trả về danh sách task trùng
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          alert(
-            `⚠️ Trùng lịch với công việc "${res.data[0].task_name}" vào ${fullName}!`
-          );
-          return true; // Có trùng
-        }
+      if (res.data.isConflict && res.data.conflicts?.length > 0) {
+        return res.data.conflicts; // Trả về danh sách conflicts
       }
-      return false; // Không trùng
+      return null; // Không có conflict
     } catch (err) {
-      console.error("❌ Lỗi checkWorkConflict:", err.response || err);
-      alert(
-        err.response?.data?.message ||
-          "Không thể kiểm tra trùng lịch! Vui lòng thử lại."
-      );
-      return true; // Dừng tạo nếu lỗi
+      console.error("❌ Lỗi checkConflict:", err);
+      toast.error(err.response?.data?.message || "Không thể kiểm tra trùng lịch!");
+      throw err;
     }
   };
 
   // ====== POST TASK ======
-  const postTask = async (payload) => {
+  const postTask = async (payload, forceCreate = false) => {
     if (!userId) {
-      alert("Không tìm thấy ID người dùng.");
+      toast.error("Không tìm thấy ID người dùng.");
       return;
     }
 
@@ -267,18 +248,42 @@ export default function MyCalendar() {
 
     // Validate cơ bản
     if (isNaN(start) || isNaN(end)) {
-      alert("Thời gian không hợp lệ!");
+      toast.error("Thời gian không hợp lệ!");
       return;
     }
     if (start < now) {
-      alert("Thời gian bắt đầu không được nhỏ hơn hiện tại!");
+      toast.error("Thời gian bắt đầu không được nhỏ hơn hiện tại!");
       return;
     }
     if (end <= start) {
-      alert("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+      toast.error("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
       return;
     }
 
+    // ✅ Kiểm tra conflict trước (nếu chưa force)
+    if (!forceCreate) {
+      try {
+        const conflictList = await checkConflict({
+          creator_id: userId,
+          start_time: start.toISOString(),
+          end_time: end.toISOString(),
+          task_mode: "dài hạn",
+          task_day: null,
+        });
+
+        if (conflictList) {
+          // Có conflict -> Hiển thị modal xác nhận
+          setConflicts(conflictList);
+          setShowConflictModal(true);
+          setPendingAction(() => () => postTask(payload, true)); // Lưu action để thực hiện sau
+          return;
+        }
+      } catch {
+        return; // Dừng nếu lỗi khi check
+      }
+    }
+
+    // ✅ Thực hiện tạo task
     try {
       const body = {
         task_name: payload.task_name,
@@ -297,7 +302,7 @@ export default function MyCalendar() {
         headers: { "Content-Type": "application/json" },
       });
 
-      alert("Tạo Task thành công!");
+      toast.success("✅ Tạo Task thành công!");
       setOpenTaskModal(false);
 
       // Refresh task list
@@ -308,39 +313,65 @@ export default function MyCalendar() {
       setTasks(list.map(normalizeItem));
     } catch (err) {
       console.error("POST task failed", err?.response || err);
-      alert("Tạo Task thất bại");
+      toast.error(err.response?.data?.message || "Tạo Task thất bại");
     }
   };
 
   // ====== POST WORK ======
-  const saveWork = async (payload) => {
+  const saveWork = async (payload, forceCreate = false) => {
     if (!userId) {
-      alert("Không tìm thấy ID người dùng.");
+      toast.error("Không tìm thấy ID người dùng.");
       return;
     }
     if (!payload.task_name?.trim()) {
-      alert("Nhập tên công việc.");
+      toast.error("Nhập tên công việc.");
       return;
     }
     if (!payload.selectedDays?.length) {
-      alert("Chọn ít nhất một ngày lặp.");
+      toast.error("Chọn ít nhất một ngày lặp.");
       return;
     }
 
     const start = new Date(payload.start_time);
     const end = new Date(payload.end_time);
-
-    const hasConflict = await checkWorkConflict(
-      userId,
-      start,
-      end,
-      payload.selectedDays
-    );
-    if (hasConflict) return;
-
     const startISO = start.toISOString();
     const endISO = end.toISOString();
 
+    // ✅ Kiểm tra conflict cho TẤT CẢ các ngày được chọn
+    if (!forceCreate) {
+      try {
+        let allConflicts = [];
+
+        for (const dayCode of payload.selectedDays) {
+          const fullName = DAY_CODE_TO_FULL_NAME[dayCode];
+          if (!fullName) continue;
+
+          const conflictList = await checkConflict({
+            creator_id: userId,
+            start_time: startISO,
+            end_time: endISO,
+            task_mode: "hàng ngày",
+            task_day: fullName,
+          });
+
+          if (conflictList) {
+            allConflicts.push(...conflictList);
+          }
+        }
+
+        if (allConflicts.length > 0) {
+          // Có conflict -> Hiển thị modal xác nhận
+          setConflicts(allConflicts);
+          setShowConflictModal(true);
+          setPendingAction(() => () => saveWork(payload, true));
+          return;
+        }
+      } catch {
+        return; // Dừng nếu lỗi
+      }
+    }
+
+    // ✅ Thực hiện tạo work
     const base = {
       task_name: payload.task_name,
       task_description: payload.task_description,
@@ -364,7 +395,7 @@ export default function MyCalendar() {
 
     try {
       await Promise.all(requests);
-      alert("Tạo Work thành công!");
+      toast.success("Tạo Work thành công!");
       setOpenWorkModal(false);
 
       // Refresh lại danh sách
@@ -375,8 +406,7 @@ export default function MyCalendar() {
       setTasks(list.map(normalizeItem));
     } catch (err) {
       console.error("POST work failed", err?.response || err);
-      const errorMsg = err.response?.data?.message || "Không thể tạo Work!";
-      alert(errorMsg);
+      toast.error(err.response?.data?.message || "Không thể tạo Work!");
     }
   };
 
@@ -467,9 +497,8 @@ export default function MyCalendar() {
               //  Màu sắc theo design: color được mapping tới class CSS (vd: calendar-event-red)
               className={`calendar-event calendar-event-${color}`}
               //  Tooltip chi tiết khi hover
-              title={`${t.task_name}${
-                isMultiDay ? ` (${daysDuration} ngày)` : ""
-              }\nTrạng thái: ${t.task_status}\nMức độ: ${t.task_level}`}
+              title={`${t.task_name}${isMultiDay ? ` (${daysDuration} ngày)` : ""
+                }\nTrạng thái: ${t.task_status}\nMức độ: ${t.task_level}`}
               onClick={(e) => {
                 e.stopPropagation();
                 renderDetailToast(t);
@@ -550,11 +579,9 @@ export default function MyCalendar() {
                         <div
                           key={t._id || `${t.task_name}_${t.start_time}`}
                           className={`calendar-event calendar-event-${color}`}
-                          title={`${t.task_name}${
-                            isMultiDay ? ` (${daysDuration} ngày)` : ""
-                          }\nTrạng thái: ${t.task_status}\nMức độ: ${
-                            t.task_level
-                          }`}
+                          title={`${t.task_name}${isMultiDay ? ` (${daysDuration} ngày)` : ""
+                            }\nTrạng thái: ${t.task_status}\nMức độ: ${t.task_level
+                            }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             renderDetailToast(t);
@@ -660,9 +687,8 @@ export default function MyCalendar() {
             {["Month", "Week", "Day", "Agenda"].map((f) => (
               <button
                 key={f}
-                className={`calendar-filter-btn ${
-                  activeFilter === f.toLowerCase() ? "active" : ""
-                }`}
+                className={`calendar-filter-btn ${activeFilter === f.toLowerCase() ? "active" : ""
+                  }`}
                 onClick={() => setActiveFilter(f.toLowerCase())}
               >
                 {f}
@@ -687,9 +713,8 @@ export default function MyCalendar() {
                 {days.map((day, idx) => (
                   <div
                     key={idx}
-                    className={`calendar-day ${
-                      !day.isCurrentMonth ? "calendar-day-other-month" : ""
-                    } ${day.isToday ? "calendar-day-today" : ""}`}
+                    className={`calendar-day ${!day.isCurrentMonth ? "calendar-day-other-month" : ""
+                      } ${day.isToday ? "calendar-day-today" : ""}`}
                     onClick={() => handleDayClick(day)}
                   >
                     <div className="calendar-day-number">
@@ -727,6 +752,24 @@ export default function MyCalendar() {
           onChange={setWorkDraft}
           onClose={() => setOpenWorkModal(false)}
           onSave={() => saveWork(workDraft)}
+        />
+      )}
+      {showConflictModal && (
+        <ConflictModal
+          conflicts={conflicts}
+          onCancel={() => {
+            setShowConflictModal(false);
+            setConflicts([]);
+            setPendingAction(null);
+          }}
+          onContinue={() => {
+            setShowConflictModal(false);
+            if (pendingAction) {
+              pendingAction(); // Thực hiện action đã lưu
+            }
+            setConflicts([]);
+            setPendingAction(null);
+          }}
         />
       )}
     </div>

@@ -23,7 +23,7 @@ import DetailModal from "../../components/calender-modal/DetailModal.jsx";
 import "../calender-modal/style/DetailModal.css";
 import FloatingWorkWidget from "../calender-modal/FloatingWorkWidget.jsx";
 
-const TaskCalendar = (props) => {
+const TaskCalendar = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
 
