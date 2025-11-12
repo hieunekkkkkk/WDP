@@ -132,7 +132,7 @@ const ProductDetailModal = ({
                   <div className="thumbnail-images">
                     {selectedProduct.thumbnails.map((thumb, idx) => (
                       <div
-                        key={idx} 
+                        key={idx}
                         className={`thumbnail ${
                           selectedImage === idx ? "active" : ""
                         }`}
