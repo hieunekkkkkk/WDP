@@ -94,109 +94,119 @@ const ProductDetailModal = ({
   const modalRoot = document.getElementById("modal-root") || document.body;
 
   return ReactDOM.createPortal(
-    <AnimatePresence>
-      {showModal && selectedProduct && (
-        <motion.div
-          className="modal-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          onClick={closeModal}
-        >
+    <>
+      <AnimatePresence>
+        {showModal && selectedProduct && (
           <motion.div
-            className="product-modal-content"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            className="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={closeModal}
           >
-            <button
-              className="modal-product-exit"
-              onClick={closeModal}
-              aria-label="Close modal"
+            <motion.div
+              className="product-modal-content"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              ✕
-            </button>
+              <button
+                className="modal-product-exit"
+                onClick={closeModal}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
 
-            <h1 className="product-modal-product-header">Chi tiết sản phẩm</h1>
+              <h1 className="product-modal-product-header">
+                Chi tiết sản phẩm
+              </h1>
 
-            <div className="business-content">
-              <div className="business-images">
-                <div className="main-image">
-                  <img
-                    src={selectedProduct.thumbnails[selectedImage]}
-                    alt={`${selectedProduct.name} main ${selectedImage + 1}`}
-                    className="main-img"
-                    style={{ cursor: "zoom-in" }}
-                    onClick={() =>
-                      handleImageZoom(selectedProduct.thumbnails[selectedImage])
-                    }
-                    onError={(e) => {
-                      e.target.src = "/1.png";
-                    }}
-                  />
-                </div>
-                <div className="thumbnail-images">
-                  {selectedProduct.thumbnails.map((thumb, idx) => (
-                    <div
-                      key={idx}
-                      className={`thumbnail ${
-                        selectedImage === idx ? "active" : ""
-                      }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedImage(idx);
+              <div className="business-content">
+                <div className="business-images">
+                  <div className="main-image">
+                    <img
+                      src={selectedProduct.thumbnails[selectedImage]}
+                      alt={`${selectedProduct.name} main ${selectedImage + 1}`}
+                      className="main-img"
+                      style={{ cursor: "zoom-in" }}
+                      onClick={() =>
+                        handleImageZoom(
+                          selectedProduct.thumbnails[selectedImage]
+                        )
+                      }
+                      onError={(e) => {
+                        e.target.src = "/1.png";
                       }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <img
-                        src={thumb}
-                        alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                        onError={(e) => {
-                          e.target.src = "/1.png";
+                    />
+                  </div>
+                  <div className="thumbnail-images">
+                    {selectedProduct.thumbnails.map((thumb, idx) => (
+                      <div
+                        key={idx}
+                        className={`thumbnail ${
+                          selectedImage === idx ? "active" : ""
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedImage(idx);
                         }}
-                      />
-                    </div>
-                  ))}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <img
+                          src={thumb}
+                          alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
+                          onError={(e) => {
+                            e.target.src = "/1.png";
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="business-info">
+                  <h1 className="modal-product-title">
+                    {selectedProduct.name}
+                  </h1>
+                  <div className="business-status">
+                    <span className="modal-product-price">
+                      {parseFloat(selectedProduct.price).toLocaleString(
+                        "vi-VN",
+                        {
+                          style: "currency",
+                          currency: "VND",
+                        }
+                      )}
+                    </span>
+                  </div>
+                  <p className="business-category">Đánh giá bởi người dùng</p>
+                  <div className="rating-section">
+                    <div className="stars">{renderStars(averageRating)}</div>
+                    <span className="rating-count">
+                      {feedbacks.length} đánh giá
+                    </span>
+                  </div>
+                  <p className="business-description">
+                    {selectedProduct.description}
+                  </p>
                 </div>
               </div>
 
-              <div className="business-info">
-                <h1 className="modal-product-title">{selectedProduct.name}</h1>
-                <div className="business-status">
-                  <span className="modal-product-price">
-                    {parseFloat(selectedProduct.price).toLocaleString("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    })}
-                  </span>
-                </div>
-                <p className="business-category">Đánh giá bởi người dùng</p>
-                <div className="rating-section">
-                  <div className="stars">{renderStars(averageRating)}</div>
-                  <span className="rating-count">
-                    {feedbacks.length} đánh giá
-                  </span>
-                </div>
-                <p className="business-description">
-                  {selectedProduct.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Product Feedback Section */}
-            <ProductFeedback
-              productId={selectedProduct.id}
-              businessId={businessId}
-              canDelete={true}
-              onFeedbackUpdated={handleFeedbackUpdate}
-            />
+              <ProductFeedback
+                productId={selectedProduct.id}
+                businessId={businessId}
+                canDelete={true}
+                onFeedbackUpdated={handleFeedbackUpdate}
+              />
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Image Zoom Modal */}
       <ImageZoomModal
@@ -205,7 +215,7 @@ const ProductDetailModal = ({
         onClose={closeImageZoom}
         imageAlt="Phóng to ảnh sản phẩm"
       />
-    </AnimatePresence>,
+    </>,
     modalRoot
   );
 };
