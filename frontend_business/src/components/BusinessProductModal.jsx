@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
-import ReactDOM from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { convertFilesToBase64 } from "../utils/imageToBase64";
-import "../css/ProductDetailModal.css";
-import MyBusinessProductFeedback from "./MyBusinessProductFeedback";
-import { LuTextCursorInput } from "react-icons/lu";
-import { toast } from "react-toastify";
-import axios from "axios";
-import { RxCross2 } from "react-icons/rx";
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FaPlus, FaTrash } from 'react-icons/fa';
+import { convertFilesToBase64 } from '../utils/imageToBase64';
+import '../css/ProductDetailModal.css';
+import MyBusinessProductFeedback from './MyBusinessProductFeedback';
+import { LuTextCursorInput } from 'react-icons/lu';
+import { toast } from 'react-toastify';
+import axios from 'axios';
+import { RxCross2 } from 'react-icons/rx';
 
 const BusinessProductModal = ({
   showModal,
@@ -36,10 +36,10 @@ const BusinessProductModal = ({
 
   // Field mapping to align frontend and backend field names
   const fieldMapping = {
-    name: "product_name",
-    price: "product_price",
-    description: "product_description",
-    thumbnails: "product_image",
+    name: 'product_name',
+    price: 'product_price',
+    description: 'product_description',
+    thumbnails: 'product_image',
   };
 
   const closeModal = () => {
@@ -52,9 +52,9 @@ const BusinessProductModal = ({
   };
 
   useEffect(() => {
-    if (showModal) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => (document.body.style.overflow = "");
+    if (showModal) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => (document.body.style.overflow = '');
   }, [showModal]);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const BusinessProductModal = ({
           setAverageRating(0);
         }
       } catch (err) {
-        console.error("Error fetching feedbacks:", err);
+        console.error('Error fetching feedbacks:', err);
       }
     };
 
@@ -92,7 +92,7 @@ const BusinessProductModal = ({
 
   useEffect(() => {
     const relevantFeedbacks = showActiveOnly
-      ? feedbacks.filter((f) => f.feedback_status === "active")
+      ? feedbacks.filter((f) => f.feedback_status === 'active')
       : feedbacks;
 
     const total = relevantFeedbacks.reduce(
@@ -109,22 +109,22 @@ const BusinessProductModal = ({
     setEditedValues((prev) => ({
       ...prev,
       [field]:
-        field === "price"
+        field === 'price'
           ? parseFloat(selectedProduct[field]).toString()
-          : selectedProduct[field] || "",
+          : selectedProduct[field] || '',
     }));
   };
 
   const handleChange = (e, field) => {
     let value = e.target.value;
-    if (field === "price") {
-      value = value.replace(/[^0-9]/g, "");
+    if (field === 'price') {
+      value = value.replace(/[^0-9]/g, '');
     }
     setEditedValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleKeyDown = (e, field) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleBlur(field);
     }
@@ -134,34 +134,34 @@ const BusinessProductModal = ({
     const newValue = editedValues[field];
     const oldValue = selectedProduct[field];
 
-    if (field === "name") {
+    if (field === 'name') {
       if (!newValue || !newValue.trim()) {
-        toast.error("Tên sản phẩm không được để trống.");
+        toast.error('Tên sản phẩm không được để trống.');
         setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
         setEditFields((prev) => ({ ...prev, [field]: false }));
         return;
       }
       if (newValue.trim().length > 100) {
-        toast.error("Tên sản phẩm không được vượt quá 100 ký tự.");
+        toast.error('Tên sản phẩm không được vượt quá 100 ký tự.');
         setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
         setEditFields((prev) => ({ ...prev, [field]: false }));
         return;
       }
     }
 
-    if (field === "description") {
+    if (field === 'description') {
       if (newValue.trim().length > 1000) {
-        toast.error("Mô tả sản phẩm không được vượt quá 1000 ký tự.");
+        toast.error('Mô tả sản phẩm không được vượt quá 1000 ký tự.');
         setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
         setEditFields((prev) => ({ ...prev, [field]: false }));
         return;
       }
     }
 
-    if (field === "price") {
+    if (field === 'price') {
       const numericPrice = parseFloat(newValue);
       if (isNaN(numericPrice) || numericPrice < 1000) {
-        toast.error("Giá thành phải là một số và ít nhất là 1,000.");
+        toast.error('Giá thành phải là một số và ít nhất là 1,000.');
         setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
         setEditFields((prev) => ({ ...prev, [field]: false }));
         return;
@@ -172,23 +172,23 @@ const BusinessProductModal = ({
       try {
         const apiField = fieldMapping[field] || field;
         let value = editedValues[field];
-        if (field === "price") {
+        if (field === 'price') {
           value = parseFloat(value) || 0;
         }
         const response = await fetch(
           `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ [apiField]: value }),
           }
         );
-        if (!response.ok) throw new Error("Cập nhật thất bại");
+        if (!response.ok) throw new Error('Cập nhật thất bại');
         const updatedProduct = await response.json();
 
         setSelectedProduct((prev) => ({
           ...prev,
-          [field]: field === "price" ? value.toString() : value,
+          [field]: field === 'price' ? value.toString() : value,
         }));
 
         if (products && setProducts) {
@@ -215,7 +215,7 @@ const BusinessProductModal = ({
 
     if (files.length === 0) return;
 
-    const toastId = toast.loading("Đang xử lý ảnh...");
+    const toastId = toast.loading('Đang xử lý ảnh...');
 
     try {
       const base64Images = await convertFilesToBase64(files);
@@ -223,22 +223,22 @@ const BusinessProductModal = ({
       setError(null);
       toast.update(toastId, {
         render: "Ảnh đã sẵn sàng! Nhấn 'Lưu ảnh' để xác nhận.",
-        type: "success",
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
     } catch (error) {
-      console.error("Error converting images to base64:", error);
-      setError("Không thể chuyển đổi ảnh. Vui lòng thử lại.");
+      console.error('Error converting images to base64:', error);
+      setError('Không thể chuyển đổi ảnh. Vui lòng thử lại.');
       toast.update(toastId, {
-        render: "Không thể xử lý ảnh. Vui lòng thử lại.",
-        type: "error",
+        render: 'Không thể xử lý ảnh. Vui lòng thử lại.',
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
     } finally {
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -246,7 +246,7 @@ const BusinessProductModal = ({
   const handleSaveImages = async () => {
     if (newImages.length > 0 && selectedProduct) {
       setLoading(true);
-      const toastId = toast.loading("Đang lưu ảnh...");
+      const toastId = toast.loading('Đang lưu ảnh...');
 
       try {
         const updatedThumbnails = [
@@ -257,13 +257,13 @@ const BusinessProductModal = ({
         const response = await fetch(
           `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_image: updatedThumbnails }),
           }
         );
 
-        if (!response.ok) throw new Error("Cập nhật ảnh thất bại");
+        if (!response.ok) throw new Error('Cập nhật ảnh thất bại');
 
         setSelectedProduct((prev) => ({
           ...prev,
@@ -283,19 +283,19 @@ const BusinessProductModal = ({
         setNewImages([]);
         setError(null);
         toast.update(toastId, {
-          render: "Lưu ảnh thành công!",
-          type: "success",
+          render: 'Lưu ảnh thành công!',
+          type: 'success',
           isLoading: false,
           autoClose: 3000,
         });
       } catch (err) {
-        console.error("Error saving images:", err);
+        console.error('Error saving images:', err);
         setError(
-          "Không thể lưu ảnh. Vui lòng kiểm tra kết nối hoặc liên hệ admin."
+          'Không thể lưu ảnh. Vui lòng kiểm tra kết nối hoặc liên hệ admin.'
         );
         toast.update(toastId, {
-          render: "Không thể lưu ảnh. Vui lòng thử lại.",
-          type: "error",
+          render: 'Không thể lưu ảnh. Vui lòng thử lại.',
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -307,7 +307,7 @@ const BusinessProductModal = ({
 
   const handleDeleteImage = (index) => {
     if (allThumbnails.length === 1) {
-      toast.warning("Sản phẩm phải có ít nhất một ảnh.");
+      toast.warning('Sản phẩm phải có ít nhất một ảnh.');
       return;
     }
 
@@ -321,7 +321,7 @@ const BusinessProductModal = ({
 
     setIsDeleteModalOpen(false);
     setLoading(true);
-    const toastId = toast.loading("Đang xóa ảnh...");
+    const toastId = toast.loading('Đang xóa ảnh...');
 
     try {
       const updatedThumbnails = allThumbnails.filter((_, i) => i !== index);
@@ -329,13 +329,13 @@ const BusinessProductModal = ({
       const response = await fetch(
         `${import.meta.env.VITE_BE_URL}/api/product/${selectedProduct.id}`,
         {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ product_image: updatedThumbnails }),
         }
       );
 
-      if (!response.ok) throw new Error("Failed to delete image");
+      if (!response.ok) throw new Error('Failed to delete image');
 
       const updatedNewImages = newImages.filter((img) =>
         updatedThumbnails.includes(img)
@@ -371,17 +371,17 @@ const BusinessProductModal = ({
 
       setError(null);
       toast.update(toastId, {
-        render: "Xóa ảnh thành công!",
-        type: "success",
+        render: 'Xóa ảnh thành công!',
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
     } catch (err) {
-      console.error("Error deleting image:", err);
-      setError("Không thể xóa ảnh. Vui lòng thử lại.");
+      console.error('Error deleting image:', err);
+      setError('Không thể xóa ảnh. Vui lòng thử lại.');
       toast.update(toastId, {
-        render: "Không thể xóa ảnh. Vui lòng thử lại.",
-        type: "error",
+        render: 'Không thể xóa ảnh. Vui lòng thử lại.',
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -395,7 +395,7 @@ const BusinessProductModal = ({
     ...(selectedProduct?.thumbnails || []),
     ...(newImages || []),
   ];
-  const modalRoot = document.getElementById("modal-root") || document.body;
+  const modalRoot = document.getElementById('modal-root') || document.body;
 
   return ReactDOM.createPortal(
     <>
@@ -430,10 +430,10 @@ const BusinessProductModal = ({
                 <div className="business-images">
                   <div className="main-image">
                     <img
-                      src={allThumbnails[selectedImage] || "1.png"}
+                      src={allThumbnails[selectedImage] || '1.png'}
                       alt={`${selectedProduct.name} main ${selectedImage + 1}`}
                       className="main-img"
-                      onError={(e) => (e.target.src = "1.png")}
+                      onError={(e) => (e.target.src = '1.png')}
                     />
                   </div>
                   <div className="thumbnail-images">
@@ -442,19 +442,19 @@ const BusinessProductModal = ({
                         <div
                           key={idx}
                           className={`thumbnail ${
-                            selectedImage === idx ? "active" : ""
+                            selectedImage === idx ? 'active' : ''
                           }`}
-                          style={{ position: "relative", cursor: "pointer" }}
+                          style={{ position: 'relative', cursor: 'pointer' }}
                           onClick={() => setSelectedImage(idx)}
                         >
                           <img
-                            src={thumb || "1.png"}
+                            src={thumb || '1.png'}
                             alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                            onError={(e) => (e.target.src = "1.png")}
+                            onError={(e) => (e.target.src = '1.png')}
                             style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
                             }}
                           />
                           {enableEdit && (
@@ -484,7 +484,7 @@ const BusinessProductModal = ({
                             multiple
                             ref={fileInputRef}
                             onChange={handleAddImage}
-                            style={{ display: "none" }}
+                            style={{ display: 'none' }}
                           />
                         </label>
                         {newImages.length > 0 && (
@@ -492,17 +492,17 @@ const BusinessProductModal = ({
                             className="business-modal-save-image"
                             onClick={handleSaveImages}
                             style={{
-                              padding: "0.5rem 1rem",
-                              background: "#4CAF50",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "4px",
-                              marginTop: "0",
-                              cursor: loading ? "not-allowed" : "pointer",
+                              padding: '0.5rem 1rem',
+                              background: '#4CAF50',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              marginTop: '0',
+                              cursor: loading ? 'not-allowed' : 'pointer',
                             }}
                             disabled={loading}
                           >
-                            {loading ? "Đang lưu..." : "Lưu ảnh"}
+                            {loading ? 'Đang lưu...' : 'Lưu ảnh'}
                           </button>
                         )}
                       </>
@@ -515,23 +515,23 @@ const BusinessProductModal = ({
                     className="editable-field"
                     onMouseEnter={() =>
                       enableEdit &&
-                      !editFields["name"] &&
+                      !editFields['name'] &&
                       setEditFields((prev) => ({ ...prev, hoverName: true }))
                     }
                     onMouseLeave={() =>
                       enableEdit &&
-                      !editFields["name"] &&
+                      !editFields['name'] &&
                       setEditFields((prev) => ({ ...prev, hoverName: false }))
                     }
                   >
                     <h1 className="modal-product-title">
-                      {editFields["name"] ? (
+                      {editFields['name'] ? (
                         <input
                           type="text"
-                          value={editedValues["name"] || ""}
-                          onChange={(e) => handleChange(e, "name")}
-                          onBlur={() => handleBlur("name")}
-                          onKeyDown={(e) => handleKeyDown(e, "name")}
+                          value={editedValues['name'] || ''}
+                          onChange={(e) => handleChange(e, 'name')}
+                          onBlur={() => handleBlur('name')}
+                          onKeyDown={(e) => handleKeyDown(e, 'name')}
                           autoFocus
                           disabled={loading}
                           maxLength="100"
@@ -541,11 +541,11 @@ const BusinessProductModal = ({
                       )}
                     </h1>
                     {enableEdit &&
-                      !editFields["name"] &&
+                      !editFields['name'] &&
                       editFields.hoverName && (
                         <p
                           className="edit-btn"
-                          onClick={() => handleEdit("name")}
+                          onClick={() => handleEdit('name')}
                         >
                           <LuTextCursorInput />
                         </p>
@@ -555,24 +555,24 @@ const BusinessProductModal = ({
                     className="editable-field"
                     onMouseEnter={() =>
                       enableEdit &&
-                      !editFields["price"] &&
+                      !editFields['price'] &&
                       setEditFields((prev) => ({ ...prev, hoverPrice: true }))
                     }
                     onMouseLeave={() =>
                       enableEdit &&
-                      !editFields["price"] &&
+                      !editFields['price'] &&
                       setEditFields((prev) => ({ ...prev, hoverPrice: false }))
                     }
                   >
                     <div className="business-status">
                       <span className="modal-product-price">
-                        {editFields["price"] ? (
+                        {editFields['price'] ? (
                           <input
                             type="text"
-                            value={editedValues["price"] || ""}
-                            onChange={(e) => handleChange(e, "price")}
-                            onBlur={() => handleBlur("price")}
-                            onKeyDown={(e) => handleKeyDown(e, "price")}
+                            value={editedValues['price'] || ''}
+                            onChange={(e) => handleChange(e, 'price')}
+                            onBlur={() => handleBlur('price')}
+                            onKeyDown={(e) => handleKeyDown(e, 'price')}
                             autoFocus
                             disabled={loading}
                             placeholder="Enter price (e.g., 1500000)"
@@ -589,11 +589,11 @@ const BusinessProductModal = ({
                       </span>
                     </div>
                     {enableEdit &&
-                      !editFields["price"] &&
+                      !editFields['price'] &&
                       editFields.hoverPrice && (
                         <p
                           className="edit-btn"
-                          onClick={() => handleEdit("price")}
+                          onClick={() => handleEdit('price')}
                         >
                           <LuTextCursorInput />
                         </p>
@@ -606,14 +606,14 @@ const BusinessProductModal = ({
                       <span className="rating-count">
                         {showActiveOnly
                           ? feedbacks.filter(
-                              (f) => f.feedback_status === "active"
+                              (f) => f.feedback_status === 'active'
                             ).length
-                          : feedbacks.length}{" "}
+                          : feedbacks.length}{' '}
                         đánh giá
                       </span>
                       <label
                         className="toggle-container"
-                        style={{ marginLeft: "0.5rem" }}
+                        style={{ marginLeft: '0.5rem' }}
                       >
                         <input
                           type="checkbox"
@@ -623,7 +623,7 @@ const BusinessProductModal = ({
                         />
                         <span className="toggle-slider"></span>
                         <span className="status-text">
-                          {showActiveOnly ? "Chỉ active" : "Tất cả"}
+                          {showActiveOnly ? 'Chỉ active' : 'Tất cả'}
                         </span>
                       </label>
                     </div>
@@ -632,7 +632,7 @@ const BusinessProductModal = ({
                     className="editable-field"
                     onMouseEnter={() =>
                       enableEdit &&
-                      !editFields["description"] &&
+                      !editFields['description'] &&
                       setEditFields((prev) => ({
                         ...prev,
                         hoverDescription: true,
@@ -640,7 +640,7 @@ const BusinessProductModal = ({
                     }
                     onMouseLeave={() =>
                       enableEdit &&
-                      !editFields["description"] &&
+                      !editFields['description'] &&
                       setEditFields((prev) => ({
                         ...prev,
                         hoverDescription: false,
@@ -653,26 +653,26 @@ const BusinessProductModal = ({
                     >
                       {editFields["description"] ? (
                         <textarea
-                          value={editedValues["description"] || ""}
-                          onChange={(e) => handleChange(e, "description")}
-                          onBlur={() => handleBlur("description")}
-                          onKeyDown={(e) => handleKeyDown(e, "description")}
+                          value={editedValues['description'] || ''}
+                          onChange={(e) => handleChange(e, 'description')}
+                          onBlur={() => handleBlur('description')}
+                          onKeyDown={(e) => handleKeyDown(e, 'description')}
                           autoFocus
                           disabled={loading}
                           maxLength="1000"
                           rows="10"
-                          style={{ width: "100%", fontSize: "0.9rem" }}
+                          style={{ width: '100%', fontSize: '0.9rem' }}
                         />
                       ) : (
                         selectedProduct.description
                       )}
                     </p>
                     {enableEdit &&
-                      !editFields["description"] &&
+                      !editFields['description'] &&
                       editFields.hoverDescription && (
                         <p
                           className="edit-btn"
-                          onClick={() => handleEdit("description")}
+                          onClick={() => handleEdit('description')}
                         >
                           <LuTextCursorInput />
                         </p>
@@ -686,7 +686,7 @@ const BusinessProductModal = ({
                 businessId={businessId}
                 canDelete={true}
               />
-              {error && <p style={{ color: "red" }}>{error}</p>}
+              {error && <p style={{ color: 'red' }}>{error}</p>}
             </motion.div>
           </motion.div>
         )}
@@ -696,15 +696,15 @@ const BusinessProductModal = ({
         {isDeleteModalOpen && (
           <div
             style={{
-              position: "fixed", // Thêm 'position: "fixed"'
+              position: 'fixed', // Thêm 'position: "fixed"'
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               zIndex: 9999,
             }}
             onClick={() => setIsDeleteModalOpen(false)}
@@ -716,31 +716,31 @@ const BusinessProductModal = ({
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                backgroundColor: "#fff",
-                padding: "30px",
-                borderRadius: "10px",
-                maxWidth: "350px",
-                width: "90%",
-                textAlign: "center",
-                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+                backgroundColor: '#fff',
+                padding: '30px',
+                borderRadius: '10px',
+                maxWidth: '350px',
+                width: '90%',
+                textAlign: 'center',
+                boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
               }}
             >
               <h3>Xác nhận xóa</h3>
-              <p style={{ margin: "15px 0" }}>
+              <p style={{ margin: '15px 0' }}>
                 Bạn có chắc chắn muốn xóa ảnh này không?
               </p>
-              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   style={{
                     flex: 1,
-                    padding: "10px 20px",
-                    cursor: "pointer",
-                    background: "#6c757d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    fontWeight: "bold",
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    fontWeight: 'bold',
                   }}
                 >
                   Hủy
@@ -750,13 +750,13 @@ const BusinessProductModal = ({
                   onClick={executeDeleteImage}
                   style={{
                     flex: 1,
-                    padding: "10px 20px",
-                    cursor: "pointer",
-                    background: "#dc3545",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    fontWeight: "bold",
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    background: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    fontWeight: 'bold',
                   }}
                 >
                   Xóa
