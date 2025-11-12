@@ -25,15 +25,38 @@ const ProductRegistrationPage = () => {
 
   const handleAddImage = async (event) => {
     const files = Array.from(event.target.files);
+
+    // MỚI: Sử dụng toast.loading để có thể update
+    const toastId = toast.loading("Đang tải ảnh lên Cloudinary...");
+
     try {
-      toast.info("Đang tải ảnh lên Cloudinary...");
       const uploadedUrls = await uploadToCloudinary(files);
       setImages((prevImages) => [...prevImages, ...uploadedUrls]);
-      toast.success("Upload ảnh thành công!");
+
+      // MỚI: Cập nhật toast khi thành công
+      toast.update(toastId, {
+        render: "Upload ảnh thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (error) {
       console.error("Error uploading images:", error);
-      toast.error("Không thể tải ảnh lên Cloudinary.");
+
+      // MỚI: Cập nhật toast khi thất bại
+      toast.update(toastId, {
+        render: "Không thể tải ảnh lên Cloudinary.",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
+  };
+
+  // MỚI: Hàm riêng để xóa ảnh và thêm toast
+  const handleRemoveImage = (indexToRemove) => {
+    setImages(images.filter((_, i) => i !== indexToRemove));
+    toast.success("Đã xóa ảnh", { autoClose: 2000 });
   };
 
   const handleInputChange = (e) => {
@@ -49,26 +72,49 @@ const ProductRegistrationPage = () => {
     setLoading(true);
     setError(null);
 
+    // 1. Tên sản phẩm
     if (!formData.productName.trim()) {
       toast.error("Tên sản phẩm là bắt buộc.");
       setLoading(false);
       return;
     }
-    if (!formData.productPrice || formData.productPrice <= 0) {
-      toast.error("Giá thành phải là số dương.");
+    // MỚI: Validate độ dài tên
+    if (formData.productName.trim().length > 100) {
+      toast.error("Tên sản phẩm không được vượt quá 100 ký tự.");
       setLoading(false);
       return;
     }
+
+    // 2. Giá thành
+    // CẬP NHẬT: Validate giá >= 1000
+    if (!formData.productPrice || formData.productPrice < 1000) {
+      toast.error("Giá thành phải ít nhất là 1,000.");
+      setLoading(false);
+      return;
+    }
+
+    // 3. Số lượng
     if (!formData.productNumber || formData.productNumber <= 0) {
       toast.error("Số lượng phải là số dương.");
       setLoading(false);
       return;
     }
+
+    // MỚI: Validate mô tả
+    if (formData.productDescription.trim().length > 1000) {
+      toast.error("Mô tả sản phẩm không được vượt quá 1000 ký tự.");
+      setLoading(false);
+      return;
+    }
+
+    // 4. Chính sách
     if (!formData.policyConfirmation) {
       toast.error("Vui lòng xác nhận tuân thủ chính sách.");
       setLoading(false);
       return;
     }
+
+    // 5. Hình ảnh
     if (images.length === 0) {
       toast.error("Vui lòng thêm ít nhất một hình ảnh.");
       setLoading(false);
@@ -190,7 +236,10 @@ const ProductRegistrationPage = () => {
                   value={formData.productName}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
+                  maxLength="100"
                 />
+                {/* MỚI: Thêm dòng hiển thị giới hạn */}
+                <small className="form-field-hint">Tối đa 100 ký tự</small>
               </div>
               <div className="form-group">
                 <label htmlFor="product-description">Mô tả sản phẩm</label>
@@ -200,7 +249,10 @@ const ProductRegistrationPage = () => {
                   value={formData.productDescription}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
+                  maxLength="1000"
                 ></textarea>
+                {/* MỚI: Thêm dòng hiển thị giới hạn */}
+                <small className="form-field-hint">Tối đa 1000 ký tự</small>
               </div>
               <div className="form-group">
                 <label htmlFor="product-image">Hình ảnh</label>
@@ -215,16 +267,13 @@ const ProductRegistrationPage = () => {
                       <button
                         type="button"
                         className="remove-image-btn"
-                        onClick={() =>
-                          setImages(images.filter((_, i) => i !== index))
-                        }
+                        onClick={() => handleRemoveImage(index)} // CẬP NHẬT
                       >
                         ×
                       </button>
                     </div>
                   ))}
                   <label className="add-image-btn">
-                    +
                     <input
                       type="file"
                       accept="image/*"
@@ -246,6 +295,7 @@ const ProductRegistrationPage = () => {
                   value={formData.productPrice}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
+                  min="1000" // MỚI: Thêm min để trình duyệt hỗ trợ
                 />
               </div>
               <div className="form-group">
@@ -257,6 +307,7 @@ const ProductRegistrationPage = () => {
                   value={formData.productNumber}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
+                  min="1" // CẬP NHẬT: Thêm min
                 />
               </div>
             </div>

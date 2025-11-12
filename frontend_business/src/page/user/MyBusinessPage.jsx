@@ -391,6 +391,30 @@ const MyBusinessPage = () => {
       }
     }
 
+    if (field === "business_name" && newValue && newValue.trim().length > 100) {
+      toast.error("Tên doanh nghiệp không được vượt quá 100 ký tự.");
+      setEditedValues((prev) => ({
+        ...prev,
+        [field]: business[field] || "",
+      }));
+      setEditFields((prev) => ({ ...prev, [field]: false }));
+      return;
+    }
+
+    if (
+      field === "business_detail" &&
+      newValue &&
+      newValue.trim().length > 1000
+    ) {
+      toast.error("Mô tả doanh nghiệp không được vượt quá 1000 ký tự.");
+      setEditedValues((prev) => ({
+        ...prev,
+        [field]: business[field] || "",
+      }));
+      setEditFields((prev) => ({ ...prev, [field]: false }));
+      return;
+    }
+
     const isSame =
       field === "business_category_id"
         ? newValue === business.business_category_id?._id
@@ -670,7 +694,7 @@ const MyBusinessPage = () => {
                 Doanh nghiệp của bạn đang trong quá trình xét duyệt bởi quản trị
                 viên. <br />
                 Vui lòng đợi hoặc liên hệ qua email{" "}
-                <b>LocalAssistantHOLA@gmail.com</b> để được hỗ trợ.
+                <b>locallinkhola@gmail.com</b> để được hỗ trợ.
               </div>
             )}
             {business?.business_active === "inactive" && (
@@ -825,6 +849,7 @@ const MyBusinessPage = () => {
                         onBlur={() => handleBlur("business_name", business._id)}
                         onKeyDown={(e) => handleKeyDown(e, "business_name")}
                         autoFocus
+                        maxLength="100"
                       />
                     ) : (
                       business.business_name
@@ -858,10 +883,9 @@ const MyBusinessPage = () => {
                   </div>
                 </div>
                 <div className="editable-field">
-                  <p className="business-description">
+                  <p className="business-description" style={{ width: "100%" }}>
                     {editFields["business_detail"] ? (
-                      <input
-                        type="text"
+                      <textarea
                         value={editedValues["business_detail"] || ""}
                         onChange={(e) => handleChange(e, "business_detail")}
                         onBlur={() =>
@@ -869,6 +893,9 @@ const MyBusinessPage = () => {
                         }
                         onKeyDown={(e) => handleKeyDown(e, "business_detail")}
                         autoFocus
+                        maxLength="1000"
+                        rows="10"
+                        style={{ width: "100%", fontSize: "0.9rem" }}
                       />
                     ) : (
                       business.business_detail || "Không có mô tả"
