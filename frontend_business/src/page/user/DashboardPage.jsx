@@ -23,8 +23,10 @@ const formatDateForInput = (date) => {
 
 const formatChartDateLabel = (dateString) => {
   try {
+    // eslint-disable-next-line no-unused-vars
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}`;
+    // eslint-disable-next-line no-unused-vars
   } catch (e) {
     return '';
   }
@@ -203,9 +205,8 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
           ))}
 
           <li
-            className={`page-item ${
-              currentPage === totalPages ? 'disabled' : ''
-            }`}
+            className={`page-item ${currentPage === totalPages ? 'disabled' : ''
+              }`}
           >
             <a
               onClick={() => paginate(totalPages)}
@@ -800,7 +801,7 @@ const DashboardPage = () => {
       const x =
         chartPaddingX +
         (i / (lineChartData.length - 1 || 1)) *
-          (chartWidth - chartPaddingX * 2);
+        (chartWidth - chartPaddingX * 2);
 
       const y =
         chartHeight -
@@ -868,6 +869,23 @@ const DashboardPage = () => {
             >
               Thêm bằng Excel
             </button>
+            <a
+              href="/business_revenues.xlsx"
+              download="business_revenues.xlsx"
+              style={{ textDecoration: 'none' }}
+            >
+              <button
+                className="import-btn"
+                style={{
+                  marginLeft: '10px',
+                  backgroundColor: '#ffc107',
+                  color: '#000',
+                  fontWeight: '500'
+                }}
+              >
+                Tải file doanh thu mẫu
+              </button>
+            </a>
           </div>
         </div>
         <table className="data-table">
@@ -933,7 +951,7 @@ const DashboardPage = () => {
               Tăng View
             </button>
           </div>
-          <p> </p>
+          <p></p>
           <div className="bar-chart">
             {weeklyData.map((item, index) => (
               <div key={index} className="bar-group">

@@ -1,13 +1,16 @@
-// components/ProductFeedback.jsx
-import React, { useState, useEffect, useMemo } from "react"; // Added useMemo
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaTrash, FaPencilAlt } from "react-icons/fa"; // Added icons
+import { FaTrash, FaPencilAlt } from "react-icons/fa";
 import "../css/ProductFeedback.css";
-// Make sure styles from BusinessFeedback.css (like .edit-review-btn) are also available
+import { motion, AnimatePresence } from "framer-motion";
 
-// 1. Added canDelete prop
-const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
+const ProductFeedback = ({
+  productId,
+  isModal = false,
+  canDelete = false,
+  onFeedbackUpdated,
+}) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +28,9 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
   const [editedComment, setEditedComment] = useState("");
   const [editedRating, setEditedRating] = useState(5);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [feedbackToDeleteId, setFeedbackToDeleteId] = useState(null);
 
   const itemsPerPage = isModal ? 3 : 5;
 
@@ -148,14 +154,12 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
     }
   };
 
-  // Get paginated feedbacks
   const getPaginatedFeedbacks = () => {
     const sorted = getSortedFeedbacks();
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sorted.slice(startIndex, startIndex + itemsPerPage);
   };
 
-  // Handle feedback submission
   const handleSubmitFeedback = async () => {
     if (!newFeedback.trim()) return;
 
@@ -191,6 +195,9 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
         setNewFeedback("");
         setSelectedRating(5);
         fetchFeedbacks();
+        if (onFeedbackUpdated) {
+          onFeedbackUpdated();
+        }
         toast.success("Đánh giá sản phẩm đã được gửi thành công!");
       }
     } catch (err) {
@@ -201,7 +208,11 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
     }
   };
 
-  const executeDelete = async (feedbackId) => {
+  const executeDelete = async () => {
+    if (!feedbackToDeleteId) return;
+
+    setDeleteConfirmOpen(false);
+
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -209,8 +220,8 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
         return;
       }
 
-      await axios.delete(
-        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`,
+      const promise = axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackToDeleteId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -218,61 +229,33 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
         }
       );
 
-      toast.success("Đã xóa đánh giá thành công!");
-      fetchFeedbacks(); // Refresh the list
+      await toast.promise(promise, {
+        pending: "Đang xóa đánh giá...",
+        success: "Đã xóa đánh giá thành công!",
+        error: "Không thể xóa đánh giá. Vui lòng thử lại.",
+      });
+
+      fetchFeedbacks();
+      if (onFeedbackUpdated) {
+        onFeedbackUpdated();
+      }
     } catch (err) {
       console.error("Error deleting feedback:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        toast.error("Bạn không có quyền xóa đánh giá này.");
-      } else {
-        toast.error("Không thể xóa đánh giá. Vui lòng thử lại.");
-      }
+    } finally {
+      setFeedbackToDeleteId(null);
     }
   };
 
-  const ConfirmToast = ({ closeToast, onConfirm, message }) => (
-    <div>
-      <p>{message}</p>
-      <div className="confirm-toast-buttons">
-        <button
-          className="confirm-btn ok"
-          onClick={() => {
-            onConfirm();
-            closeToast();
-          }}
-        >
-          OK
-        </button>
-        <button className="confirm-btn cancel" onClick={closeToast}>
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
-
   const handleDeleteFeedback = (feedbackId) => {
-    toast.warn(
-      <ConfirmToast
-        message="Bạn có chắc chắn muốn xóa đánh giá này không?"
-        onConfirm={() => executeDelete(feedbackId)}
-      />,
-      {
-        position: "top-center",
-        autoClose: false, // Don't auto-close
-        closeOnClick: false, // Don't close on click
-        pauseOnHover: true,
-        draggable: false,
-        closeButton: false, // Hide the default 'x' button
-        theme: "colored", // Use the warning color theme
-      }
-    );
+    setFeedbackToDeleteId(feedbackId);
+    setDeleteConfirmOpen(true);
   };
 
   const handleEditClick = (feedback) => {
     setEditingFeedbackId(feedback._id);
     setEditedComment(feedback.feedback_comment);
     setEditedRating(feedback.feedback_rating || 5);
-    setHoveredRating(0); // Reset hover state for stars
+    setHoveredRating(0);
   };
 
   const handleCancelEdit = () => {
@@ -298,7 +281,6 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
         return;
       }
 
-      // Using PUT as requested
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/feedback/${editingFeedbackId}`,
         {
@@ -313,8 +295,11 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
       );
 
       toast.success("Đã cập nhật đánh giá!");
-      handleCancelEdit(); // Exit edit mode
-      fetchFeedbacks(); // Refresh the list
+      handleCancelEdit();
+      fetchFeedbacks();
+      if (onFeedbackUpdated) {
+        onFeedbackUpdated();
+      }
     } catch (err) {
       console.error("Error updating feedback:", err);
       toast.error("Không thể cập nhật đánh giá.");
@@ -322,7 +307,6 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
     }
   };
 
-  // Handle like/dislike
   const handleLike = async (feedbackId) => {
     try {
       await axios.patch(
@@ -733,6 +717,80 @@ const ProductFeedback = ({ productId, isModal = false, canDelete = false }) => {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {deleteConfirmOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setDeleteConfirmOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0" }}>
+                Bạn có chắc chắn muốn xóa đánh giá này không?
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={executeDelete} // Gọi hàm executeDelete của ProductFeedback
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

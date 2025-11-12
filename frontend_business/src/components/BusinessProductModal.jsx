@@ -578,7 +578,13 @@ const BusinessProductModal = ({
                             placeholder="Enter price (e.g., 1500000)"
                           />
                         ) : (
-                          selectedProduct.price
+                          parseFloat(selectedProduct.price).toLocaleString(
+                            "vi-VN",
+                            {
+                              style: "currency",
+                              currency: "VND",
+                            }
+                          )
                         )}
                       </span>
                     </div>
@@ -641,7 +647,10 @@ const BusinessProductModal = ({
                       }))
                     }
                   >
-                    <p className="business-description" style={{ width: "100%" }}>
+                    <p
+                      className="business-description"
+                      style={{ width: "100%" }}
+                    >
                       {editFields["description"] ? (
                         <textarea
                           value={editedValues["description"] || ""}

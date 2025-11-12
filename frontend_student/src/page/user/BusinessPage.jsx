@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../../components/Header";
@@ -40,131 +40,205 @@ const BusinessPage = () => {
 
   const itemsPerSlide = 3;
 
-  useEffect(() => {
-    const fetchBusinessData = async () => {
-      if (!id) {
-        setError("ID doanh nghiệp không hợp lệ");
-        setLoading(false);
-        return;
+  const fetchBusinessData = useCallback(async () => {
+    if (!id) {
+      setError("ID doanh nghiệp không hợp lệ");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const results = await Promise.allSettled([
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/business/${id}`),
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/product/business/${id}`),
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/feedback/business/${id}`),
+      ]);
+
+      const [businessResult, productsResult, businessFeedbackResult] = results;
+
+      if (businessResult.status === "fulfilled") {
+        const fetchedBusiness = businessResult.value.data;
+        setBusiness(fetchedBusiness);
+
+        const currentUserId = getCurrentUserId();
+        if (currentUserId && fetchedBusiness.owner_id === currentUserId) {
+          navigate("/my-business");
+          return;
+        }
+      } else {
+        throw new Error("Không thể tải thông tin doanh nghiệp");
       }
 
-      try {
-        setLoading(true);
-        setError(null);
+      let overallRating = 0;
+      let totalReviews = 0;
+      if (businessFeedbackResult.status === "fulfilled") {
+        const feedbackList = businessFeedbackResult.value.data?.data || [];
 
-        const results = await Promise.allSettled([
-          axios.get(`${import.meta.env.VITE_BE_URL}/api/business/${id}`),
-          axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/product/business/${id}`
-          ),
-          axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/feedback/business/${id}`
-          ),
-        ]);
+        // Lọc chỉ feedback active
+        const activeFeedbacks = feedbackList.filter(
+          (f) => f.feedback_status !== "inactive"
+        );
 
-        const [businessResult, productsResult, businessFeedbackResult] =
-          results;
-
-        if (businessResult.status === "fulfilled") {
-          const fetchedBusiness = businessResult.value.data;
-          setBusiness(fetchedBusiness);
-
-          const currentUserId = getCurrentUserId();
-          if (currentUserId && fetchedBusiness.owner_id === currentUserId) {
-            navigate("/my-business");
-            return;
-          }
-        } else {
-          throw new Error("Không thể tải thông tin doanh nghiệp");
-        }
-
-        let overallRating = 0;
-        let totalReviews = 0;
-        if (businessFeedbackResult.status === "fulfilled") {
-          const feedbackList = businessFeedbackResult.value.data?.data || [];
-
-          // Lọc chỉ feedback active
-          const activeFeedbacks = feedbackList.filter(
-            (f) => f.feedback_status !== "inactive"
+        if (activeFeedbacks.length > 0) {
+          const totalStars = activeFeedbacks.reduce(
+            (sum, fb) => sum + (fb.feedback_rating || 0),
+            0
           );
-
-          if (activeFeedbacks.length > 0) {
-            const totalStars = activeFeedbacks.reduce(
-              (sum, fb) => sum + (fb.feedback_rating || 0),
-              0
-            );
-            overallRating = totalStars / activeFeedbacks.length;
-            totalReviews = activeFeedbacks.length;
-          }
-        } else {
-          console.warn(
-            "Không thể tải feedback doanh nghiệp:",
-            businessFeedbackResult.reason
-          );
+          overallRating = totalStars / activeFeedbacks.length;
+          totalReviews = activeFeedbacks.length;
         }
+      } else {
+        console.warn(
+          "Không thể tải feedback doanh nghiệp:",
+          businessFeedbackResult.reason
+        );
+      }
 
-        setBusiness((prev) => ({
-          ...prev,
-          business_rating: overallRating,
-          business_total_vote: totalReviews,
-        }));
+      setBusiness((prev) => ({
+        ...prev,
+        business_rating: overallRating,
+        business_total_vote: totalReviews,
+      }));
 
-        if (productsResult.status === "fulfilled") {
-          const fetchedProducts = productsResult.value.data?.products || [];
+      if (productsResult.status === "fulfilled") {
+        const fetchedProducts = productsResult.value.data?.products || [];
 
-          const productWithRatings = await Promise.all(
-            fetchedProducts.map(async (product) => {
-              try {
-                const res = await axios.get(
-                  `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
-                    product._id
-                  }`
-                );
-                const feedbackList = res.data.data || [];
+        const productWithRatings = await Promise.all(
+          fetchedProducts.map(async (product) => {
+            try {
+              const res = await axios.get(
+                `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
+                  product._id
+                }`
+              );
+              const feedbackList = res.data.data || [];
 
-                const activeFeedbacks = feedbackList.filter(
-                  (f) => f.feedback_status !== "inactive"
-                );
+              const activeFeedbacks = feedbackList.filter(
+                (f) => f.feedback_status !== "inactive"
+              );
 
-                if (activeFeedbacks.length === 0)
-                  return { ...product, averageRating: 0, totalReviews: 0 };
-
-                const totalStars = activeFeedbacks.reduce(
-                  (sum, fb) => sum + (fb.feedback_rating || 0),
-                  0
-                );
-                const avg = totalStars / activeFeedbacks.length;
-
-                return {
-                  ...product,
-                  averageRating: avg,
-                  totalReviews: activeFeedbacks.length,
-                };
-              } catch (err) {
-                console.warn(
-                  `Could not fetch feedback for ${product._id}`,
-                  err
-                );
+              if (activeFeedbacks.length === 0)
                 return { ...product, averageRating: 0, totalReviews: 0 };
-              }
-            })
-          );
 
-          setProducts(productWithRatings);
-        } else {
-          console.warn("Could not load products:", productsResult.reason);
-          setProducts([]);
-        }
-      } catch (err) {
-        console.error("Error fetching business data:", err);
-        setError(err.message || "Không thể tải dữ liệu doanh nghiệp");
-      } finally {
-        setLoading(false);
+              const totalStars = activeFeedbacks.reduce(
+                (sum, fb) => sum + (fb.feedback_rating || 0),
+                0
+              );
+              const avg = totalStars / activeFeedbacks.length;
+
+              return {
+                ...product,
+                averageRating: avg,
+                totalReviews: activeFeedbacks.length,
+              };
+            } catch (err) {
+              console.warn(`Could not fetch feedback for ${product._id}`, err);
+              return { ...product, averageRating: 0, totalReviews: 0 };
+            }
+          })
+        );
+
+        setProducts(productWithRatings);
+      } else {
+        console.warn("Could not load products:", productsResult.reason);
+        setProducts([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching business data:", err);
+      setError(err.message || "Không thể tải dữ liệu doanh nghiệp");
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate]);
 
-    fetchBusinessData();
+  const refreshBusinessFeedback = useCallback(async () => {
+    if (!id) return;
+    try {
+      const businessFeedbackResult = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/business/${id}`
+      );
+
+      let overallRating = 0;
+      let totalReviews = 0;
+
+      if (businessFeedbackResult.data && businessFeedbackResult.data.data) {
+        const feedbackList = businessFeedbackResult.data.data || []; // Sửa cả dòng này
+        const activeFeedbacks = feedbackList.filter(
+          (f) => f.feedback_status !== "inactive"
+        );
+
+        if (activeFeedbacks.length > 0) {
+          const totalStars = activeFeedbacks.reduce(
+            (sum, fb) => sum + (fb.feedback_rating || 0),
+            0
+          );
+          overallRating = totalStars / activeFeedbacks.length;
+          totalReviews = activeFeedbacks.length;
+        }
+      }
+      setBusiness((prev) => ({
+        ...prev,
+        business_rating: overallRating,
+        business_total_vote: totalReviews,
+      }));
+    } catch (err) {
+      console.warn("Không thể tải lại feedback doanh nghiệp:", err);
+    }
   }, [id]);
+
+  const refreshProductList = useCallback(async () => {
+    if (!id) return;
+    try {
+      const productsResult = await axios.get(
+        `${import.meta.env.VITE_BE_URL}/api/product/business/${id}`
+      );
+
+      if (productsResult.data && productsResult.data.products) {
+        const fetchedProducts = productsResult.data.products || [];
+
+        const productWithRatings = await Promise.all(
+          fetchedProducts.map(async (product) => {
+            try {
+              const res = await axios.get(
+                `${import.meta.env.VITE_BE_URL}/api/feedback/product/${
+                  product._id
+                }`
+              );
+              const feedbackList = res.data.data || [];
+              const activeFeedbacks = feedbackList.filter(
+                (f) => f.feedback_status !== "inactive"
+              );
+              if (activeFeedbacks.length === 0)
+                return { ...product, averageRating: 0, totalReviews: 0 };
+              const totalStars = activeFeedbacks.reduce(
+                (sum, fb) => sum + (fb.feedback_rating || 0),
+                0
+              );
+              const avg = totalStars / activeFeedbacks.length;
+              return {
+                ...product,
+                averageRating: avg,
+                totalReviews: activeFeedbacks.length,
+              };
+            } catch (err) {
+              console.warn(`Could not fetch feedback for ${product._id}`, err);
+              return { ...product, averageRating: 0, totalReviews: 0 };
+            }
+          })
+        );
+        setProducts(productWithRatings);
+      }
+    } catch (err) {
+      console.warn("Không thể tải lại danh sách sản phẩm:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchBusinessData();
+  }, [id, fetchBusinessData]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -425,7 +499,12 @@ const BusinessPage = () => {
                       <div className="product-info">
                         <h3 className="product-name">{product.product_name}</h3>
                         <div className="product-price">
-                          {product.product_price} VND
+                          {parseFloat(
+                            product.product_price || "0"
+                          ).toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          })}
                         </div>
                         <div className="product-rating">
                           <div className="stars">
@@ -472,7 +551,11 @@ const BusinessPage = () => {
       )}
 
       {/* Feedback Section - Use BusinessFeedback component */}
-      <BusinessFeedback businessId={id} canDelete={true} />
+      <BusinessFeedback
+        businessId={id}
+        canDelete={true}
+        onFeedbackUpdated={refreshBusinessFeedback}
+      />
 
       <ProductDetailModal
         showModal={showModal}
@@ -481,6 +564,7 @@ const BusinessPage = () => {
         setSelectedProduct={setSelectedProduct}
         businessId={id}
         renderStars={renderStars}
+        onProductFeedbackUpdated={refreshProductList}
       />
 
       <ImageZoomModal

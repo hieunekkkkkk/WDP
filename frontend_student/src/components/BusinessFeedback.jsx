@@ -3,9 +3,14 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "../css/BusinessFeedback.css";
 import { FaPencilAlt, FaTrash } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
 // 1. Added canDelete prop with a default value
-const BusinessFeedback = ({ businessId, canDelete = false }) => {
+const BusinessFeedback = ({
+  businessId,
+  canDelete = false,
+  onFeedbackUpdated,
+}) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,6 +26,8 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
   const [editedComment, setEditedComment] = useState("");
   const [editedRating, setEditedRating] = useState(5);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [feedbackToDeleteId, setFeedbackToDeleteId] = useState(null);
 
   const itemsPerPage = 5;
 
@@ -144,14 +151,12 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  // Get paginated feedbacks
   const getPaginatedFeedbacks = () => {
     const sorted = getSortedFeedbacks();
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sorted.slice(startIndex, startIndex + itemsPerPage);
   };
 
-  // Handle feedback submission
   const handleSubmitFeedback = async () => {
     if (!newFeedback.trim()) {
       toast.error("Vui lòng nhập nội dung đánh giá");
@@ -161,14 +166,12 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
     try {
       setIsSubmitting(true);
 
-      // Get current user ID from token
       const token = localStorage.getItem("accessToken");
       if (!token) {
         toast.error("Vui lòng đăng nhập để gửi đánh giá");
         return;
       }
 
-      // Decode token to get user ID
       const payload = JSON.parse(atob(token.split(".")[1]));
       const userId = payload.sub || payload.id;
 
@@ -179,23 +182,20 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
           business_id: businessId,
           feedback_type: "business",
           feedback_comment: newFeedback.trim(),
-          feedback_rating: selectedRating, // Include rating
+          feedback_rating: selectedRating,
           feedback_like: 0,
           feedback_dislike: 0,
         }
-        // Assuming POST also needs auth header if DELETE does
-        // {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //   },
-        // }
       );
 
       if (response.data.message === "Feedback created successfully") {
         setNewFeedback("");
         setSelectedRating(5);
         setShowWriteReview(false);
-        fetchFeedbacks(); // Refresh feedbacks
+        fetchFeedbacks();
+        if (onFeedbackUpdated) {
+          onFeedbackUpdated();
+        }
         toast.success("Đánh giá đã được gửi thành công!");
       }
     } catch (err) {
@@ -206,27 +206,16 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
     }
   };
 
-  const ConfirmToast = ({ closeToast, onConfirm, message }) => (
-    <div>
-      <p>{message}</p>
-      <div className="confirm-toast-buttons">
-        <button
-          className="confirm-btn ok"
-          onClick={() => {
-            onConfirm();
-            closeToast();
-          }}
-        >
-          OK
-        </button>
-        <button className="confirm-btn cancel" onClick={closeToast}>
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
+  const confirmDeleteFeedback = (id) => {
+    setFeedbackToDeleteId(id);
+    setDeleteConfirmOpen(true);
+  };
 
-  const executeDelete = async (feedbackId) => {
+  const handleDeleteFeedback = async () => {
+    if (!feedbackToDeleteId) return;
+
+    setDeleteConfirmOpen(false);
+
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -234,8 +223,8 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
         return;
       }
 
-      await axios.delete(
-        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackId}`,
+      const promise = axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/feedback/${feedbackToDeleteId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -243,35 +232,21 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
         }
       );
 
-      toast.success("Đã xóa đánh giá thành công!");
-      fetchFeedbacks(); // Refresh the list
-    } catch (err) {
-      console.error("Error deleting feedback:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        toast.error("Bạn không có quyền xóa đánh giá này.");
-      } else {
-        toast.error("Không thể xóa đánh giá. Vui lòng thử lại.");
-      }
-    }
-  };
+      await toast.promise(promise, {
+        pending: "Đang xóa đánh giá...",
+        success: "Đã xóa đánh giá thành công!",
+        error: "Không thể xóa đánh giá. Vui lòng thử lại.",
+      });
 
-  // This function now just shows the confirmation toast
-  const handleDeleteFeedback = (feedbackId) => {
-    toast.warn(
-      <ConfirmToast
-        message="Bạn có chắc chắn muốn xóa đánh giá này không?"
-        onConfirm={() => executeDelete(feedbackId)}
-      />,
-      {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: false,
-        closeButton: false, // Hide the default 'x' button
-        theme: "colored",
+      fetchFeedbacks();
+      if (onFeedbackUpdated) {
+        onFeedbackUpdated();
       }
-    );
+    } catch (err) {
+      console.error("Lỗi khi xóa đánh giá:", err);
+    } finally {
+      setFeedbackToDeleteId(null); // Reset ID
+    }
   };
 
   const handleEditClick = (feedback) => {
@@ -319,8 +294,11 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
       );
 
       toast.success("Đã cập nhật đánh giá!");
-      handleCancelEdit(); // Exit edit mode
-      fetchFeedbacks(); // Refresh the list
+      handleCancelEdit();
+      fetchFeedbacks();
+      if (onFeedbackUpdated) {
+        onFeedbackUpdated();
+      }
     } catch (err) {
       console.error("Error updating feedback:", err);
       toast.error("Không thể cập nhật đánh giá.");
@@ -689,7 +667,7 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
                               <button
                                 className="delete-review-btn"
                                 onClick={() =>
-                                  handleDeleteFeedback(feedback._id)
+                                  confirmDeleteFeedback(feedback._id)
                                 }
                                 aria-label="Xóa đánh giá"
                                 title="Xóa đánh giá này"
@@ -819,6 +797,80 @@ const BusinessFeedback = ({ businessId, canDelete = false }) => {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {deleteConfirmOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setDeleteConfirmOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0" }}>
+                Bạn có chắc chắn muốn xóa đánh giá này không?
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleDeleteFeedback} // <-- Gọi hàm delete mới
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
