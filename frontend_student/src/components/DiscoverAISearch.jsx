@@ -48,7 +48,10 @@ function PersonalizedPage() {
       const data = await res.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        setBestPlaces(data.slice(0, 6));
+        const openBusinesses = data.filter(
+          (place) => place.business_status === true
+        );
+        setBestPlaces(openBusinesses.slice(0, 6));
       } else {
         setBestPlaces([]);
       }
@@ -96,10 +99,11 @@ function PersonalizedPage() {
                       <button
                         key={category._id}
                         onClick={() => setType(category.category_name)}
-                        className={`personalized-filter-button ${type === category.category_name
-                          ? "personalized-active"
-                          : ""
-                          }`}
+                        className={`personalized-filter-button ${
+                          type === category.category_name
+                            ? "personalized-active"
+                            : ""
+                        }`}
                       >
                         {category.category_name}
                       </button>
@@ -123,8 +127,9 @@ function PersonalizedPage() {
                       <button
                         key={option}
                         onClick={() => setBudget(option)}
-                        className={`personalized-filter-button ${budget === option ? "personalized-active" : ""
-                          }`}
+                        className={`personalized-filter-button ${
+                          budget === option ? "personalized-active" : ""
+                        }`}
                       >
                         {option}
                       </button>
@@ -155,8 +160,9 @@ function PersonalizedPage() {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span
                         key={star}
-                        className={`personalized-star-rating ${star <= rating ? "personalized-active" : ""
-                          }`}
+                        className={`personalized-star-rating ${
+                          star <= rating ? "personalized-active" : ""
+                        }`}
                         onClick={() => setRating(star)}
                       >
                         ★
@@ -228,8 +234,9 @@ function PersonalizedPage() {
                       </p>
                       <div className="discover-place-meta">
                         <span
-                          className={`discover-status ${place.business_status ? "open" : "closed"
-                            }`}
+                          className={`discover-status ${
+                            place.business_status ? "open" : "closed"
+                          }`}
                         >
                           {place.business_status
                             ? "Đang mở cửa"
