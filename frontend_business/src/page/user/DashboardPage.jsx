@@ -61,13 +61,19 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
       return;
     }
 
+    const amount = Number(formData.revenue_amount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error('Doanh thu không thể là số âm.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await axios.post(
         `${BACKEND_URL}/api/business/${businessId}/business_revenue`,
         {
           ...formData,
-          revenue_amount: Number(formData.revenue_amount),
+          revenue_amount: amount,
         }
       );
       toast.success('Thêm doanh thu thành công!');
@@ -212,14 +218,19 @@ const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
       return;
     }
 
+    const amount = Number(formData.revenue_amount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error('Doanh thu không thể là số âm.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Dùng API PUT /:id/business_revenue (số ít)
       await axios.put(
         `${BACKEND_URL}/api/business/${revenueId}/business_revenue`,
         {
           ...formData,
-          revenue_amount: Number(formData.revenue_amount),
+          revenue_amount: amount,
         }
       );
       toast.success('Cập nhật doanh thu thành công!');

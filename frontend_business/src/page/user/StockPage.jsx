@@ -45,12 +45,17 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
       toast.error('Số lượng tồn kho không thể âm.');
       return;
     }
+    const price = parseFloat(formData.product_price);
+    if (!isNaN(price) && price < 1000) {
+      toast.error('Giá sản phẩm phải lớn hơn hoặc bằng 1.000.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
       await axios.put(`${BACKEND_URL}/api/product/${product._id}`, {
         product_name: formData.product_name,
-        product_price: formData.product_price,
+        product_price: price,
         product_number: stockAmount,
       });
 
