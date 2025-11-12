@@ -131,7 +131,43 @@ const BusinessProductModal = ({
   };
 
   const handleBlur = async (field) => {
-    if (editedValues[field] !== selectedProduct[field]) {
+    const newValue = editedValues[field];
+    const oldValue = selectedProduct[field];
+
+    if (field === "name") {
+      if (!newValue || !newValue.trim()) {
+        toast.error("Tên sản phẩm không được để trống.");
+        setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
+        setEditFields((prev) => ({ ...prev, [field]: false }));
+        return;
+      }
+      if (newValue.trim().length > 100) {
+        toast.error("Tên sản phẩm không được vượt quá 100 ký tự.");
+        setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
+        setEditFields((prev) => ({ ...prev, [field]: false }));
+        return;
+      }
+    }
+
+    if (field === "description") {
+      if (newValue.trim().length > 1000) {
+        toast.error("Mô tả sản phẩm không được vượt quá 1000 ký tự.");
+        setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
+        setEditFields((prev) => ({ ...prev, [field]: false }));
+        return;
+      }
+    }
+
+    if (field === "price") {
+      const numericPrice = parseFloat(newValue);
+      if (isNaN(numericPrice) || numericPrice < 1000) {
+        toast.error("Giá thành phải là một số và ít nhất là 1,000.");
+        setEditedValues((prev) => ({ ...prev, [field]: oldValue }));
+        setEditFields((prev) => ({ ...prev, [field]: false }));
+        return;
+      }
+    }
+    if (newValue !== oldValue) {
       setLoading(true);
       try {
         const apiField = fieldMapping[field] || field;
@@ -498,6 +534,7 @@ const BusinessProductModal = ({
                           onKeyDown={(e) => handleKeyDown(e, "name")}
                           autoFocus
                           disabled={loading}
+                          maxLength="100"
                         />
                       ) : (
                         selectedProduct.name
@@ -604,7 +641,7 @@ const BusinessProductModal = ({
                       }))
                     }
                   >
-                    <p className="business-description">
+                    <p className="business-description" style={{ width: "100%" }}>
                       {editFields["description"] ? (
                         <textarea
                           value={editedValues["description"] || ""}
@@ -613,6 +650,9 @@ const BusinessProductModal = ({
                           onKeyDown={(e) => handleKeyDown(e, "description")}
                           autoFocus
                           disabled={loading}
+                          maxLength="1000"
+                          rows="10"
+                          style={{ width: "100%", fontSize: "0.9rem" }}
                         />
                       ) : (
                         selectedProduct.description

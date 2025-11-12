@@ -59,11 +59,29 @@ const BusinessRegistrationPage = () => {
 
   const handleAddImage = async (event) => {
     const files = Array.from(event.target.files);
+
+    if (files.length === 0) return;
+
+    const toastId = toast.loading("Đang tải ảnh lên...");
+
     try {
       const uploadedUrls = await uploadToCloudinary(files);
       setImages((prev) => [...prev, ...uploadedUrls]);
+
+      toast.update(toastId, {
+        render: "Tải ảnh thành công!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } catch (err) {
-      toast.error("Không thể tải ảnh lên Cloudinary");
+      console.error("Upload error:", err);
+      toast.update(toastId, {
+        render: "Không thể tải ảnh lên Cloudinary.",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
@@ -75,6 +93,7 @@ const BusinessRegistrationPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 1. Tên doanh nghiệp (bắt buộc)
     if (!formData.businessName || !formData.businessName.trim()) {
       toast.error(
         <div>
@@ -84,6 +103,17 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
+    // MỚI: Tên doanh nghiệp (max 100)
+    if (formData.businessName.trim().length > 100) {
+      toast.error(
+        <div>
+          <b>Tên doanh nghiệp</b> không được vượt quá 100 ký tự.
+        </div>
+      );
+      return;
+    }
+
+    // 2. Loại hình (bắt buộc)
     if (!formData.businessType || !formData.businessType.trim()) {
       toast.error(
         <div>
@@ -93,6 +123,7 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
+    // 3. Địa chỉ (bắt buộc)
     if (!formData.businessAddress || !formData.businessAddress.trim()) {
       toast.error(
         <div>
@@ -102,15 +133,21 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
-    if (!selectedCoords.latitude || !selectedCoords.longitude) {
+    // 4. Tọa độ (bắt buộc) - Sửa lỗi check null
+    if (
+      !selectedCoords ||
+      !selectedCoords.latitude ||
+      !selectedCoords.longitude
+    ) {
       toast.error(
         <div>
-          Kinh độ/vĩ độ<b></b> là bắt buộc và phải có nội dung.
+          Kinh độ/vĩ độ<b></b> là bắt buộc. Vui lòng chọn trên bản đồ.
         </div>
       );
       return;
     }
 
+    // 5. Số điện thoại (bắt buộc)
     if (!formData.businessPhone || !formData.businessPhone.trim()) {
       toast.error(
         <div>
@@ -120,6 +157,29 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
+    // MỚI: Số điện thoại (format)
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(formData.businessPhone.trim())) {
+      toast.error(
+        <div>
+          <b>Số điện thoại doanh nghiệp</b> không hợp lệ.
+          <br />
+          Phải bắt đầu bằng số 0 và có đúng 10 chữ số.
+        </div>
+      );
+      return;
+    }
+
+    if (formData.businessDescription.trim().length > 1000) {
+      toast.error(
+        <div>
+          <b>Mô tả doanh nghiệp</b> không được vượt quá 1000 ký tự.
+        </div>
+      );
+      return;
+    }
+
+    // 6. Giờ mở cửa (bắt buộc)
     if (!formData.operatingHoursFrom || !formData.operatingHoursFrom.trim()) {
       toast.error(
         <div>
@@ -129,6 +189,7 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
+    // 7. Giờ đóng cửa (bắt buộc)
     if (!formData.operatingHoursTo || !formData.operatingHoursTo.trim()) {
       toast.error(
         <div>
@@ -138,6 +199,7 @@ const BusinessRegistrationPage = () => {
       return;
     }
 
+    // 8. Hình ảnh (bắt buộc)
     if (!images || images.length === 0) {
       toast.error(
         <div>
@@ -294,7 +356,10 @@ const BusinessRegistrationPage = () => {
                     placeholder="Nhập tên doanh nghiệp..."
                     value={formData.businessName}
                     onChange={handleInputChange}
+                    maxLength="100"
                   />
+                  {/* MỚI: Thêm dòng hiển thị giới hạn */}
+                  <small className="form-field-hint">Tối đa 100 ký tự</small>
                 </div>
                 <div className="business-register-form-group">
                   <label htmlFor="business-address">
@@ -319,7 +384,10 @@ const BusinessRegistrationPage = () => {
                     value={formData.businessDescription}
                     onChange={handleInputChange}
                     rows="7"
+                    maxLength="1000" // Sửa lại từ 500 ở code trước thành 1000
                   />
+                  {/* MỚI: Thêm dòng hiển thị giới hạn */}
+                  <small className="form-field-hint">Tối đa 1000 ký tự</small>
                 </div>
                 <div className="business-register-form-group">
                   <label htmlFor="business-image">
@@ -335,9 +403,22 @@ const BusinessRegistrationPage = () => {
                           type="button"
                           className="remove-image-btn"
                           onClick={() => {
-                            const newImages = [...images];
-                            newImages.splice(index, 1);
-                            setImages(newImages);
+                            const toastId = toast.loading("Đang xóa ảnh..."); // Cập nhật từ code trước
+
+                            setTimeout(() => {
+                              // Cập nhật từ code trước
+                              const newImages = [...images];
+                              newImages.splice(index, 1);
+                              setImages(newImages);
+
+                              toast.update(toastId, {
+                                // Cập nhật từ code trước
+                                render: "Đã xóa ảnh thành công!",
+                                type: "success",
+                                isLoading: false,
+                                autoClose: 2000,
+                              });
+                            }, 500);
                           }}
                         >
                           ×
@@ -381,10 +462,15 @@ const BusinessRegistrationPage = () => {
                       name="businessType"
                       value={formData.businessType}
                       onChange={handleInputChange}
+                      style={{ textTransform: "capitalize" }} // Thêm từ code trước
                     >
                       <option value="">Lựa chọn...</option>
                       {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
+                        <option
+                          key={category._id}
+                          value={category._id}
+                          style={{ textTransform: "capitalize" }} // Thêm từ code trước
+                        >
                           {category.category_name}
                         </option>
                       ))}
@@ -432,7 +518,12 @@ const BusinessRegistrationPage = () => {
                     placeholder="Nhập số điện thoại..."
                     value={formData.businessPhone}
                     onChange={handleInputChange}
+                    maxLength="10"
                   />
+                  {/* MỚI: Thêm dòng hiển thị giới hạn */}
+                  <small className="form-field-hint">
+                    Đúng 10 chữ số, bắt đầu bằng 0
+                  </small>
                 </div>
                 <div className="business-register-form-group">
                   <label htmlFor="operating-hours">
