@@ -94,7 +94,7 @@ function PersonalizedPage() {
                   <div className="personalized-filter-options">
                     {categories.map((category) => (
                       <button
-                        key={category.category_id}
+                        key={category._id}
                         onClick={() => setType(category.category_name)}
                         className={`personalized-filter-button ${type === category.category_name
                           ? "personalized-active"
