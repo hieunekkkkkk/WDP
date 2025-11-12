@@ -3,18 +3,25 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import HeroSection from "../../components/HeroSection";
 import FilterSidebar from "../../components/FilterSidebar";
-import LoadingScreen from "../../components/LoadingScreen";
 import { AnimatePresence, motion } from "framer-motion";
 import "../../css/DiscoverByCategoryPage.css";
 import useGeolocation from "../../utils/useGeolocation";
 import { PuffLoader } from "react-spinners";
+import { LuUtensils } from "react-icons/lu";
+import { FiCoffee } from "react-icons/fi";
+import { IoGameControllerOutline } from "react-icons/io5";
+import { LuShoppingBag } from "react-icons/lu";
+import { FaDumbbell } from "react-icons/fa6";
+import { PiStudent } from "react-icons/pi";
+import { FaHouse } from "react-icons/fa6";
 
 function DiscoverByCategoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { fetchLocation } = useGeolocation();
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [categoryId, setCategoryId] = useState(
     location.state?.category_id || null
@@ -27,9 +34,12 @@ function DiscoverByCategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(categoryId);
+
   const [filters, setFilters] = useState({
     distance: 50,
-    searchByLocation: true, // <-- THÊM MỚI: Trạng thái cho công tắc
+    searchByLocation: true,
     price: {
       cheapest: false,
       mostExpensive: false,
@@ -44,14 +54,27 @@ function DiscoverByCategoryPage() {
     },
   });
 
-  // Navigate back if no category
   useEffect(() => {
     if (!categoryId) {
       navigate("/discover");
     }
+    setSelectedCategory(categoryId);
   }, [categoryId, navigate]);
 
-  // Fetch businesses by distance and category
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const catRes = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/category`
+        );
+        setCategories(catRes.data.categories || []);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     const fetchBusinesses = async () => {
       if (!categoryId) return;
@@ -69,11 +92,9 @@ function DiscoverByCategoryPage() {
 
         const { latitude, longitude } = storedLocation;
 
-        // --- THAY ĐỔI LOGIC KHOẢNG CÁCH ---
-        // Quyết định giá trị maxDistance dựa trên công tắc
         const maxDistanceValue = filters.searchByLocation
-          ? filters.distance * 1000 // Chuyển km sang mét
-          : 99999999; // Giá trị lớn để tìm kiếm tất cả
+          ? filters.distance * 1000
+          : 99999999;
 
         const response = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/business/near`,
@@ -81,7 +102,7 @@ function DiscoverByCategoryPage() {
             params: {
               latitude,
               longitude,
-              maxDistance: maxDistanceValue, // <-- SỬ DỤNG GIÁ TRỊ MỚI
+              maxDistance: maxDistanceValue,
               categoryId: categoryId,
             },
             timeout: 10000,
@@ -93,7 +114,6 @@ function DiscoverByCategoryPage() {
             (b) => b.business_active === "active"
           );
 
-          // 🔹 Fetch live ratings for each business
           const enriched = await Promise.all(
             filtered.map(async (b) => {
               let avgRating = 0;
@@ -126,7 +146,7 @@ function DiscoverByCategoryPage() {
                 price: b.business_stack_id?.stack_price
                   ? parseFloat(b.business_stack_id.stack_price)
                   : 50000,
-                rating: avgRating, // ✅ Use real rating
+                rating: avgRating,
                 status: b.business_status ? "Đang mở cửa" : "Đã đóng cửa",
               };
             })
@@ -150,49 +170,49 @@ function DiscoverByCategoryPage() {
     };
 
     fetchBusinesses();
-  }, [categoryId, filters.distance, filters.searchByLocation]); // <-- THÊM MỚI: dependency
+  }, [categoryId, filters.distance, filters.searchByLocation]);
 
-  // Local filtering for price and rating
   const filteredBusinesses = businesses.filter((b) => {
     const { price, rating, status } = b;
 
     const { cheapest, mostExpensive, opening, closed } = filters.price;
     const { lowest, highest, fourStars, fiveStars } = filters.rating;
 
-    // Lọc giá và trạng thái (đã được kết hợp trong state)
     let pricePass = true;
     const priceFiltersActive = cheapest || mostExpensive;
     if (priceFiltersActive) {
-      pricePass = (cheapest && price <= 50000) || (mostExpensive && price >= 50000);
+      pricePass =
+        (cheapest && price <= 50000) || (mostExpensive && price >= 50000);
     }
-    
+
     let statusPass = true;
     const statusFiltersActive = opening || closed;
     if (statusFiltersActive) {
-        statusPass = (opening && status === "Đang mở cửa") || (closed && status === "Đã đóng cửa");
+      statusPass =
+        (opening && status === "Đang mở cửa") ||
+        (closed && status === "Đã đóng cửa");
     }
 
-    // Lọc đánh giá
     let ratingPass = true;
     const ratingFiltersActive = lowest || highest || fourStars || fiveStars;
     if (ratingFiltersActive) {
-        ratingPass = (lowest && rating <= 2) ||
-                     (highest && rating >= 4) ||
-                     (fourStars && rating >= 4 && rating < 5) || // Điều chỉnh logic 4 sao
-                     (fiveStars && rating === 5);
+      ratingPass =
+        (lowest && rating <= 2) ||
+        (highest && rating >= 4) ||
+        (fourStars && rating >= 4 && rating < 5) ||
+        (fiveStars && rating === 5);
     }
-    
-    // Nếu không có filter nào được check, pass = true (hiển thị tất cả)
+
     if (!priceFiltersActive && !statusFiltersActive && !ratingFiltersActive) {
       return true;
     }
-    
-    // Logic: Nếu filter được kích hoạt, nó phải pass.
-    // Nếu filter không kích hoạt, nó cũng được xem là "pass" (không cản trở).
-    return (!priceFiltersActive || pricePass) && 
-           (!statusFiltersActive || statusPass) && 
-           (!ratingFiltersActive || ratingPass);
-});
+
+    return (
+      (!priceFiltersActive || pricePass) &&
+      (!statusFiltersActive || statusPass) &&
+      (!ratingFiltersActive || ratingPass)
+    );
+  });
 
   const handleFilterChange = (type, value) => {
     setFilters((prev) => ({
@@ -201,11 +221,116 @@ function DiscoverByCategoryPage() {
     }));
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() !== "") {
+      navigate(`/discover?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSeeMore = (categoryName, categoryId) => {
+    if (categoryId === selectedCategory) return;
+
+    const slug = categoryName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+    navigate(`/discover/${slug}`, {
+      state: {
+        category_id: categoryId,
+        category_name: categoryName,
+      },
+    });
+  };
+
+  const handleCategoryClick = (id) => {
+    if (id === "all") {
+      navigate("/discover");
+    }
+  };
+
+  const getCategoryIcon = (iconName, categoryName) => {
+    const iconMap = {
+      LuUtensils: <LuUtensils />,
+      FiCoffee: <FiCoffee />,
+      IoGameControllerOutline: <IoGameControllerOutline />,
+      LuShoppingBag: <LuShoppingBag />,
+      FaDumbbell: <FaDumbbell />,
+      PiStudent: <PiStudent />,
+      FaHouse: <FaHouse />,
+    };
+
+    return iconMap[iconName] || iconMap[categoryName] || <span>📍</span>;
+  };
+
   if (loading) {
     return (
       <>
         <Header />
-        <HeroSection />
+        <section className="hero-section-landing">
+          <div className="hero-background">
+            <img
+              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+              alt="Mountains"
+              className="hero-bg-image"
+            />
+            <div className="hero-overlay"></div>
+          </div>
+          <div className="hero-content">
+            <div className="hero-text">
+              <h1>Lựa chọn điểm đến lý tưởng</h1>
+              <p>Cùng cập nhật thông tin hữu ích</p>
+            </div>
+
+            <div className="search-form">
+              <form className="search-box" onSubmit={handleSearch}>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm địa điểm"
+                  className="hero-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button type="submit" className="search-btn">
+                  Tìm kiếm
+                </button>
+              </form>
+            </div>
+
+            <div className="category-pills">
+              <p>Đã đăng theo danh mục</p>
+              <div className="pills-container">
+                <button
+                  onClick={() => handleCategoryClick("all")}
+                  className={`category-pill ${
+                    selectedCategory === "all" ? "active" : ""
+                  }`}
+                >
+                  <span className="pill-icon">🏠</span>
+                  <span>Tất cả</span>
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category._id}
+                    onClick={() =>
+                      handleSeeMore(category.category_name, category._id)
+                    }
+                    className={`category-pill ${
+                      selectedCategory === category._id ? "active" : ""
+                    }`}
+                  >
+                    <span className="pill-icon">
+                      {getCategoryIcon(category.icon, category.category_name)}
+                    </span>
+                    <span>{category.category_name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
         <div className="discover-by-category-page">
           <FilterSidebar
             filters={filters}
@@ -251,7 +376,70 @@ function DiscoverByCategoryPage() {
   return (
     <>
       <Header />
-      <HeroSection />
+      <section className="hero-section-landing">
+        <div className="hero-background">
+          <img
+            src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+            alt="Mountains"
+            className="hero-bg-image"
+          />
+          <div className="hero-overlay"></div>
+        </div>
+        <div className="hero-content">
+          <div className="hero-text">
+            <h1>Lựa chọn điểm đến lý tưởng</h1>
+            <p>Cùng cập nhật thông tin hữu ích</p>
+          </div>
+
+          <div className="search-form">
+            <form className="search-box" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Tìm kiếm địa điểm"
+                className="hero-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="search-btn">
+                Tìm kiếm
+              </button>
+            </form>
+          </div>
+
+          <div className="category-pills">
+            <p>Đã đăng theo danh mục</p>
+            <div className="pills-container">
+              <button
+                onClick={() => handleCategoryClick("all")}
+                className={`category-pill ${
+                  selectedCategory === "all" ? "active" : ""
+                }`}
+              >
+                <span className="pill-icon">🏠</span>
+                <span>Tất cả</span>
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category._id}
+                  onClick={() =>
+                    handleSeeMore(category.category_name, category._id)
+                  }
+                  className={`category-pill ${
+                    selectedCategory === category._id ? "active" : ""
+                  }`}
+                >
+                  <span className="pill-icon">
+                    {getCategoryIcon(category.icon, category.category_name)}
+                  </span>
+                  <span style={{ textTransform: "capitalize" }}>
+                    {category.category_name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="discover-by-category-page">
         <FilterSidebar
