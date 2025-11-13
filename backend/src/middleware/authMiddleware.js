@@ -1,6 +1,6 @@
 // middleware/authMiddleware.js
 const { verifyClerkToken } = require('../utils/verifyClerkToken');
-const { getClerkClient } = require('./clerkClient');
+const { getUserWithRetry } = require('./clerkClient');
 const { getCachedMetadata, setCachedMetadata } = require('../utils/userMetadataCache');
 
 module.exports = async function authMiddleware(req, res, next) {
@@ -22,18 +22,9 @@ module.exports = async function authMiddleware(req, res, next) {
             return next();
         }
 
-        // Lấy thông tin user đầy đủ từ Clerk API với timeout
+        // Lấy thông tin user đầy đủ từ Clerk API với timeout và retry
         try {
-            const clerkClient = await getClerkClient();
-
-            // Thêm timeout cho việc lấy user data
-            const fullUser = await Promise.race([
-                clerkClient.users.getUser(userId),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Clerk API timeout')), 5000)
-                )
-            ]);
-
+            const fullUser = await getUserWithRetry(userId);
             const metadata = fullUser.publicMetadata || {};
 
             // Cache metadata

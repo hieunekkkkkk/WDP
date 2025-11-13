@@ -1,7 +1,7 @@
 // routes/auth.js
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
-const { getClerkClient } = require('../middleware/clerkClient');
+const { updateUserMetadataWithRetry } = require('../middleware/clerkClient');
 const { invalidateCache } = require('../utils/userMetadataCache');
 const router = express.Router();
 
@@ -17,20 +17,13 @@ router.post('/', authMiddleware, async (req, res) => {
         // Nếu FE gửi role và chưa có trong publicMetadata, cập nhật vào Clerk
         if (role && !decoded.publicMetadata?.role) {
             try {
-                const clerkClient = await getClerkClient();
-
-                // Thêm timeout cho việc update metadata
-                await Promise.race([
-                    clerkClient.users.updateUserMetadata(userId, {
-                        publicMetadata: {
-                            ...decoded.publicMetadata,
-                            role: role
-                        }
-                    }),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Update metadata timeout')), 5000)
-                    )
-                ]);
+                // Sử dụng function có retry và timeout
+                await updateUserMetadataWithRetry(userId, {
+                    publicMetadata: {
+                        ...decoded.publicMetadata,
+                        role: role
+                    }
+                });
 
                 userRole = role;
 
