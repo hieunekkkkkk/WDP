@@ -34,7 +34,7 @@ const ProductDetailModal = ({
         }`
       );
 
-      if (res.data?.success) {
+      if (res.data?.success && Array.isArray(res.data.data)) {
         const data = res.data.data;
 
         // Only active feedbacks
@@ -51,6 +51,9 @@ const ProductDetailModal = ({
         const avg =
           activeFeedbacks.length > 0 ? total / activeFeedbacks.length : 0;
         setAverageRating(avg);
+      } else {
+        setFeedbacks([]);
+        setAverageRating(0);
       }
     } catch (err) {
       console.error("Error fetching feedbacks:", err);
