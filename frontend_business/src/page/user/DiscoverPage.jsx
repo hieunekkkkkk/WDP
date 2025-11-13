@@ -1,65 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import LoadingScreen from '../../components/LoadingScreen';
-import DiscoverAISearch from '../../components/DiscoverAISearch';
-import '../../css/DiscoverPage.css';
-import { FaXmark } from 'react-icons/fa6';
-import { PuffLoader } from 'react-spinners';
-import { LuUtensils } from 'react-icons/lu';
-import { FiCoffee } from 'react-icons/fi';
-import { IoGameControllerOutline } from 'react-icons/io5';
-import { LuShoppingBag } from 'react-icons/lu';
-import { FaDumbbell } from 'react-icons/fa6';
-import { PiStudent } from 'react-icons/pi';
-import { FaHouse } from 'react-icons/fa6';
-
-const checkAndResetExpiredPriorities = async (businessList) => {
-  const tenSecondAgo = Date.now() - 60 * 30 * 1000;
-  const businessesToResetIds = [];
-
-  businessList.forEach((business) => {
-    const updatedAtTime = business.updated_at
-      ? new Date(business.updated_at).getTime()
-      : 0;
-    if (business.business_priority > 0 && updatedAtTime < tenSecondAgo) {
-      businessesToResetIds.push(business._id);
-    }
-  });
-
-  if (businessesToResetIds.length === 0) {
-    return businessList;
-  }
-
-  const resetPromises = businessesToResetIds.map((id) =>
-    axios
-      .post(`${import.meta.env.VITE_BE_URL}/api/business/${id}/reset-priority`)
-      .catch((error) => {
-        console.error(
-          `[DiscoverPage] Failed to reset priority for ${id}:`,
-          error.response?.data || error.message
-        );
-        return { id, success: false };
-      })
-  );
-
-  await Promise.allSettled(resetPromises);
-
-  const updatedBusinessList = businessList.map((business) => {
-    if (businessesToResetIds.includes(business._id)) {
-      return {
-        ...business,
-        business_priority: 0,
-        updated_at: new Date().toISOString(),
-      };
-    }
-    return business;
-  });
-
-  return updatedBusinessList;
-};
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingScreen from "../../components/LoadingScreen";
+import DiscoverAISearch from "../../components/DiscoverAISearch";
+import "../../css/DiscoverPage.css";
+import { FaXmark } from "react-icons/fa6";
+import { PuffLoader } from "react-spinners";
+import { LuUtensils } from "react-icons/lu";
+import { FiCoffee } from "react-icons/fi";
+import { IoGameControllerOutline } from "react-icons/io5";
+import { LuShoppingBag } from "react-icons/lu";
+import { FaDumbbell } from "react-icons/fa6";
+import { PiStudent } from "react-icons/pi";
+import { FaHouse } from "react-icons/fa6";
 
 function DiscoverPage() {
   const [categories, setCategories] = useState([]);
@@ -68,84 +23,15 @@ function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [loadingFilter, setLoadingFilter] = useState(false);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const query = searchParams.get('query') || '';
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const query = searchParams.get("query") || "";
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
     useState([]);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [catRes, busRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BE_URL}/api/category`),
-        axios.get(`${import.meta.env.VITE_BE_URL}/api/business?limit=100`),
-      ]);
-
-      let activeBusinesses = busRes.data.businesses.filter(
-        (b) => b.business_active === 'active'
-      );
-
-      let businessesWithRatings = await Promise.all(
-        activeBusinesses.map(async (b) => {
-          let avgRating = 0;
-          try {
-            const res = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
-            );
-            if (res.data?.success && Array.isArray(res.data.data)) {
-              const feedbacks = res.data.data;
-              const total = feedbacks.reduce(
-                (sum, fb) => sum + (fb.feedback_rating || 0),
-                0
-              );
-              avgRating = feedbacks.length > 0 ? total / feedbacks.length : 0;
-            }
-          } catch (err) {
-            console.error(
-              `Error fetching feedback for ${b.business_name}:`,
-              err
-            );
-          }
-          return {
-            ...b,
-            avg_rating: avgRating,
-            business_priority: b.business_priority ?? 0,
-            updated_at: b.updated_at ?? new Date(0),
-          };
-        })
-      );
-
-      businessesWithRatings = await checkAndResetExpiredPriorities(
-        businessesWithRatings
-      );
-
-      businessesWithRatings.sort((a, b) => {
-        if (b.business_priority !== a.business_priority) {
-          return b.business_priority - a.business_priority;
-        }
-        if (a.business_priority > 0) {
-          const dateA = new Date(a.updated_at).getTime();
-          const dateB = new Date(b.updated_at).getTime();
-          return dateB - dateA;
-        }
-        return (b.avg_rating || 0) - (a.avg_rating || 0);
-      });
-
-      setCategories(catRes.data.categories || []);
-      setBusinesses(businessesWithRatings);
-      setFilteredBusinessesByCategory(businessesWithRatings);
-    } catch (err) {
-      console.error('Fetch failed:', err);
-      setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (query) {
@@ -153,27 +39,49 @@ function DiscoverPage() {
     } else {
       fetchData();
     }
-  }, [query, fetchData]);
+  }, [query]);
 
   const fetchSearchResults = async (query) => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_BE_URL
+        `${import.meta.env.VITE_BE_URL
         }/api/business/search?query=${encodeURIComponent(query)}`
       );
 
       const filteredBusinesses = res.data.businesses.filter(
-        (b) => b.business_active === 'active'
+        (b) => b.business_active === "active"
       );
 
       setFilteredBusinesses(filteredBusinesses || []);
       setSearchQuery(query);
       setIsSearching(true);
     } catch (err) {
-      console.error('Search failed:', err);
-      setError('Không thể tìm kiếm dữ liệu. Vui lòng thử lại sau.');
+      console.error("Search failed:", err);
+      setError("Không thể tìm kiếm dữ liệu. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [catRes, busRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/category`),
+        axios.get(`${import.meta.env.VITE_BE_URL}/api/business?limit=20`),
+      ]);
+
+      const activeBusinesses = busRes.data.businesses.filter(
+        (b) => b.business_active === "active"
+      );
+
+      setCategories(catRes.data.categories || []);
+      setBusinesses(activeBusinesses);
+      setFilteredBusinessesByCategory(activeBusinesses);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
@@ -182,65 +90,22 @@ function DiscoverPage() {
   const fetchBusinessesByCategory = async (categoryId) => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/business?limit=100`
+        `${import.meta.env.VITE_BE_URL}/api/business`
       );
       let activeBusinesses = res.data.businesses.filter(
-        (b) => b.business_active === 'active'
+        (b) => b.business_active === "active"
       );
 
-      if (categoryId !== 'all') {
+      if (categoryId !== "all") {
         activeBusinesses = activeBusinesses.filter(
           (b) => b.business_category_id?._id === categoryId
         );
       }
 
-      let businessesWithRatings = await Promise.all(
-        activeBusinesses.map(async (b) => {
-          let avgRating = 0;
-          try {
-            const res = await axios.get(
-              `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
-            );
-            if (res.data?.success && Array.isArray(res.data.data)) {
-              const feedbacks = res.data.data;
-              const total = feedbacks.reduce(
-                (sum, fb) => sum + (fb.feedback_rating || 0),
-                0
-              );
-              avgRating = feedbacks.length > 0 ? total / feedbacks.length : 0;
-            }
-          } catch (err) {
-            `Error fetching feedback for ${b.business_name}:`, err;
-          }
-          return {
-            ...b,
-            avg_rating: avgRating,
-            business_priority: b.business_priority ?? 0,
-            updated_at: b.updated_at ?? new Date(0),
-          };
-        })
-      );
-
-      businessesWithRatings = await checkAndResetExpiredPriorities(
-        businessesWithRatings
-      );
-
-      businessesWithRatings.sort((a, b) => {
-        if (b.business_priority !== a.business_priority) {
-          return b.business_priority - a.business_priority;
-        }
-        if (a.business_priority > 0) {
-          const dateA = new Date(a.updated_at).getTime();
-          const dateB = new Date(b.updated_at).getTime();
-          return dateB - dateA;
-        }
-        return (b.avg_rating || 0) - (a.avg_rating || 0);
-      });
-
-      setFilteredBusinessesByCategory(businessesWithRatings);
+      setFilteredBusinessesByCategory(activeBusinesses);
     } catch (err) {
-      console.error('Fetch businesses failed:', err);
-      setError('Không thể tải dữ liệu doanh nghiệp. Vui lòng thử lại sau.');
+      console.error("Fetch businesses failed:", err);
+      setError("Không thể tải dữ liệu doanh nghiệp. Vui lòng thử lại sau.");
     } finally {
       setLoadingFilter(false);
     }
@@ -248,10 +113,10 @@ function DiscoverPage() {
 
   const handleSeeMore = (categoryName, categoryId) => {
     const slug = categoryName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/\s+/g, '-');
+      .replace(/\s+/g, "-");
 
     navigate(`/discover/${slug}`, {
       state: {
@@ -267,7 +132,7 @@ function DiscoverPage() {
 
   const handleCategoryClick = useCallback(
     (categoryId) => {
-      const newCategory = categoryId === selectedCategory ? 'all' : categoryId;
+      const newCategory = categoryId === selectedCategory ? "all" : categoryId;
 
       setSelectedCategory(newCategory);
       setLoadingFilter(true);
@@ -278,7 +143,7 @@ function DiscoverPage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim() !== '') {
+    if (searchQuery.trim() !== "") {
       navigate(`/discover?query=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -317,15 +182,16 @@ function DiscoverPage() {
     );
   }
 
+
   const PlaceCard = React.memo(({ business, onClick }) => {
-    const businessName = business.business_name || 'Tên không có';
-    const businessAddress = business.business_address || 'Địa chỉ không có';
+    const businessName = business.business_name || "Tên không có";
+    const businessAddress = business.business_address || "Địa chỉ không có";
 
     const handleClick = useCallback(() => {
       onClick(business._id);
     }, [business._id, onClick]);
 
-    let imageUrl = '/1.png';
+    let imageUrl = "/1.png";
     if (
       business.business_image &&
       Array.isArray(business.business_image) &&
@@ -342,7 +208,7 @@ function DiscoverPage() {
             alt={businessName}
             loading="lazy"
             onError={(e) => {
-              e.target.src = '/1.png';
+              e.target.src = "/1.png";
             }}
           />
           <div className="place-overlay">
@@ -396,10 +262,9 @@ function DiscoverPage() {
             <p>Đã đăng theo danh mục</p>
             <div className="pills-container">
               <button
-                onClick={() => handleCategoryClick('all')}
-                className={`category-pill ${
-                  selectedCategory === 'all' ? 'active' : ''
-                }`}
+                onClick={() => handleCategoryClick("all")}
+                className={`category-pill ${selectedCategory === "all" ? "active" : ""
+                  }`}
               >
                 <span className="pill-icon">🏠</span>
                 <span>Tất cả</span>
@@ -410,16 +275,13 @@ function DiscoverPage() {
                   onClick={() =>
                     handleSeeMore(category.category_name, category._id)
                   }
-                  className={`category-pill ${
-                    selectedCategory === category._id ? 'active' : ''
-                  }`}
+                  className={`category-pill ${selectedCategory === category._id ? "active" : ""
+                    }`}
                 >
                   <span className="pill-icon">
                     {getCategoryIcon(category.icon, category.category_name)}
                   </span>
-                  <span style={{ textTransform: 'capitalize' }}>
-                    {category.category_name}
-                  </span>
+                  <span>{category.category_name}</span>
                 </button>
               ))}
             </div>
@@ -435,19 +297,19 @@ function DiscoverPage() {
               {loadingFilter ? (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '20vh',
-                    flexDirection: 'column',
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "20vh",
+                    flexDirection: "column",
                   }}
                 >
                   <PuffLoader size={90} />
                   <p
                     style={{
-                      marginTop: '16px',
-                      fontSize: '18px',
-                      color: '#333',
+                      marginTop: "16px",
+                      fontSize: "18px",
+                      color: "#333",
                     }}
                   ></p>
                 </div>
@@ -476,10 +338,10 @@ function DiscoverPage() {
                   className="clear-search-icon"
                   title="Bỏ tìm kiếm"
                   onClick={() => {
-                    setSearchQuery('');
+                    setSearchQuery("");
                     setFilteredBusinesses([]);
                     setIsSearching(false);
-                    navigate('/discover', { replace: true });
+                    navigate("/discover", { replace: true });
                   }}
                 >
                   <FaXmark />
@@ -491,15 +353,15 @@ function DiscoverPage() {
                     key={business._id}
                     className="discover-place-card"
                     onClick={() => handleBusinessClick(business._id)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   >
                     <div className="discover-place-image">
                       <img
-                        src={business.business_image?.[0] || '/placeholder.jpg'}
+                        src={business.business_image?.[0] || "/placeholder.jpg"}
                         alt={business.business_name}
                         loading="lazy"
                         onError={(e) => {
-                          e.target.src = '/1.png';
+                          e.target.src = "/1.png";
                         }}
                       />
                     </div>
@@ -510,13 +372,12 @@ function DiscoverPage() {
                       </p>
                       <div className="discover-place-meta">
                         <span
-                          className={`discover-status ${
-                            business.business_status ? 'open' : 'closed'
-                          }`}
+                          className={`discover-status ${business.business_status ? "open" : "closed"
+                            }`}
                         >
                           {business.business_status
-                            ? 'Đang mở cửa'
-                            : 'Đã đóng cửa'}
+                            ? "Đang mở cửa"
+                            : "Đã đóng cửa"}
                         </span>
                         <span className="discover-rating">
                           ⭐ {(business.avg_rating || 0).toFixed(1)}
@@ -544,17 +405,17 @@ function DiscoverPage() {
                         key={business._id}
                         className="discover-place-card"
                         onClick={() => handleBusinessClick(business._id)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         <div className="discover-place-image">
                           <img
                             src={
-                              business.business_image?.[0] || '/placeholder.jpg'
+                              business.business_image?.[0] || "/placeholder.jpg"
                             }
                             alt={business.business_name}
                             loading="lazy"
                             onError={(e) => {
-                              e.target.src = '/1.png';
+                              e.target.src = "/1.png";
                             }}
                           />
                         </div>
@@ -565,13 +426,12 @@ function DiscoverPage() {
                           </p>
                           <div className="discover-place-meta">
                             <span
-                              className={`discover-status ${
-                                business.business_status ? 'open' : 'closed'
-                              }`}
+                              className={`discover-status ${business.business_status ? "open" : "closed"
+                                }`}
                             >
                               {business.business_status
-                                ? 'Đang mở cửa'
-                                : 'Đã đóng cửa'}
+                                ? "Đang mở cửa"
+                                : "Đã đóng cửa"}
                             </span>
                             <span className="discover-rating">
                               ⭐ {(business.avg_rating || 0).toFixed(1)}
@@ -593,11 +453,11 @@ function DiscoverPage() {
             ))}
 
           {!searchQuery && categories.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-              <h2 style={{ color: '#666', marginBottom: '20px' }}>
+            <div style={{ textAlign: "center", padding: "80px 20px" }}>
+              <h2 style={{ color: "#666", marginBottom: "20px" }}>
                 Chưa có danh mục nào
               </h2>
-              <p style={{ color: '#999' }}>
+              <p style={{ color: "#999" }}>
                 Vui lòng quay lại sau để khám phá các địa điểm thú vị!
               </p>
             </div>
