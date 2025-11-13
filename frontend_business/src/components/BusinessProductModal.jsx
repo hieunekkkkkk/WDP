@@ -342,7 +342,7 @@ const BusinessProductModal = ({
       );
 
       const updatedProductThumbnails = updatedThumbnails.filter(
-        (img) => !newImages.includes(img) || updatedNewImages.includes(img)
+        (img) => !newImages.includes(img)
       );
 
       const newSelectedImage =
@@ -579,10 +579,10 @@ const BusinessProductModal = ({
                           />
                         ) : (
                           parseFloat(selectedProduct.price).toLocaleString(
-                            "vi-VN",
+                            'vi-VN',
                             {
-                              style: "currency",
-                              currency: "VND",
+                              style: 'currency',
+                              currency: 'VND',
                             }
                           )
                         )}
@@ -649,9 +649,9 @@ const BusinessProductModal = ({
                   >
                     <p
                       className="business-description"
-                      style={{ width: "100%" }}
+                      style={{ width: '100%' }}
                     >
-                      {editFields["description"] ? (
+                      {editFields['description'] ? (
                         <textarea
                           value={editedValues['description'] || ''}
                           onChange={(e) => handleChange(e, 'description')}

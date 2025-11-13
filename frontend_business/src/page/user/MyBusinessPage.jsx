@@ -546,13 +546,9 @@ const MyBusinessPage = () => {
       );
       setBusiness((prev) => ({
         ...prev,
-        business_image: updatedImages.filter(
-          (_, i) => !newImages.includes(allImages[i])
-        ),
+        business_image: updatedImages.filter((img) => !newImages.includes(img)),
       }));
-      setNewImages((prev) =>
-        prev.filter((_, i) => allImages[index] !== prev[i])
-      );
+      setNewImages((prev) => prev.filter((img) => updatedImages.includes(img)));
       if (index === selectedImage) {
         setSelectedImage(0);
       } else if (index < selectedImage) {
@@ -1089,11 +1085,11 @@ const MyBusinessPage = () => {
                   <div className="product-info">
                     <h3 className="product-name">{product.product_name}</h3>
                     <div className="product-price">
-                      {parseFloat(product.product_price || "0").toLocaleString(
-                        "vi-VN",
+                      {parseFloat(product.product_price || '0').toLocaleString(
+                        'vi-VN',
                         {
-                          style: "currency",
-                          currency: "VND",
+                          style: 'currency',
+                          currency: 'VND',
                         }
                       )}
                     </div>
