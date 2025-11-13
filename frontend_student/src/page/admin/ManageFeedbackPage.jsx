@@ -312,7 +312,6 @@ function ManageFeedbackPage() {
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {console.log(fb)}
                       <td>{fb.user_fullName || "Loading"}</td>
                       <td>{fb.feedback_type.toUpperCase()}</td>
                       <td>

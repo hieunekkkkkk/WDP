@@ -233,7 +233,6 @@ function PersonalizedPage() {
                                         key={place._id}
                                         className="discover-place-card"
                                         onClick={() => {
-                                            console.log("Navigating to business:", place?.business_id);
                                             navigate(`/business/${place?.business_id}`);
                                         }}
                                         style={{ cursor: 'pointer' }}

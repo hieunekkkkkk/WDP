@@ -704,7 +704,7 @@ function ManageTransactionPage() {
         <div className="transaction-pagination">
           {pagination.currentPage > 1 && (
             <span onClick={() => handlePageChange(pagination.currentPage - 1)}>
-              &lt;
+              ‹
             </span>
           )}
 
@@ -722,7 +722,7 @@ function ManageTransactionPage() {
 
           {pagination.currentPage < pagination.totalPages && (
             <span onClick={() => handlePageChange(pagination.currentPage + 1)}>
-              &gt;
+              ›
             </span>
           )}
         </div>

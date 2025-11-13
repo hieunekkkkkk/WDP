@@ -298,7 +298,7 @@ function ManageUserPage() {
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            &lt;
+            ‹
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
             <button
@@ -314,7 +314,7 @@ function ManageUserPage() {
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
           >
-            &gt;
+            ›
           </button>
         </div>
       </div>

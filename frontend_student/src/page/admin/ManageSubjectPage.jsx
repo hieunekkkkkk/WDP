@@ -10,6 +10,8 @@ import {
   deleteSubject,
 } from "../../api/ManagerSubject.jsx";
 import "../../css/ManageSubjectPage.css";
+import { FaPen, FaEyeSlash, FaTrash } from "react-icons/fa";
+import { IoEyeSharp } from "react-icons/io5";
 
 Modal.setAppElement("#root");
 
@@ -156,14 +158,13 @@ function ManageSubjectPage() {
   return (
     <>
       <Header />
-      <HeroSectionAdmin message="Trang quản lý Subject" />
+      <HeroSectionAdmin message="Trang quản lý môn học" />
 
       <div className="subject-container">
         {/* Header với search và filter */}
         <div className="subject-header">
           <div className="subject-header-left">
-            <div className="search-wrapper">
-              <span className="search-icon">🔍</span>
+            <div className="manage-business-search-bar">
               <input
                 type="text"
                 className="subject-search"
@@ -183,7 +184,7 @@ function ManageSubjectPage() {
                 setCurrentPage(1);
               }}
             >
-              <option value="all">📂 Tất cả danh mục</option>
+              <option value="all">Tất cả danh mục</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -207,7 +208,7 @@ function ManageSubjectPage() {
           <>
             {/* Table */}
             <div className="table-wrapper">
-              <table className="subject-table">
+              <table className="manage-business-table">
                 <thead>
                   <tr>
                     <th className="col-title">Tiêu đề</th>
@@ -251,36 +252,38 @@ function ManageSubjectPage() {
                         <td className="col-author">{s.author || "—"}</td>
                         <td className="col-status">
                           <span
-                            className={`status-badge ${
-                              s.used ? "status-active" : "status-inactive"
+                            className={`manage-business-status ${
+                              s.used ? "active" : "inactive"
                             }`}
                           >
-                            <span className="status-dot"></span>
                             {s.used ? "Hoạt động" : "Ẩn"}
                           </span>
                         </td>
                         <td className="col-actions">
-                          <div className="action-buttons">
+                          <div
+                            className="action-buttons"
+                            style={{ margin: "1rem 0" }}
+                          >
                             <button
                               onClick={() => handleEdit(s)}
                               className="btn-action btn-edit"
                               title="Chỉnh sửa"
                             >
-                              ✏️
+                              <FaPen size={20} />
                             </button>
                             <button
                               onClick={() => handleToggleUsed(s)}
                               className="btn-action btn-toggle"
                               title={s.used ? "Ẩn subject" : "Hiện subject"}
                             >
-                              {s.used ? "👁️" : "🔒"}
+                              {s.used ? <FaEyeSlash size={24} /> : <IoEyeSharp size={24} />}
                             </button>
                             <button
                               onClick={() => handleDelete(s)}
                               className="btn-action btn-delete"
                               title="Xóa"
                             >
-                              🗑️
+                              <FaTrash size={20} />
                             </button>
                           </div>
                         </td>
@@ -320,7 +323,7 @@ function ManageSubjectPage() {
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  ‹ Trước
+                  ‹
                 </button>
                 <div className="page-numbers">
                   {Array.from({ length: totalPages }, (_, i) => {
@@ -356,13 +359,13 @@ function ManageSubjectPage() {
                   })}
                 </div>
                 <button
-                  className="pagination-btn"
+                  className="page-btn"
                   onClick={() =>
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
                 >
-                  Sau ›
+                  ›
                 </button>
               </div>
             )}
@@ -467,7 +470,7 @@ function ManageSubjectPage() {
               Hủy
             </button>
             <button type="submit" className="btn-submit">
-              {editingSubject ? "💾 Cập nhật" : "➕ Thêm mới"}
+              {editingSubject ? "Cập nhật" : "Thêm mới"}
             </button>
           </div>
         </form>
