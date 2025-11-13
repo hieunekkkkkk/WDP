@@ -295,7 +295,7 @@ function ManageAIBotPage() {
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            &lt;
+            ‹
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
             <button
@@ -313,7 +313,7 @@ function ManageAIBotPage() {
             }
             disabled={currentPage === totalPages}
           >
-            &gt;
+            ›
           </button>
         </div>
       </div>

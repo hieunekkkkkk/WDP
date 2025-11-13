@@ -357,7 +357,7 @@ function ManageBusinessPage() {
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            &lt;
+            ‹
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
             <button
@@ -375,7 +375,7 @@ function ManageBusinessPage() {
             }
             disabled={currentPage === totalPages || totalPages === 0}
           >
-            &gt;
+            ›
           </button>
         </div>
       </div>

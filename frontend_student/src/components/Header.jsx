@@ -268,7 +268,7 @@ const Header = () => {
           isActive("/admin/subjects") ? "active" : ""
         }`}
       >
-        Subject
+        Môn học
       </Link>
     </nav>
   );
