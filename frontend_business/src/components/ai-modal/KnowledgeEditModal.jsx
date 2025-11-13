@@ -9,19 +9,31 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     content: knowledge.content || "",
     tags: knowledge.tags ? knowledge.tags.join(", ") : "",
   });
+  // THÊM: State loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
+    // 1. Validate Tên (đã có)
     if (!form.title.trim()) {
       toast.error("Tên không được để trống");
       return;
     }
 
+    // 2. MỚI: Validate Nội dung
+    if (!form.content.trim()) {
+      toast.error("Nội dung không được để trống");
+      return;
+    }
+
+    setIsLoading(true); // Bắt đầu loading
+
     try {
-      await axios.put(
+      // 3. MỚI: Dùng toast.promise
+      const updatePromise = axios.put(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledge._id}`,
         {
           title: form.title,
@@ -54,7 +66,7 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     <div className="modal-overlay">
       <div className="modal-box">
         <div className="modal-header">
-          <h2>Sửa kiến thức</h2>
+          <h3 style={{ margin: 0 }}>Sửa kiến thức</h3>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
@@ -95,11 +107,20 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
         </div>
 
         <div className="form-buttons">
-          <button className="button save-button" onClick={handleSubmit}>
-            💾 Lưu thay đổi
+          <button
+            className="button save-button"
+            onClick={handleSubmit}
+            style={{ margin: 0 }}
+            disabled={isLoading} // Thêm disabled
+          >
+            {isLoading ? "Đang lưu..." : "Lưu thay đổi"}{" "}
           </button>
-          <button className="button cancel-button" onClick={onClose}>
-            ✗ Hủy
+          <button
+            className="button cancel-button"
+            onClick={onClose}
+            disabled={isLoading} // Thêm disabled
+          >
+            Hủy
           </button>
         </div>
       </div>

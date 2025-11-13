@@ -6,7 +6,7 @@ const KnowledgeDetailModal = ({ knowledge, onClose }) => {
     <div className="modal-overlay">
       <div className="modal-box">
         <div className="modal-header">
-          <h2>Chi tiết kiến thức</h2>
+          <h2 style={{margin: 0}}>Chi tiết kiến thức</h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
@@ -17,6 +17,7 @@ const KnowledgeDetailModal = ({ knowledge, onClose }) => {
             <b>Loại:</b> {knowledge.type === "link" ? "Liên kết" : "Văn bản"}
           </p>
         )}
+        <br></br>
         <p>
           <b>Nội dung:</b>
         </p>

@@ -47,8 +47,6 @@ function PersonalizedPage() {
 
       const data = await res.json();
 
-      console.log(data);
-
       if (Array.isArray(data) && data.length > 0) {
         const openBusinesses = data.filter(
           (place) => place.business_status === true
