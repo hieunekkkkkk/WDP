@@ -36,7 +36,7 @@
   z-index: -1;
 }
 
-.hero-content input{
+.hero-content input {
   margin: 0;
 }
 
@@ -198,6 +198,7 @@
 .landing-page-new {
   margin-top: 0;
   position: relative;
+  background-color: white;
 }
 
 .container {
@@ -222,7 +223,7 @@
 }
 
 .best-places-section h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -15px;
   left: 50%;
@@ -321,7 +322,7 @@
 }
 
 .services-section-new h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -15px;
   left: 50%;
@@ -648,7 +649,7 @@
 }
 
 .pricing-section h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -15px;
   left: 50%;
@@ -690,7 +691,7 @@
 }
 
 .pricing-card.featured::before {
-  content: 'PHỔ BIẾN';
+  content: "PHỔ BIẾN";
   position: absolute;
   top: -10px;
   left: 50%;
@@ -800,7 +801,7 @@
 }
 
 .feedback-section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -819,7 +820,7 @@
 }
 
 .feedback-section h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -10px;
   left: 50%;
@@ -1198,19 +1199,19 @@
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .revenue-card {
     padding: 1.5rem;
   }
-  
+
   .revenue-icon {
     font-size: 2.5rem;
   }
-  
+
   .revenue-card h3 {
     font-size: 1.3rem;
   }
-  
+
   .stat-value {
     font-size: 1.3rem;
   }

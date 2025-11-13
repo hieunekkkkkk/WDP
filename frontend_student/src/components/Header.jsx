@@ -346,7 +346,7 @@ const Header = () => {
         <div className="header-left">
           <Link to="/">
             <img
-              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696181/2021-FPTU-Long_iiws6l.jpg"
+              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1763055998/ChatGPT_Image_23_50_47_13_thg_11_2025_bqnixp.png"
               alt="LOCAL ASSISTANT"
               className="header-logo"
             />
