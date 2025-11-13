@@ -48,7 +48,6 @@ function PersonalizedPage() {
             });
 
             const data = await res.json();
-            console.log("AI recommendation response:", data);
 
             if (Array.isArray(data) && data.length > 0) {
                 setBestPlaces(data.slice(0, 6));

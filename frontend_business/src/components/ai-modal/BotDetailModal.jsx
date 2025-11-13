@@ -31,7 +31,7 @@ const BotDetailModal = ({ bot, onClose, onSave }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-box">
-        <h3>Chi tiết Bot</h3>
+        <h3 style={{textAlign: "center"}}>Chi tiết Bot</h3>
 
         <label>Tên bot:</label>
         <input
@@ -49,10 +49,10 @@ const BotDetailModal = ({ bot, onClose, onSave }) => {
 
         <div className="modal-actions">
           <button className="primary-btn" onClick={handleSave}>
-            💾 Lưu
+            Lưu
           </button>
           <button className="cancel-btn" onClick={onClose}>
-            ❌ Đóng
+            Đóng
           </button>
         </div>
       </div>
