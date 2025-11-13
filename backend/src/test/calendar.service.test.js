@@ -1,9 +1,28 @@
 // calendar.service.test.js
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const CalendarService = require("../services/calendar.service");
 const Calendar = require("../entity/module/calendar.model");
 
-// Dùng jest mock để tránh gọi DB thật
-jest.mock("../entity/module/calendar.model");
+let mongoServer;
+
+beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    const uri = mongoServer.getUri();
+    await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+});
+
+afterEach(async () => {
+    await Calendar.deleteMany({});
+});
+
+afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+});
 
 describe("CalendarService", () => {
     afterEach(() => {
@@ -13,6 +32,7 @@ describe("CalendarService", () => {
     describe("createTask()", () => {
         it(" Nên báo lỗi khi task dài hạn có task_day", async () => {
             const data = {
+                creator_id: new mongoose.Types.ObjectId(),
                 task_name: "Học lập trình",
                 start_time: new Date(),
                 end_time: new Date(),
@@ -28,6 +48,7 @@ describe("CalendarService", () => {
 
         it(" Nên báo lỗi khi task hàng ngày không có task_day", async () => {
             const data = {
+                creator_id: new mongoose.Types.ObjectId(),
                 task_name: "Tập thể dục",
                 start_time: new Date(),
                 end_time: new Date(),
@@ -42,47 +63,61 @@ describe("CalendarService", () => {
 
         it(" Nên tạo task thành công khi dữ liệu hợp lệ", async () => {
             const data = {
+                creator_id: new mongoose.Types.ObjectId(),
                 task_name: "Học Node.js",
                 start_time: new Date(),
-                end_time: new Date(),
+                end_time: new Date(Date.now() + 3600000),
                 task_type: "học tập",
                 task_mode: "hàng ngày",
-                task_day: "Monday",
+                task_day: "Thứ 2",
             };
-
-            const mockTask = { ...data, save: jest.fn().mockResolvedValue(data) };
-            Calendar.mockImplementation(() => mockTask);
 
             const result = await CalendarService.createTask(data);
             expect(result.task_name).toBe("Học Node.js");
-            expect(mockTask.save).toHaveBeenCalledTimes(1);
+            expect(result._id).toBeDefined();
         });
     });
 
     describe("updateTask()", () => {
         it(" Nên báo lỗi khi không tìm thấy task", async () => {
-            Calendar.findById.mockResolvedValue(null);
-            await expect(CalendarService.updateTask("abc123", {}))
+            const fakeId = new mongoose.Types.ObjectId();
+            await expect(CalendarService.updateTask(fakeId, {}))
                 .rejects
                 .toThrow("Task not found");
         });
 
         it(" Nên cập nhật task thành công khi hợp lệ", async () => {
-            const existingTask = { save: jest.fn().mockResolvedValue(true) };
-            Calendar.findById.mockResolvedValue(existingTask);
+            const task = await Calendar.create({
+                creator_id: new mongoose.Types.ObjectId(),
+                task_name: "Old task",
+                start_time: new Date(),
+                end_time: new Date(Date.now() + 3600000),
+                task_type: "công việc",
+                task_mode: "dài hạn"
+            });
 
             const data = { task_name: "Updated task" };
-            await CalendarService.updateTask("id", data);
+            const result = await CalendarService.updateTask(task._id, data);
 
-            expect(existingTask.save).toHaveBeenCalled();
+            expect(result.task_name).toBe("Updated task");
         });
     });
 
     describe("deleteTask()", () => {
         it(" Nên gọi findByIdAndDelete đúng tham số", async () => {
-            Calendar.findByIdAndDelete.mockResolvedValue(true);
-            await CalendarService.deleteTask("123");
-            expect(Calendar.findByIdAndDelete).toHaveBeenCalledWith("123");
+            const task = await Calendar.create({
+                creator_id: new mongoose.Types.ObjectId(),
+                task_name: "Delete me",
+                start_time: new Date(),
+                end_time: new Date(Date.now() + 3600000),
+                task_type: "công việc",
+                task_mode: "dài hạn"
+            });
+
+            await CalendarService.deleteTask(task._id);
+
+            const found = await Calendar.findById(task._id);
+            expect(found).toBeNull();
         });
     });
 });

@@ -146,17 +146,19 @@ describe('BusinessService', () => {
     expect(updated.business_priority).toBe(2);
   });
 
-test('resetBusinessPriority: đặt lại độ ưu tiên = 0', async () => {
-  const mockId = new mongoose.Types.ObjectId();
-  const business = { _id: mockId, business_priority: 5, save: jest.fn() };
+  test('resetBusinessPriority: đặt lại độ ưu tiên = 0', async () => {
+    const business = await Business.create({
+      business_name: 'Test priority',
+      business_location: {
+        type: 'Point',
+        coordinates: [106.6, 10.6],
+      },
+      business_priority: 5,
+    });
 
-  jest.spyOn(Business, 'findById').mockResolvedValue(business);
-
-  const updated = await businessService.resetBusinessPriority(mockId);
-
-  expect(business.save).toHaveBeenCalled();
-  expect(updated.business_priority).toBe(0);
-});
+    const updated = await businessService.resetBusinessPriority(business._id);
+    expect(updated.business_priority).toBe(0);
+  });
 
   test('searchBusinesses: tìm business theo tên', async () => {
     await Business.create({
