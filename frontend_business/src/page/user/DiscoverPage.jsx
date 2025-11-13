@@ -33,13 +33,7 @@ function DiscoverPage() {
   const [filteredBusinessesByCategory, setFilteredBusinessesByCategory] =
     useState([]);
 
-  useEffect(() => {
-    if (query) {
-      fetchSearchResults(query);
-    } else {
-      fetchData();
-    }
-  }, [query, fetchData]);
+
 
   const fetchSearchResults = async (query) => {
     try {
@@ -140,6 +134,14 @@ function DiscoverPage() {
       setLoadingFilter(false);
     }
   };
+
+  useEffect(() => {
+    if (query) {
+      fetchSearchResults(query);
+    } else {
+      fetchData();
+    }
+  }, [query, fetchData]);
 
   const handleSeeMore = (categoryName, categoryId) => {
     const slug = categoryName
