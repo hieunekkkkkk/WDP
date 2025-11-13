@@ -41,7 +41,7 @@ function DiscoverPage() {
     } else {
       fetchData();
     }
-  }, [query]);
+  }, [query, fetchData]);
 
   const fetchSearchResults = async (query) => {
     try {
@@ -66,7 +66,7 @@ function DiscoverPage() {
     }
   };
 
-  const checkAndResetPriority = async (businesses) => {
+  const checkAndResetPriority = useCallback(async (businesses) => {
     const now = Date.now();
     const THIRTY_MINUTES = 30 * 60 * 1000; // 30 phút
 
@@ -91,9 +91,9 @@ function DiscoverPage() {
         }
       });
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [catRes, busRes] = await Promise.all([
@@ -117,7 +117,7 @@ function DiscoverPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [checkAndResetPriority]);
 
   const fetchBusinessesByCategory = async (categoryId) => {
     try {
