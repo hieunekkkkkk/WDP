@@ -2,6 +2,7 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
 const { getClerkClient } = require('../middleware/clerkClient');
+const { invalidateCache } = require('../utils/userMetadataCache');
 const router = express.Router();
 
 router.post('/', authMiddleware, async (req, res) => {
@@ -11,23 +12,39 @@ router.post('/', authMiddleware, async (req, res) => {
         const userId = decoded.sub;
 
         // Lấy role hiện tại từ publicMetadata hoặc từ request body
-        let userRole = decoded.publicMetadata?.role || role || 'client';
+        let userRole = decoded.publicMetadata?.role || role;
 
         // Nếu FE gửi role và chưa có trong publicMetadata, cập nhật vào Clerk
         if (role && !decoded.publicMetadata?.role) {
             try {
                 const clerkClient = await getClerkClient();
-                await clerkClient.users.updateUserMetadata(userId, {
-                    publicMetadata: {
-                        ...decoded.publicMetadata,
-                        role: role
-                    }
-                });
+
+                // Thêm timeout cho việc update metadata
+                await Promise.race([
+                    clerkClient.users.updateUserMetadata(userId, {
+                        publicMetadata: {
+                            ...decoded.publicMetadata,
+                            role: role
+                        }
+                    }),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Update metadata timeout')), 5000)
+                    )
+                ]);
+
                 userRole = role;
+
+                // Invalidate cache sau khi update
+                invalidateCache(userId);
+
                 console.log(`✅ [Auth Route] Updated role for user ${userId}: ${role}`);
             } catch (clerkError) {
                 console.error('[Auth Route] ❌ Failed to update Clerk metadata:', clerkError.message);
                 // Vẫn tiếp tục xử lý, chỉ log lỗi
+                // Nếu update fail, vẫn dùng role từ FE
+                if (role) {
+                    userRole = role;
+                }
             }
         }
 
