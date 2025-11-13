@@ -72,9 +72,9 @@ const Sidebar = ({ darkMode, setDarkMode, open, setOpen }) => {
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <img
-              src="/localLink.png"
-              alt="Local Link Assistant"
-              className="logo-img"
+              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1763055998/ChatGPT_Image_23_50_47_13_thg_11_2025_bqnixp.png"
+              alt="LOCAL ASSISTANT"
+              className="header-logo"
             />
           </div>
 

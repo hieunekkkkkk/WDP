@@ -306,8 +306,8 @@ const Header = () => {
         <div className="header-left">
           <Link to="/">
             <img
-              src="/Logo_FPT_Education.png"
-              alt="FPT Education Logo"
+              src="https://res.cloudinary.com/diqpghsfm/image/upload/v1763055998/ChatGPT_Image_23_50_47_13_thg_11_2025_bqnixp.png"
+              alt="LOCAL ASSISTANT"
               className="header-logo"
             />
           </Link>
