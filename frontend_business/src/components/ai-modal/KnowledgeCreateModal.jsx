@@ -49,22 +49,30 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
 
       formData.append("created_by", user.id);
 
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      toast.success("Tạo kiến thức thành công!");
+      toast.success("✅ Tạo kiến thức thành công!");
 
       onSave();
       onClose();
     } catch (err) {
       console.error(
         "❌ Error creating knowledge:",
-        err.response?.data?.message
+        err.response?.data || err.message
       );
-      toast.error("Có lỗi khi tạo kiến thức");
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi tạo kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được lưu nhưng chưa được đánh index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 

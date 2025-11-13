@@ -33,12 +33,20 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
         }
       );
 
-      toast.success("Cập nhật kiến thức thành công!");
+      toast.success("✅ Cập nhật kiến thức thành công!");
       onSave();
       onClose();
     } catch (err) {
-      console.error(" Error updating knowledge:", err.response?.data || err);
-      toast.error("Có lỗi khi cập nhật kiến thức");
+      console.error("❌ Error updating knowledge:", err.response?.data || err.message);
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi cập nhật kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được cập nhật nhưng chưa được đánh index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 

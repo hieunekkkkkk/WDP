@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom"; // Impor
 import axios from "axios";
 import { useUser } from "@clerk/clerk-react"; // Import useUser
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { toast } from "react-toastify";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
 import KnowledgeCreateModal from "../ai-modal/KnowledgeCreateModal";
 import KnowledgeEditModal from "../../components/ai-modal/KnowledgeEditModal.jsx";
@@ -12,8 +13,8 @@ import "./style/KnowledgePage.css";
 const KnowledgePage = () => {
   const { botId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate(); 
-  const { user } = useUser(); 
+  const navigate = useNavigate();
+  const { user } = useUser();
 
   const isBusinessKnowledge = location.pathname.includes("business-dashboard");
   const [bot, setBot] = useState(null);
@@ -32,7 +33,7 @@ const KnowledgePage = () => {
   );
 
   const fetchBot = useCallback(async () => {
-    if (!user) return; 
+    if (!user) return;
 
     try {
       const res = await axios.get(
@@ -45,7 +46,7 @@ const KnowledgePage = () => {
         return;
       }
 
-      setBot(res.data); 
+      setBot(res.data);
     } catch (err) {
       console.error("Error fetching bot:", err);
       if (err.response && err.response.status === 500) {
@@ -79,9 +80,19 @@ const KnowledgePage = () => {
       await axios.delete(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${id}`
       );
+      toast.success("✅ Xóa kiến thức thành công!");
       fetchKnowledge(); // Gọi lại fetchKnowledge sau khi xóa thành công
     } catch (err) {
-      console.error("Error deleting knowledge:", err);
+      console.error("❌ Error deleting knowledge:", err.response?.data || err.message);
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi xóa kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được xóa nhưng không thể cập nhật index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 

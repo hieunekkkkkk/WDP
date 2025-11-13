@@ -13,7 +13,11 @@ class BotKnowledgeController {
       );
       res.status(201).json(knowledge);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error in createKnowledge controller:", error);
+      res.status(500).json({
+        message: error.message,
+        error: "Failed to create knowledge"
+      });
     }
   }
   // GET /botknowledge/:aibot_id
@@ -45,7 +49,11 @@ class BotKnowledgeController {
       );
       res.status(200).json(knowledge);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error in updateKnowledge controller:", error);
+      res.status(500).json({
+        message: error.message,
+        error: "Failed to update knowledge"
+      });
     }
   }
   // DELETE /botknowledge/:id
@@ -54,7 +62,11 @@ class BotKnowledgeController {
       await KnowledgeService.deleteKnowledge(req.params.id);
       res.status(200).json({ message: "Knowledge deleted successfully" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error in deleteKnowledge controller:", error);
+      res.status(500).json({
+        message: error.message,
+        error: "Failed to delete knowledge"
+      });
     }
   }
 }
