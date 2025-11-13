@@ -347,7 +347,7 @@ const Header = () => {
           <Link to="/">
             <img
               src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696181/2021-FPTU-Long_iiws6l.jpg"
-              alt="FPT Education Logo"
+              alt="LOCAL ASSISTANT"
               className="header-logo"
             />
           </Link>

@@ -15,7 +15,7 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleAuth = async () => {
-      if (hasRun.current) return; // nếu đã chạy rồi thì bỏ qua
+      if (hasRun.current) return; 
       hasRun.current = true;
 
       if (isSignedIn && user) {

@@ -19,16 +19,26 @@ const AuthCallback = () => {
           const clerkToken = await getToken({ template: "node-backend" });
           if (!clerkToken) throw new Error("Không lấy được token từ Clerk");
 
+          const requestOptions = {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${clerkToken}`,
+              "Content-Type": "application/json",
+            },
+          };
+
+          const hasRoleField = Object.prototype.hasOwnProperty.call(
+            user.publicMetadata,
+            "role"
+          );
+          if (!hasRoleField) {
+            requestOptions.body = JSON.stringify({ role: "client" });
+          }
+
           const response = await fetch(
             `${import.meta.env.VITE_BE_URL}/api/auth`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${clerkToken}`,
-              },
-            }
+            requestOptions
           );
-
           const data = await response.json();
 
           if (!response.ok)
