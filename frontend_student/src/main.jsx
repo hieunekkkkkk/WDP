@@ -5,7 +5,6 @@ import App from './App.jsx'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { viVN } from '@clerk/localizations'
 import { ToastContainer } from 'react-toastify';
-import GetUserLocation from './utils/GetUserLocation';
 import 'react-toastify/dist/ReactToastify.css';
 import { UserRoleProvider } from './contexts/UserRoleContext';
 //clerk
@@ -25,7 +24,6 @@ createRoot(document.getElementById('root')).render(
             unsafe_disableDevelopmentModeWarnings: true,
           },
         }}>
-        <GetUserLocation />
         <App />
       </ClerkProvider>
     </UserRoleProvider>

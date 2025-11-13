@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import "./index.css";
@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import useGeolocation from "./utils/useGeolocation";
 import LandingPage from "./page/user/LandingPage";
 import LoginPage from "./page/user/LoginPage";
 import SignupPage from "./page/user/SignupPage";
@@ -213,6 +214,14 @@ const AppRoutes = () => {
 };
 
 function App() {
+  // Gọi hook geolocation trực tiếp trong App component
+  const { location, error, fetchLocation } = useGeolocation(false);
+
+  useEffect(() => {
+    // Tự động fetch location khi app mount
+    fetchLocation();
+  }, []);
+
   return (
     <BrowserRouter>
       <ToastContainer

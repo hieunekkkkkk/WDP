@@ -8,13 +8,13 @@ const esTransportOpts = {
     clientOpts: {
         node: process.env.ELASTICSEARCH_URL || 'http://elasticsearch:9200',
     },
-    indexPrefix: 'sdn-backend',
+    indexPrefix: 'wdp-backend',
     transformer: (logData) => {
         return {
             '@timestamp': new Date().toISOString(),
             message: logData.message,
             level: logData.level,
-            service: 'sdn-backend',
+            service: 'wdp-backend',
             ...logData.meta
         };
     }
@@ -34,7 +34,7 @@ const logFormat = format.combine(
 const logger = createLogger({
     level: process.env.LOG_LEVEL || 'info',
     format: logFormat,
-    defaultMeta: { service: 'sdn-backend' },
+    defaultMeta: { service: 'wdp-backend' },
     transports: [
         new transports.Console({
             format: format.combine(

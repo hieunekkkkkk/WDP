@@ -1,5 +1,36 @@
 services:
   # ============================================
+  # REVERSE PROXY
+  # ============================================
+
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v3.1
+    container_name: wdp-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/letsencrypt/acme.json
+      - ./traefik/logs:/var/log/traefik
+    networks:
+      - sdn_network
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.smearch.io.vn`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      # Basic Auth (user: admin, password: admin) - change this!
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
+
+  # ============================================
   # BACKEND & FRONTEND SERVICES
   # ============================================
 
@@ -9,8 +40,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: wdp-backend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - REDIS_HOST=redis
@@ -21,11 +52,24 @@ services:
     networks:
       - sdn_network
     depends_on:
+      - traefik
       - redis
       - qdrant
       - elasticsearch
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.smearch.io.vn`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # CORS middleware
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolalloworiginlist=https://smearch.io.vn,https://business.smearch.io.vn"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.routers.backend.middlewares=backend-cors"
 
   # Frontend Student
   frontend-student:
@@ -33,18 +77,22 @@ services:
       context: ./frontend_student
       dockerfile: Dockerfile
     container_name: wdp-student
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     env_file:
       - ./frontend_student/.env
     restart: unless-stopped
     networks:
       - sdn_network
     depends_on:
+      - traefik
       - backend
-    volumes:
-      - ./frontend_student:/app
-      - /app/node_modules
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-student.rule=Host(`smearch.io.vn`)"
+      - "traefik.http.routers.frontend-student.entrypoints=websecure"
+      - "traefik.http.routers.frontend-student.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend-student.loadbalancer.server.port=5173"
 
   # Frontend Business
   frontend-business:
@@ -52,18 +100,22 @@ services:
       context: ./frontend_business
       dockerfile: Dockerfile
     container_name: wdp-business
-    ports:
-      - "5174:5174"
+    expose:
+      - "5174"
     env_file:
       - ./frontend_business/.env
     restart: unless-stopped
     networks:
       - sdn_network
     depends_on:
+      - traefik
       - backend
-    volumes:
-      - ./frontend_business:/app
-      - /app/node_modules
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-business.rule=Host(`business.smearch.io.vn`)"
+      - "traefik.http.routers.frontend-business.entrypoints=websecure"
+      - "traefik.http.routers.frontend-business.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend-business.loadbalancer.server.port=5174"
 
   # ============================================
   # DATABASE & CACHE SERVICES
@@ -162,15 +214,24 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.1
     container_name: wdp-kibana
-    ports:
-      - "5601:5601"
+    expose:
+      - "5601"
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     networks:
       - sdn_network
     depends_on:
+      - traefik
       - elasticsearch
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kibana.rule=Host(`kibana.smearch.io.vn`)"
+      - "traefik.http.routers.kibana.entrypoints=websecure"
+      - "traefik.http.routers.kibana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+      - "traefik.http.routers.kibana.middlewares=kibana-auth"
+      - "traefik.http.middlewares.kibana-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
 
   # ============================================
   # MONITORING SERVICES (Prometheus + Grafana)
@@ -178,20 +239,30 @@ services:
 
   # Prometheus for metrics
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.54.1
     container_name: wdp-prometheus
     volumes:
       - ./backend/monitor/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./backend/monitor/prometheus/rules.yml:/etc/prometheus/rules.yml
       - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--web.enable-lifecycle"
     networks:
       - sdn_network
+    depends_on:
+      - traefik
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.smearch.io.vn`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      # - "traefik.http.routers.prometheus.middlewares=prometheus-auth"
+      # - "traefik.http.middlewares.prometheus-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
 
   # Alertmanager for alerts
   alertmanager:
@@ -207,20 +278,28 @@ services:
 
   # Grafana for dashboards
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.3.0
     container_name: wdp-grafana
     volumes:
       - grafana-data:/var/lib/grafana
-    ports:
-      - "3001:3000"
+    expose:
+      - "3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=https://grafana.smearch.io.vn
     depends_on:
+      - traefik
       - prometheus
     networks:
       - sdn_network
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.smearch.io.vn`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
 networks:
   sdn_network:
