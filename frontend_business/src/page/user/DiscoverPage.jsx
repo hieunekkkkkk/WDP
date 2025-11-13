@@ -39,7 +39,7 @@ function DiscoverPage() {
     } else {
       fetchData();
     }
-  }, [query]);
+  }, [query, fetchData]);
 
   const fetchSearchResults = async (query) => {
     try {
@@ -64,7 +64,34 @@ function DiscoverPage() {
     }
   };
 
-  const fetchData = async () => {
+  const checkAndResetPriority = useCallback(async (businesses) => {
+    const now = Date.now();
+    const THIRTY_MINUTES = 30 * 60 * 1000; // 30 phút
+
+    const businessesToReset = businesses.filter((business) => {
+      if (!business.updated_at) return false;
+      const updatedAt = new Date(business.updated_at).getTime();
+      return now - updatedAt > THIRTY_MINUTES;
+    });
+
+    if (businessesToReset.length > 0) {
+      console.log(`🔄 Resetting priority for ${businessesToReset.length} businesses`);
+
+      // Gọi API reset-priority cho từng business (không await để không block UI)
+      businessesToReset.forEach(async (business) => {
+        try {
+          await axios.post(
+            `${import.meta.env.VITE_BE_URL}/api/business/${business._id}/reset-priority`
+          );
+          console.log(`✅ Reset priority for business: ${business.business_name}`);
+        } catch (err) {
+          console.warn(`⚠️ Failed to reset priority for ${business.business_name}:`, err.message);
+        }
+      });
+    }
+  }, []);
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [catRes, busRes] = await Promise.all([
@@ -76,6 +103,9 @@ function DiscoverPage() {
         (b) => b.business_active === "active"
       );
 
+      // Check và reset priority cho các business đã quá 30 phút
+      checkAndResetPriority(activeBusinesses);
+
       setCategories(catRes.data.categories || []);
       setBusinesses(activeBusinesses);
       setFilteredBusinessesByCategory(activeBusinesses);
@@ -85,7 +115,7 @@ function DiscoverPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [checkAndResetPriority]);
 
   const fetchBusinessesByCategory = async (categoryId) => {
     try {
