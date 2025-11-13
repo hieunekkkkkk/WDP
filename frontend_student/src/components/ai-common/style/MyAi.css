@@ -966,3 +966,152 @@
     max-width: 400px;
   }
 }
+
+.ai-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 40px 20px;
+  overflow-y: hidden;
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+  min-width: 0;
+  position: relative;
+}
+
+.ai-avatar,
+.ai-title,
+.ai-subtitle,
+.ai-desc,
+.ai-suggestions {
+  display: none;
+}
+
+.ai-input-bar {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  align-self: center;
+  width: 100%;
+  max-width: 700px;
+
+  animation: none;
+  flex-shrink: 0;
+}
+
+.ai-start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+}
+
+.ai-start-screen .ai-avatar,
+.ai-start-screen .ai-title,
+.ai-start-screen .ai-subtitle,
+.ai-start-screen .ai-desc,
+.ai-start-screen .ai-suggestions {
+  display: flex;
+  animation: fadeInUp 0.6s ease 0.1s backwards;
+}
+
+.ai-start-screen .ai-suggestions {
+  display: grid;
+}
+
+.ai-start-screen .ai-desc {
+  display: block;
+}
+.ai-start-screen .ai-subtitle {
+  display: flex;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 0 20px;
+  width: 100%;
+  max-width: 700px;
+  align-self: center;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+.message {
+  display: flex;
+  margin: 0;
+  padding: 0 40px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@media (max-width: 768px) {
+  .ai-main {
+    padding: 20px 10px 10px;
+  }
+
+  .ai-input-bar {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .message {
+    padding: 0 10px; /* Giảm padding ngang cho mobile */
+  }
+}
+/* Thêm vào MyAi.css */
+
+.ai-chat-item {
+  /* Điều chỉnh để chứa nút xóa */
+  padding-right: 36px; /* Tăng padding để có chỗ cho nút xóa */
+  position: relative;
+  /* Loại bỏ ai-chat-arrow cũ */
+  /* .ai-chat-arrow đã bị xóa trong code JS, cần xem xét nếu cần giữ lại */
+}
+
+/* Ẩn nút xóa theo mặc định */
+.ai-chat-delete-btn {
+  position: absolute;
+  right: 8px; /* Khoảng cách từ lề phải */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: var(--surface-hover);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0; /* Ẩn theo mặc định */
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Hiển thị nút xóa khi hover hoặc khi là item active */
+.ai-chat-item:hover .ai-chat-delete-btn,
+.ai-chat-item.active .ai-chat-delete-delete-btn {
+  opacity: 1;
+}
+
+.ai-chat-item:hover .ai-chat-delete-btn:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.ai-chat-title-text {
+  /* Đảm bảo tiêu đề bị cắt ngắn (ellipsis) khi quá dài */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+}
