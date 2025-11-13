@@ -48,7 +48,10 @@ function PersonalizedPage() {
       const data = await res.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        setBestPlaces(data.slice(0, 6));
+        const openBusinesses = data.filter(
+          (place) => place.business_status === true
+        );
+        setBestPlaces(openBusinesses.slice(0, 6));
       } else {
         setBestPlaces([]);
       }

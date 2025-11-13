@@ -26,7 +26,7 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
     }
 
     try {
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledge._id}`,
         {
           title: form.title,
@@ -35,26 +35,23 @@ const KnowledgeEditModal = ({ knowledge, onClose, onSave }) => {
             .split(",")
             .map((t) => t.trim())
             .filter(Boolean),
-        },
-        {
-          validateStatus: (status) => status < 500, 
         }
       );
 
-      if (!response.data.success && response.data.message) {
-        throw new Error(response.data.message);
-      }
-
-      toast.success("Cập nhật kiến thức thành công!");
+      toast.success("✅ Cập nhật kiến thức thành công!");
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error updating knowledge:", err);
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Có lỗi khi cập nhật kiến thức";
-      toast.error(errorMessage);
+      console.error("❌ Error updating knowledge:", err.response?.data || err.message);
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi cập nhật kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được cập nhật nhưng chưa được đánh index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 

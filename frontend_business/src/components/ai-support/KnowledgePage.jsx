@@ -3,17 +3,22 @@ import { useParams, useLocation, useNavigate } from "react-router-dom"; // Impor
 import axios from "axios";
 import { useUser } from "@clerk/clerk-react"; // Import useUser
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { toast } from "react-toastify";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
 import KnowledgeCreateModal from "../ai-modal/KnowledgeCreateModal";
 import KnowledgeEditModal from "../../components/ai-modal/KnowledgeEditModal.jsx";
 import BotDetailModal from "../ai-modal/BotDetailModal";
 import "./style/KnowledgePage.css";
+import { FaPlus } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const KnowledgePage = () => {
   const { botId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate(); 
-  const { user } = useUser(); 
+  const navigate = useNavigate();
+  const { user } = useUser();
+
 
   const isBusinessKnowledge = location.pathname.includes("business-dashboard");
   const [bot, setBot] = useState(null);
@@ -23,6 +28,8 @@ const KnowledgePage = () => {
   const [editingKnowledge, setEditingKnowledge] = useState(null);
   const [showBotDetail, setShowBotDetail] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [knowledgeToDeleteId, setKnowledgeToDeleteId] = useState(null);
 
   const filteredKnowledges = knowledges.filter(
     (k) =>
@@ -32,7 +39,8 @@ const KnowledgePage = () => {
   );
 
   const fetchBot = useCallback(async () => {
-    if (!user) return; 
+    if (!user) return;
+    if (!user) return;
 
     try {
       const res = await axios.get(
@@ -45,7 +53,8 @@ const KnowledgePage = () => {
         return;
       }
 
-      setBot(res.data); 
+      setBot(res.data);
+      setBot(res.data);
     } catch (err) {
       console.error("Error fetching bot:", err);
       if (err.response && err.response.status === 500) {
@@ -63,25 +72,41 @@ const KnowledgePage = () => {
     } catch (err) {
       console.error("Error fetching knowledge:", err);
     }
-  }, [botId]); // fetchKnowledge chỉ phụ thuộc vào botId
+  }, [botId]); 
 
   useEffect(() => {
-    // Chỉ chạy fetch khi user đã được tải
     if (user) {
       fetchBot();
       fetchKnowledge();
     }
-  }, [botId, user, fetchBot, fetchKnowledge]); // Thêm user, fetchBot, fetchKnowledge
+  }, [botId, user, fetchBot, fetchKnowledge]);
 
-  const deleteKnowledge = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa kiến thức này?")) return;
+  const handleDeleteClick = (id) => {
+    setKnowledgeToDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!knowledgeToDeleteId) return;
+
+    setIsDeleteModalOpen(false);
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${id}`
+      const promise = axios.delete(
+        `${import.meta.env.VITE_BE_URL}/api/botknowledge/${knowledgeToDeleteId}`
       );
+      toast.success("✅ Xóa kiến thức thành công!");
       fetchKnowledge(); // Gọi lại fetchKnowledge sau khi xóa thành công
     } catch (err) {
-      console.error("Error deleting knowledge:", err);
+      console.error("❌ Error deleting knowledge:", err.response?.data || err.message);
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi xóa kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được xóa nhưng không thể cập nhật index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 
@@ -90,9 +115,7 @@ const KnowledgePage = () => {
       {/* Header card */}
       <div className="knowledge-header-card">
         <h1 className="knowledge-title">
-          {isBusinessKnowledge
-            ? "🏢 Kiến thức doanh nghiệp"
-            : "📘 Kiến thức học tập"}
+          {isBusinessKnowledge ? "Kiến thức doanh nghiệp" : "Kiến thức học tập"}
         </h1>
 
         <div className="action-bar">
@@ -103,10 +126,15 @@ const KnowledgePage = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
+              style={{margin: 0}}
             />
           </div>
-          <button className="add-button" onClick={() => setShowCreate(true)}>
-            ➕{" "}
+          <button
+            className="add-button"
+            onClick={() => setShowCreate(true)}
+            style={{ display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <FaPlus /> {"    "}
             {isBusinessKnowledge
               ? "Thêm kiến thức doanh nghiệp"
               : "Thêm kiến thức học tập"}
@@ -140,7 +168,9 @@ const KnowledgePage = () => {
         <div className="knowledge-table">
           <div className="knowledge-row header">
             <div className="col">Tên</div>
-            <div className="col actions-col">Hành động</div>
+            <div className="col actions-col" style={{ textAlign: "center" }}>
+              Hành động
+            </div>
           </div>
 
           {filteredKnowledges.map((k, idx) => (
@@ -148,7 +178,7 @@ const KnowledgePage = () => {
               key={k._id}
               className={`knowledge-row ${idx % 2 === 0 ? "zebra" : ""}`}
             >
-              <div className="knowledge-info-box">📄 {k.title}</div>
+              <div className="knowledge-info-box">{k.title}</div>
               <div className="actions">
                 <button
                   style={{ backgroundColor: "#059669", ...btnStyle }}
@@ -166,7 +196,7 @@ const KnowledgePage = () => {
                 </button>
                 <button
                   style={{ backgroundColor: "#ef4444", ...btnStyle }}
-                  onClick={() => deleteKnowledge(k._id)}
+                  onClick={() => handleDeleteClick(k._id)}
                   title="Xóa"
                 >
                   <FaTrash size={14} />
@@ -213,6 +243,80 @@ const KnowledgePage = () => {
           onSave={fetchBot}
         />
       )}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div
+            className="modal-overlay" // Đảm bảo bạn có CSS cho class này
+            onClick={() => setIsDeleteModalOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+              }}
+            >
+              <h3>Xác nhận xóa</h3>
+              <p style={{ margin: "15px 0" }}>
+                Bạn có chắc chắn muốn xóa kiến thức này không?
+              </p>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={confirmDelete} 
+                  style={{
+                    flex: 1,
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545", 
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

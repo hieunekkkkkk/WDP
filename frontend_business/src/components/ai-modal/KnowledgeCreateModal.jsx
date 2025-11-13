@@ -12,6 +12,8 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
     tags: "",
   });
   const [file, setFile] = useState(null);
+  // Thêm state loading để vô hiệu hóa nút
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,10 +24,19 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
+    // 1. Validate Tên
     if (!form.title.trim()) {
       toast.error("Tên không được để trống");
       return;
     }
+
+    // 2. MỚI: Validate Nội dung HOẶC File
+    if (!file && !form.content.trim()) {
+      toast.error("Vui lòng nhập nội dung hoặc tải lên một file.");
+      return;
+    }
+
+    setIsLoading(true); // Vô hiệu hóa nút
 
     try {
       const formData = new FormData();
@@ -49,22 +60,30 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
 
       formData.append("created_by", user.id);
 
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_BE_URL}/api/botknowledge/${botId}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      toast.success("Tạo kiến thức thành công!");
+      toast.success("✅ Tạo kiến thức thành công!");
 
       onSave();
       onClose();
     } catch (err) {
       console.error(
         "❌ Error creating knowledge:",
-        err.response?.data?.message
+        err.response?.data || err.message
       );
-      toast.error("Có lỗi khi tạo kiến thức");
+
+      const errorMessage = err.response?.data?.message || err.message || "Có lỗi khi tạo kiến thức";
+
+      // Kiểm tra nếu là lỗi Qdrant
+      if (errorMessage.includes("Qdrant") || errorMessage.includes("ECONNREFUSED")) {
+        toast.warning("⚠️ Kiến thức đã được lưu nhưng chưa được đánh index. Vui lòng khởi động Qdrant service!");
+      } else {
+        toast.error(`❌ Lỗi: ${errorMessage}`);
+      }
     }
   };
 
@@ -72,7 +91,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
     <div className="modal-overlay">
       <div className="modal-box">
         <div className="modal-header">
-          <h2>Thêm kiến thức</h2>
+          <h2 style={{ margin: 0 }}>Thêm kiến thức</h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
@@ -98,6 +117,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
             onChange={handleChange}
             placeholder="Nhập nội dung văn bản..."
             className="form-textarea"
+            disabled={!!file} // Vô hiệu hóa nếu đã chọn file
           />
         </div>
 
@@ -108,6 +128,7 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
             accept=".pdf,.doc,.docx,.txt"
             onChange={handleFileChange}
             className="form-input"
+            disabled={!!form.content.trim()} // Vô hiệu hóa nếu đã nhập nội dung
           />
         </div>
 
@@ -123,11 +144,20 @@ const KnowledgeCreateModal = ({ botId, onClose, onSave }) => {
         </div>
 
         <div className="form-buttons">
-          <button className="button save-button" onClick={handleSubmit}>
-            💾 Lưu
+          <button
+            className="button save-button"
+            onClick={handleSubmit}
+            style={{ margin: 0 }}
+            disabled={isLoading}
+          >
+            {isLoading ? "Đang lưu..." : "Lưu"}
           </button>
-          <button className="button cancel-button" onClick={onClose}>
-            ✗ Hủy
+          <button
+            className="button cancel-button"
+            onClick={onClose}
+            disabled={isLoading} 
+          >
+            Hủy
           </button>
         </div>
       </div>
