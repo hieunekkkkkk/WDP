@@ -1,18 +1,41 @@
 // routes/auth.js
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const { getClerkClient } = require('../middleware/clerkClient');
 const router = express.Router();
 
 router.post('/', authMiddleware, async (req, res) => {
     try {
-
+        const { role } = req.body;
         const decoded = req.user;
+        const userId = decoded.sub;
+
+        // Lấy role hiện tại từ publicMetadata hoặc từ request body
+        let userRole = decoded.publicMetadata?.role || role || 'client';
+
+        // Nếu FE gửi role và chưa có trong publicMetadata, cập nhật vào Clerk
+        if (role && !decoded.publicMetadata?.role) {
+            try {
+                const clerkClient = await getClerkClient();
+                await clerkClient.users.updateUserMetadata(userId, {
+                    publicMetadata: {
+                        ...decoded.publicMetadata,
+                        role: role
+                    }
+                });
+                userRole = role;
+                console.log(`✅ [Auth Route] Updated role for user ${userId}: ${role}`);
+            } catch (clerkError) {
+                console.error('[Auth Route] ❌ Failed to update Clerk metadata:', clerkError.message);
+                // Vẫn tiếp tục xử lý, chỉ log lỗi
+            }
+        }
 
         // JWT Clerk payload đã có thông tin cơ bản:
         const claims = {
-            userId: decoded.sub,
+            userId: userId,
             email: decoded.email_address || decoded.email,
-            role: decoded.role || 'client',
+            role: userRole,
             username: decoded.username || '',
             image: decoded.image_url || '',
         };
