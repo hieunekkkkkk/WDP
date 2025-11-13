@@ -11,15 +11,14 @@ import BotDetailModal from "../ai-modal/BotDetailModal";
 import "./style/KnowledgePage.css";
 import { FaPlus } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-toastify";
+
 
 const KnowledgePage = () => {
   const { botId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useUser();
-  const navigate = useNavigate();
-  const { user } = useUser();
+
 
   const isBusinessKnowledge = location.pathname.includes("business-dashboard");
   const [bot, setBot] = useState(null);
