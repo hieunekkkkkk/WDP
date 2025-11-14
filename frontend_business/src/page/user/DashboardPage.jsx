@@ -398,7 +398,7 @@ const PriorityTimer = ({ updatedAt }) => {
     if (!updatedAt) return;
 
     const interval = setInterval(() => {
-      const expirationTime = new Date(updatedAt).getTime() + 60 * 60 * 1000;
+      const expirationTime = new Date(updatedAt).getTime() + 30 * 60 * 1000;
       const now = Date.now();
       const diff = expirationTime - now;
 

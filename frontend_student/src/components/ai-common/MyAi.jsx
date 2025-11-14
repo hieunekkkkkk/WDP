@@ -665,7 +665,7 @@ export default function MyAi() {
         setAsking(false);
       }
     },
-    [bot, question, activeChatId, messages.length, user.id]
+    [bot, question, activeChatId, messages.length]
   );
 
   // handlePickSuggestion

@@ -26,6 +26,10 @@ const ProductRegistrationPage = () => {
   const handleAddImage = async (event) => {
     const files = Array.from(event.target.files);
 
+    if (files.length === 0) {
+      return;
+    }
+
     // MỚI: Sử dụng toast.loading để có thể update
     const toastId = toast.loading("Đang tải ảnh lên Cloudinary...");
 
@@ -51,6 +55,7 @@ const ProductRegistrationPage = () => {
         autoClose: 5000,
       });
     }
+    event.target.value = null;
   };
 
   // MỚI: Hàm riêng để xóa ảnh và thêm toast

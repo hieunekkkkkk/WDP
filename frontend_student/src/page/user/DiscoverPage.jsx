@@ -71,7 +71,6 @@ function DiscoverPage() {
     });
 
     if (businessesToReset.length > 0) {
-      console.log(`🔄 Resetting priority for ${businessesToReset.length} businesses`);
 
       // Gọi API reset-priority cho từng business (không await để không block UI)
       businessesToReset.forEach(async (business) => {
@@ -79,7 +78,6 @@ function DiscoverPage() {
           await axios.post(
             `${import.meta.env.VITE_BE_URL}/api/business/${business._id}/reset-priority`
           );
-          console.log(`✅ Reset priority for business: ${business.business_name}`);
         } catch (err) {
           console.warn(`⚠️ Failed to reset priority for ${business.business_name}:`, err.message);
         }

@@ -90,27 +90,6 @@ function FilterSidebar({ filters, handleFilterChange, fetchLocation }) {
       {/* ----- KẾT THÚC CẬP NHẬT KHỐI VỊ TRÍ ----- */}
 
       <div className="filter-section">
-        <h4>Giá tiền</h4>
-        <div className="filter-checkbox-group">
-          <label>
-            <input
-              type="checkbox"
-              checked={filters.price.cheapest}
-              onChange={() => handlePriceChange('cheapest')}
-            />
-            Rẻ nhất (≤ 50.000 VND)
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={filters.price.mostExpensive}
-              onChange={() => handlePriceChange('mostExpensive')}
-            />
-            Đắt nhất (≥ 50.000 VND)
-          </label>
-        </div>
-      </div>
-      <div className="filter-section">
         <h4>Đánh giá</h4>
         <div className="filter-checkbox-group">
           <label>
