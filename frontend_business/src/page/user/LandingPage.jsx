@@ -233,7 +233,7 @@ function LandingPage() {
           author: {
             name: feedback.user_id || "Người dùng ẩn danh",
             role: "Khách hàng",
-            avatar: "/1.png"
+            avatar: "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
           },
           date: new Date(feedback.feedback_date).toLocaleDateString('vi-VN'),
           likes: likes,
@@ -315,7 +315,7 @@ function LandingPage() {
       {/* Hero Section */}
       <section className="hero-section-landing">
         <div className="hero-background">
-          <img src="/1.png" alt="Mountains" className="hero-bg-image" />
+          <img src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg" alt="Mountains" className="hero-bg-image" />
           <div className="hero-overlay"></div>
         </div>
         <div className="hero-content">
@@ -561,7 +561,7 @@ const PlaceCard = React.memo(({ business, onClick }) => {
     onClick(business._id);
   }, [business._id, onClick]);
 
-  let imageUrl = '/1.png';
+  let imageUrl = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg';
   if (business.business_image && Array.isArray(business.business_image) && business.business_image.length > 0) {
     imageUrl = business.business_image[0];
   }
@@ -574,7 +574,7 @@ const PlaceCard = React.memo(({ business, onClick }) => {
           alt={businessName}
           loading="lazy"
           onError={(e) => {
-            e.target.src = '/1.png';
+            e.target.src = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg';
           }}
         />
         <div className="place-overlay">
@@ -596,10 +596,10 @@ const ServiceCard = React.memo(({ category, businesses, onSeeMore, index }) => {
   );
 
   const backgroundImages = [
-    '/1.png',
+    'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg',
     '/2.png',
     '/3.png',
-    '/1.png',
+    'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg',
     '/2.png'
   ];
 
@@ -626,11 +626,11 @@ const ServiceCard = React.memo(({ category, businesses, onSeeMore, index }) => {
     <div className="service-card-new" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
       <div className="service-background">
         <img
-          src={backgroundImages[index % backgroundImages.length] || '/1.png'}
+          src={backgroundImages[index % backgroundImages.length] || 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg'}
           alt={category.category_name}
           loading="lazy"
           onError={(e) => {
-            e.target.src = '/1.png';
+            e.target.src = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg';
           }}
         />
         <div
@@ -680,7 +680,7 @@ const WhyChooseSection = React.memo(() => (
         </div>
       </div>
       <div className="why-choose-right-new">
-        <img src="/1.png" alt="Tại sao chọn chúng tôi" loading="lazy" />
+        <img src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg" alt="Tại sao chọn chúng tôi" loading="lazy" />
       </div>
     </div>
   </section>
@@ -699,7 +699,7 @@ const TestimonialCard = React.memo(({ text, author, date, likes, dislikes }) => 
         alt={author.name}
         loading="lazy"
         onError={(e) => {
-          e.target.src = '/1.png';
+          e.target.src = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg';
         }}
       />
       <div>

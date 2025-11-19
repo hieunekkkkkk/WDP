@@ -1,20 +1,17 @@
-# Sử dụng Node.js phiên bản 20 làm base image
-FROM node:20
-
-# Thiết lập thư mục làm việc trong container
+# --- Stage 1: Build ---
+FROM node:20 AS builder
 WORKDIR /app
-
-# Sao chép file package.json và package-lock.json (nếu có)
 COPY package*.json ./
-
-# Cài đặt dependencies
 RUN npm install
-
-# Sao chép toàn bộ mã nguồn vào container
+# Copy .env first (before COPY . . because .env is in .dockerignore)
+COPY .env* ./
 COPY . .
+RUN npm run build
 
-# Mở cổng 5173 (port cho frontend Vite dev server)
+# --- Stage 2: Serve static ---
+FROM node:20 AS runner
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=builder /app/dist ./dist
 EXPOSE 5173
-
-# Lệnh khởi động ứng dụng Vite
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["serve", "-s", "dist", "-l", "5173"]

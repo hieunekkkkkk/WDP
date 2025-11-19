@@ -65,6 +65,8 @@ router.post('/', FeedbackController.createFeedback);
  *               items:
  *                 $ref: '#/components/schemas/Feedback'
  */
+router.get('/businesses', FeedbackController.getAllBussinessFeedback);
+router.get('/products', FeedbackController.getAllProductFeedback);
 router.get('/', FeedbackController.getAllFeedbacks);
 /**
  * @swagger
@@ -237,5 +239,6 @@ router.patch('/:id/dislike', FeedbackController.incrementDislike);
  *         description: Đã phản hồi feedback
  */
 router.patch('/:id/response', FeedbackController.updateFeedbackResponse);
+
 
 module.exports = router;

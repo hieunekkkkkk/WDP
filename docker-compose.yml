@@ -1,11 +1,6 @@
 services:
-  # ============================================
-  # REVERSE PROXY
-  # ============================================
-
-  # Traefik Reverse Proxy
   traefik:
-    image: traefik:v3.1
+    image: traefik:v2.11
     container_name: wdp-traefik
     restart: unless-stopped
     ports:
@@ -16,23 +11,18 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/acme.json:/letsencrypt/acme.json
-      - ./traefik/logs:/var/log/traefik
+      - traefik-logs:/var/log/traefik
     networks:
       - sdn_network
     labels:
       - "traefik.enable=true"
-      # Dashboard
       - "traefik.http.routers.traefik.rule=Host(`traefik.smearch.io.vn`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.middlewares=traefik-auth"
-      # Basic Auth (user: admin, password: admin) - change this!
       - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
 
-  # ============================================
-  # BACKEND & FRONTEND SERVICES
-  # ============================================
 
   # Backend API
   backend:
@@ -64,7 +54,7 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # CORS middleware
+     
       - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
       - "traefik.http.middlewares.backend-cors.headers.accesscontrolalloworiginlist=https://smearch.io.vn,https://business.smearch.io.vn"
       - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowcredentials=true"
@@ -117,11 +107,6 @@ services:
       - "traefik.http.routers.frontend-business.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend-business.loadbalancer.server.port=5174"
 
-  # ============================================
-  # DATABASE & CACHE SERVICES
-  # ============================================
-
-  # Redis Cache
   redis:
     image: redis:latest
     container_name: wdp-redis
@@ -134,7 +119,6 @@ services:
       - sdn_network
     command: redis-server --appendonly yes
 
-  # Redis Insight GUI
   redisinsight:
     image: redis/redisinsight:latest
     container_name: wdp-redisinsight
@@ -148,24 +132,24 @@ services:
     networks:
       - sdn_network
 
-  # Qdrant Vector DB
   qdrant:
     image: qdrant/qdrant:latest
     container_name: wdp-qdrant
     ports:
-      - "6333:6333"
+      - "6333"
       - "6334:6334"
     volumes:
       - qdrant-data:/qdrant/storage
     restart: unless-stopped
     networks:
       - sdn_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qdrant.rule=Host(`qdrant.smearch.io.vn`)"
+      - "traefik.http.routers.qdrant.entrypoints=websecure"
+      - "traefik.http.routers.qdrant.tls.certresolver=letsencrypt"
+      - "traefik.http.services.qdrant.loadbalancer.server.port=6333"
 
-  # ============================================
-  # LOGGING SERVICES (ELK Stack)
-  # ============================================
-
-  # Elasticsearch for logs
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
     container_name: wdp-elasticsearch
@@ -185,7 +169,6 @@ services:
       - sdn_network
     restart: unless-stopped
 
-  # Logstash for log processing
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.1
     container_name: wdp-logstash
@@ -210,7 +193,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Kibana for log visualization
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.1
     container_name: wdp-kibana
@@ -218,6 +200,10 @@ services:
       - "5601"
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      SERVER_PUBLICBASEURL: https://kibana.smearch.io.vn
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "5601"
+      SERVER_NAME: "kibana.smearch.io.vn"
     networks:
       - sdn_network
     depends_on:
@@ -225,19 +211,19 @@ services:
       - elasticsearch
     restart: unless-stopped
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.kibana.rule=Host(`kibana.smearch.io.vn`)"
-      - "traefik.http.routers.kibana.entrypoints=websecure"
-      - "traefik.http.routers.kibana.tls.certresolver=letsencrypt"
-      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
-      - "traefik.http.routers.kibana.middlewares=kibana-auth"
-      - "traefik.http.middlewares.kibana-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
+       - "traefik.enable=true"
+       - "traefik.http.routers.kibana.rule=Host(`kibana.smearch.io.vn`)"
+       - "traefik.http.routers.kibana.entrypoints=websecure"
+       - "traefik.http.routers.kibana.tls.certresolver=letsencrypt"
+       - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+       
+       - "traefik.http.middlewares.kibana-headers.headers.customrequestheaders.X-Forwarded-For="
+       - "traefik.http.middlewares.kibana-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+       - "traefik.http.middlewares.kibana-headers.headers.customrequestheaders.X-Forwarded-Host=kibana.smearch.io.vn"
+       - "traefik.http.middlewares.kibana-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+       
+       - "traefik.http.routers.kibana.middlewares=kibana-headers"
 
-  # ============================================
-  # MONITORING SERVICES (Prometheus + Grafana)
-  # ============================================
-
-  # Prometheus for metrics
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: wdp-prometheus
@@ -264,7 +250,6 @@ services:
       # - "traefik.http.routers.prometheus.middlewares=prometheus-auth"
       # - "traefik.http.middlewares.prometheus-auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
 
-  # Alertmanager for alerts
   alertmanager:
     image: prom/alertmanager:latest
     container_name: wdp-alertmanager
@@ -276,7 +261,6 @@ services:
       - sdn_network
     restart: unless-stopped
 
-  # Grafana for dashboards
   grafana:
     image: grafana/grafana:11.3.0
     container_name: wdp-grafana
@@ -312,3 +296,4 @@ volumes:
   elasticsearch-data:
   prometheus-data:
   grafana-data:
+  traefik-logs:

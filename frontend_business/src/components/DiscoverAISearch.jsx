@@ -220,7 +220,7 @@ function PersonalizedPage() {
                         alt={place.business_name}
                         loading="lazy"
                         onError={(e) => {
-                          e.target.src = "/1.png";
+                          e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
                         }}
                       />
                     </div>

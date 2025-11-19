@@ -6,9 +6,6 @@ import Footer from "../../components/Footer";
 import LoadingScreen from "../../components/LoadingScreen";
 import BusinessFeedback from "../../components/BusinessFeedback";
 import {
-  FaFacebookF,
-  FaInstagram,
-  FaGoogle,
   FaArrowLeft,
 } from "react-icons/fa";
 import ProductDetailModal from "../../components/ProductDetailModal";
@@ -268,8 +265,11 @@ const BusinessPage = () => {
     }
   };
 
-  // Products handlers
-  const totalSlides = Math.ceil(products.length / itemsPerSlide);
+  const availableProducts = products.filter(
+    (product) => product.product_number > 0
+  );
+
+  const totalSlides = Math.ceil(availableProducts.length / itemsPerSlide);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % totalSlides);
   const prevSlide = () =>
@@ -277,8 +277,8 @@ const BusinessPage = () => {
   const goToSlide = (index) => setCurrentSlide(index);
 
   const getCurrentProducts = () => {
-    const startIndex = currentSlide * itemsPerSlide;
-    return products.slice(startIndex, startIndex + itemsPerSlide);
+    const startIndex = currentSlide * itemsPerSlide; 
+    return availableProducts.slice(startIndex, startIndex + itemsPerSlide);
   };
 
   const handleViewDetails = (productId) => {
@@ -466,7 +466,7 @@ const BusinessPage = () => {
       </section>
 
       {/* Products Section */}
-      {products.length > 0 && (
+      {availableProducts.length > 0 && (
         <section className="business-products-section">
           <div className="business-products">
             <div className="products-container">

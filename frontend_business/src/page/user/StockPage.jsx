@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '@clerk/clerk-react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import '../../css/StockPage.css';
-import '../../css/DashboardPage.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@clerk/clerk-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import "../../css/StockPage.css";
+import "../../css/DashboardPage.css";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BACKEND_URL = import.meta.env.VITE_BE_URL;
 
 const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    product_name: '',
-    product_price: '',
+    product_name: "",
+    product_price: "",
     product_number: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,8 +23,8 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (product) {
       setFormData({
-        product_name: product.product_name || '',
-        product_price: product.product_price || '',
+        product_name: product.product_name || "",
+        product_price: product.product_price || "",
         product_number: product.product_number || 0,
       });
     }
@@ -42,12 +42,12 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
     if (isSubmitting) return;
     const stockAmount = Number(formData.product_number);
     if (isNaN(stockAmount) || stockAmount < 0) {
-      toast.error('Số lượng tồn kho không thể âm.');
+      toast.error("Số lượng tồn kho không thể âm.");
       return;
     }
     const price = parseFloat(formData.product_price);
     if (!isNaN(price) && price < 1000) {
-      toast.error('Giá sản phẩm phải lớn hơn hoặc bằng 1.000.');
+      toast.error("Giá sản phẩm phải lớn hơn hoặc bằng 1.000.");
       return;
     }
     setIsSubmitting(true);
@@ -59,12 +59,12 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
         product_number: stockAmount,
       });
 
-      toast.success('Cập nhật tồn kho thành công!');
+      toast.success("Cập nhật tồn kho thành công!");
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Failed to update product stock:', err);
-      toast.error(err.response?.data?.error || 'Lỗi khi cập nhật tồn kho');
+      console.error("Failed to update product stock:", err);
+      toast.error(err.response?.data?.error || "Lỗi khi cập nhật tồn kho");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,18 +85,25 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
               value={formData.product_name}
               onChange={handleChange}
               required
+              maxLength="100"
             />
+            <small className="form-field-hint">Tối đa 100 ký tự.</small>
           </div>
           <div className="form-group">
             <label htmlFor="product_price">Giá (VND)</label>
             <input
-              type="text"
+              type="number"
               id="product_price"
               name="product_price"
               value={formData.product_price}
               onChange={handleChange}
               required
+              min="1000"
+              max="999999999"
             />
+            <small className="form-field-hint">
+              Nhập giá trị từ 1000 đến 999,999,999.
+            </small>
           </div>
 
           <div className="form-group">
@@ -108,7 +115,12 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
               value={formData.product_number}
               onChange={handleChange}
               required
+              min="0"
+              max="9999"
             />
+            <small className="form-field-hint">
+              Nhập số lượng từ 0 đến 9,999.
+            </small>
           </div>
 
           <div className="modal-actions">
@@ -125,7 +137,7 @@ const EditProductModal = ({ product, isOpen, onClose, onSuccess }) => {
               className="btn-primary dashboard-btn"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+              {isSubmitting ? "Đang lưu..." : "Lưu"}
             </button>
           </div>
         </form>
@@ -148,8 +160,8 @@ const InlineStockEditor = ({ product, onSuccess }) => {
       });
       onSuccess();
     } catch (err) {
-      console.error('Failed to update stock:', err);
-      toast.error('Lỗi cập nhật tồn kho');
+      console.error("Failed to update stock:", err);
+      toast.error("Lỗi cập nhật tồn kho");
     } finally {
       setTimeout(() => setIsUpdating(false), 10);
     }
@@ -165,7 +177,7 @@ const InlineStockEditor = ({ product, onSuccess }) => {
         -
       </button>
 
-      <span>{isUpdating ? '...' : product.product_number ?? 0}</span>
+      <span>{isUpdating ? "..." : product.product_number ?? 0}</span>
 
       <button
         className="inline-stock-btn"
@@ -182,7 +194,7 @@ const StockPage = () => {
   const [businessId, setBusinessId] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [appStatus, setAppStatus] = useState('Đang tải...');
+  const [appStatus, setAppStatus] = useState("Đang tải...");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -193,20 +205,20 @@ const StockPage = () => {
 
   useEffect(() => {
     if (userId) {
-      setAppStatus('Đang tải thông tin business...');
+      setAppStatus("Đang tải thông tin business...");
       axios
         .get(`${BACKEND_URL}/api/business/owner/${userId}`)
         .then((res) => {
           if (res.data && res.data.length > 0) {
             setBusinessId(res.data[0]._id);
           } else {
-            setAppStatus('Không tìm thấy business.');
+            setAppStatus("Không tìm thấy business.");
             setLoading(false);
           }
         })
         .catch((err) => {
-          console.error('Failed to fetch business:', err);
-          setAppStatus('Lỗi tải business.');
+          console.error("Failed to fetch business:", err);
+          setAppStatus("Lỗi tải business.");
           setLoading(false);
         });
     }
@@ -220,11 +232,11 @@ const StockPage = () => {
         `${BACKEND_URL}/api/product/business/${businessId}?limit=1000`
       );
       setProducts(res.data.products || []);
-      setAppStatus('');
+      setAppStatus("");
     } catch (err) {
-      console.error('Failed to fetch products:', err);
-      toast.error('Không thể tải danh sách sản phẩm');
-      setAppStatus('Lỗi tải sản phẩm.');
+      console.error("Failed to fetch products:", err);
+      toast.error("Không thể tải danh sách sản phẩm");
+      setAppStatus("Lỗi tải sản phẩm.");
     } finally {
       setLoading(false);
     }
@@ -235,7 +247,7 @@ const StockPage = () => {
   }, [fetchProducts]);
 
   const handleNavigateToCreate = () => {
-    navigate('/product-registration');
+    navigate("/product-registration");
   };
 
   const handleOpenEditModal = (product) => {
@@ -253,22 +265,22 @@ const StockPage = () => {
     if (!productIdToDelete) return;
 
     setIsDeleteModalOpen(false);
-    const toastId = toast.loading('Đang xóa sản phẩm...');
+    const toastId = toast.loading("Đang xóa sản phẩm...");
 
     try {
       await axios.delete(`${BACKEND_URL}/api/product/${productIdToDelete}`); // Cập nhật toast
       toast.update(toastId, {
-        render: 'Xóa sản phẩm thành công!',
-        type: 'success',
+        render: "Xóa sản phẩm thành công!",
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
       fetchProducts();
     } catch (err) {
-      console.error('Failed to delete product:', err); // Cập nhật toast
+      console.error("Failed to delete product:", err); // Cập nhật toast
       toast.update(toastId, {
-        render: err.response?.data?.error || 'Lỗi khi xóa sản phẩm',
-        type: 'error',
+        render: err.response?.data?.error || "Lỗi khi xóa sản phẩm",
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
@@ -280,9 +292,9 @@ const StockPage = () => {
   const formatCurrency = (amount) => {
     const numberAmount = parseFloat(amount);
     if (!isNaN(numberAmount)) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
       }).format(numberAmount);
     }
     return amount;
@@ -292,8 +304,8 @@ const StockPage = () => {
     if (loading && products.length === 0) {
       return (
         <tr>
-          <td colSpan="5" style={{ textAlign: 'center' }}>
-            {appStatus || 'Đang tải...'}
+          <td colSpan="5" style={{ textAlign: "center" }}>
+            {appStatus || "Đang tải..."}
           </td>
         </tr>
       );
@@ -301,7 +313,7 @@ const StockPage = () => {
     if (products.length === 0) {
       return (
         <tr>
-          <td colSpan="5" style={{ textAlign: 'center' }}>
+          <td colSpan="5" style={{ textAlign: "center" }}>
             Chưa có sản phẩm nào.
           </td>
         </tr>
@@ -312,16 +324,16 @@ const StockPage = () => {
         <td>{product.product_name}</td>
         <td>
           <img
-            src={product.product_image?.[0] || '/1.png'}
+            src={product.product_image?.[0] || "/1.png"}
             alt={product.product_name}
             style={{
-              width: '60px',
-              height: '60px',
-              objectFit: 'cover',
-              borderRadius: '4px',
+              width: "60px",
+              height: "60px",
+              objectFit: "cover",
+              borderRadius: "4px",
             }}
             onError={(e) => {
-              e.target.src = '/1.png';
+              e.target.src = "/1.png";
             }}
           />
         </td>
@@ -376,10 +388,10 @@ const StockPage = () => {
                 exit={{ scale: 0.8, opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                style={{ maxWidth: '400px' }}
+                style={{ maxWidth: "400px" }}
               >
                 <h2 style={{ marginTop: 0 }}>Xác nhận xóa</h2>
-                <p style={{ margin: '15px 0', lineHeight: '1.5' }}>
+                <p style={{ margin: "15px 0", lineHeight: "1.5" }}>
                   Bạn có chắc chắn muốn xóa sản phẩm này? <br /> Hành động này
                   không thể hoàn tác.
                 </p>
@@ -417,18 +429,18 @@ const StockPage = () => {
                 onClick={handleNavigateToCreate}
                 disabled={!businessId}
               >
-                <FaPlus style={{ marginRight: '5px' }} /> Thêm sản phẩm mới
+                <FaPlus style={{ marginRight: "5px" }} /> Thêm sản phẩm mới
               </button>
             </div>
           </div>
           <table className="data-table stock-data-table">
             <thead>
               <tr>
-                <th style={{ width: '35%' }}>Tên sản phẩm</th>
-                <th style={{ width: '15%' }}>Ảnh</th>
-                <th style={{ width: '20%' }}>Giá</th>
-                <th style={{ width: '15%' }}>Tồn kho</th>
-                <th style={{ width: '15%' }}>Hành động</th>
+                <th style={{ width: "35%" }}>Tên sản phẩm</th>
+                <th style={{ width: "15%" }}>Ảnh</th>
+                <th style={{ width: "20%" }}>Giá</th>
+                <th style={{ width: "15%" }}>Tồn kho</th>
+                <th style={{ width: "15%" }}>Hành động</th>
               </tr>
             </thead>
             <tbody>{renderTableBody()}</tbody>

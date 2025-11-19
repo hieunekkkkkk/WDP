@@ -39,6 +39,7 @@
   margin: 40px auto 0;
   padding: 0 24px;
   padding-bottom: 40px;
+  min-height: 100vh;
 }
 
 /* ===== HEADER SECTION ===== */

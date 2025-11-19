@@ -809,9 +809,23 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
                                   className="reply-textarea"
                                   placeholder="Nhập phản hồi của bạn..."
                                   value={replyText}
-                                  onChange={(e) => setReplyText(e.target.value)}
+                                  onChange={(e) => {
+                                    if (e.target.value.length <= 250) {
+                                      setReplyText(e.target.value);
+                                    }
+                                  }}
                                   rows="3"
                                 />
+                                <p
+                                  style={{
+                                    fontStyle: "italic",
+                                    fontSize: "0.85rem",
+                                    marginTop: "4px",
+                                    color: "grey",
+                                  }}
+                                >
+                                  *Giới hạn 250 ký tự
+                                </p>
                                 <div className="reply-actions">
                                   <button
                                     className="submit-reply-btn"
@@ -950,7 +964,8 @@ const MyBusinessFeedback = ({ businessId, canDelete = false }) => {
             >
               <h3>Xác nhận {toggleModalActionText}</h3>
               <p>
-                Bạn có chắc chắn muốn {toggleModalActionText} đánh giá này không?
+                Bạn có chắc chắn muốn {toggleModalActionText} đánh giá này
+                không?
               </p>
               <div style={{ marginTop: "20px" }}>
                 <button

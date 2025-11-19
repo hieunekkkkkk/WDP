@@ -39,7 +39,7 @@ class BotKnowledgeService {
     return collectionName;
   }
 
-  // 🔹 Tạo kiến thức
+
   async createKnowledge(aibot_id, data, filePath = null) {
     try {
       let content = data.content;
@@ -55,7 +55,6 @@ class BotKnowledgeService {
 
       await newKnowledge.save();
 
-      // ✅ Index lại kiến thức sau khi tạo (nếu Qdrant available)
       try {
         const isQdrantAvailable = await qdrantClientSingleton.checkAvailability();
         if (isQdrantAvailable) {
@@ -79,17 +78,17 @@ class BotKnowledgeService {
     }
   }
 
-  // 🔹 Lấy tất cả kiến thức
+
   async getKnowledges() {
     return await botKnowledgeModel.find().sort({ created_at: -1 });
   }
 
-  // 🔹 Lấy kiến thức theo bot
+
   async getKnowledgeByBotId(aibot_id) {
     return await botKnowledgeModel.find({ aibot_id }).sort({ created_at: -1 });
   }
 
-  // 🔹 Cập nhật kiến thức
+
   async updateKnowledge(id, data) {
     const updated = await botKnowledgeModel.findByIdAndUpdate(
       id,
@@ -97,48 +96,54 @@ class BotKnowledgeService {
       { new: true }
     );
 
-    // Index lại nếu Qdrant available
+    // Re-index toàn bộ knowledge của bot (xóa collection và tạo lại từ DB)
     if (updated?.aibot_id) {
       try {
         const isQdrantAvailable = await qdrantClientSingleton.checkAvailability();
         if (isQdrantAvailable) {
+          console.log(`🔄 Re-indexing all knowledge for bot ${updated.aibot_id} after update`);
           await this.indexBotKnowledge(updated.aibot_id);
+          console.log(`✅ Successfully re-indexed bot ${updated.aibot_id}`);
         } else {
           console.warn("Knowledge updated but NOT indexed (Qdrant unavailable)");
         }
       } catch (indexError) {
         console.warn("Failed to index after update:", indexError.message);
+        throw new Error(`Qdrant indexing failed: ${indexError.message}`);
       }
     }
 
     return updated;
   }
 
-  // 🔹 Xóa kiến thức
+
   async deleteKnowledge(id) {
     const removed = await botKnowledgeModel.findByIdAndDelete(id);
 
-    // Index lại nếu Qdrant available
+    // Re-index toàn bộ knowledge của bot (xóa collection và tạo lại từ DB)
     if (removed?.aibot_id) {
       try {
         const isQdrantAvailable = await qdrantClientSingleton.checkAvailability();
         if (isQdrantAvailable) {
+          console.log(`🔄 Re-indexing all knowledge for bot ${removed.aibot_id} after delete`);
           await this.indexBotKnowledge(removed.aibot_id);
+          console.log(`✅ Successfully re-indexed bot ${removed.aibot_id}`);
         } else {
           console.warn("Knowledge deleted but NOT re-indexed (Qdrant unavailable)");
         }
       } catch (indexError) {
         console.warn("Failed to index after delete:", indexError.message);
+        throw new Error(`Qdrant indexing failed: ${indexError.message}`);
       }
     }
 
     return removed;
   }
 
-  // 🔹 Index toàn bộ kiến thức của 1 bot vào Qdrant
+
   async indexBotKnowledge(botId) {
     try {
-      // Kiểm tra Qdrant availability trước
+
       const isQdrantAvailable = await qdrantClientSingleton.checkAvailability();
       if (!isQdrantAvailable) {
         console.warn(`Skipping indexing for bot ${botId}: Qdrant unavailable`);
@@ -148,28 +153,28 @@ class BotKnowledgeService {
       const collectionName = this._getCollectionName(botId);
       const knowledge = await this.getKnowledgeByBotId(botId);
 
-      // 🔥 XÓA collection cũ để tránh duplicate
+
       try {
         await this.qdrantClient.deleteCollection(collectionName);
         console.log(`🗑️ Deleted old collection: ${collectionName}`);
       } catch (err) {
-        // Nếu collection không tồn tại thì bỏ qua
+
         console.log(`Collection ${collectionName} doesn't exist, creating new one`);
       }
 
-      // Nếu không có kiến thức nào, không cần tạo collection
+
       if (!knowledge.length) {
         console.log(`No knowledge to index for bot ${botId}`);
         return { indexed: 0 };
       }
 
-      // Tạo collection mới
+
       await this.qdrantClient.createCollection(collectionName, {
         vectors: { size: 3072, distance: "Cosine" },
       });
       console.log(`✨ Created new collection: ${collectionName}`);
 
-      // Tạo document
+
       const documents = knowledge.map(
         (k) =>
           new Document({
@@ -183,10 +188,10 @@ class BotKnowledgeService {
           })
       );
 
-      // Chia nhỏ văn bản
+
       const splitDocs = await this.textSplitter.splitDocuments(documents);
 
-      // Gắn vào vector store
+
       const vectorStore = await QdrantVectorStore.fromExistingCollection(
         this.embeddings,
         { client: this.qdrantClient, collectionName }
@@ -197,12 +202,11 @@ class BotKnowledgeService {
       return { indexed: splitDocs.length };
     } catch (err) {
       console.error("❌ Error indexing knowledge:", err.message);
-      // Không throw error để không làm crash service
+
       return { indexed: 0, error: err.message };
     }
   }
 
-  // 🔹 Tìm kiếm trong Qdrant
   async searchKnowledge(botId, query, limit = 5) {
     const collectionName = this._getCollectionName(botId);
     const vectorStore = await QdrantVectorStore.fromExistingCollection(

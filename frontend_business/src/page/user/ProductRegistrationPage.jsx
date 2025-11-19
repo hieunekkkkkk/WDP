@@ -26,6 +26,16 @@ const ProductRegistrationPage = () => {
   const handleAddImage = async (event) => {
     const files = Array.from(event.target.files);
 
+    if (files.length === 0) {
+      return;
+    }
+
+    if (images.length + files.length > 10) {
+      toast.error("Bạn chỉ có thể tải lên tối đa 10 hình ảnh.");
+      event.target.value = null;
+      return;
+    }
+
     // MỚI: Sử dụng toast.loading để có thể update
     const toastId = toast.loading("Đang tải ảnh lên Cloudinary...");
 
@@ -51,6 +61,7 @@ const ProductRegistrationPage = () => {
         autoClose: 5000,
       });
     }
+    event.target.value = null;
   };
 
   // MỚI: Hàm riêng để xóa ảnh và thêm toast
@@ -85,17 +96,31 @@ const ProductRegistrationPage = () => {
       return;
     }
 
-    // 2. Giá thành
-    // CẬP NHẬT: Validate giá >= 1000
-    if (!formData.productPrice || formData.productPrice < 1000) {
+    const price = parseInt(formData.productPrice, 10);
+
+    if (!price || price < 1000) {
       toast.error("Giá thành phải ít nhất là 1,000.");
       setLoading(false);
       return;
     }
 
+    if (price > 999999999) {
+      toast.error("Giá thành không được vượt quá 999,999,999.");
+      setLoading(false);
+      return;
+    }
+
     // 3. Số lượng
-    if (!formData.productNumber || formData.productNumber <= 0) {
+    const productNumber = parseInt(formData.productNumber, 10);
+
+    if (!productNumber || productNumber <= 0) {
       toast.error("Số lượng phải là số dương.");
+      setLoading(false);
+      return;
+    }
+
+    if (productNumber > 9999) {
+      toast.error("Số lượng không được vượt quá 9,999.");
       setLoading(false);
       return;
     }
@@ -117,6 +142,12 @@ const ProductRegistrationPage = () => {
     // 5. Hình ảnh
     if (images.length === 0) {
       toast.error("Vui lòng thêm ít nhất một hình ảnh.");
+      setLoading(false);
+      return;
+    }
+
+    if (images.length > 10) {
+      toast.error("Bạn chỉ có thể tải lên tối đa 10 hình ảnh.");
       setLoading(false);
       return;
     }
@@ -148,8 +179,8 @@ const ProductRegistrationPage = () => {
         product_name: formData.productName,
         product_description: formData.productDescription,
         product_image: images,
-        product_price: parseInt(formData.productPrice),
-        product_number: parseInt(formData.productNumber),
+        product_price: price,
+        product_number: productNumber,
         product_total_vote: 0,
         product_rating: 0,
       };
@@ -219,7 +250,10 @@ const ProductRegistrationPage = () => {
               </ul>
             </div>
             <div className="intro-image">
-              <img src="/1.png" alt="Product Illustration" />
+              <img
+                src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg"
+                alt="Product Illustration"
+              />
             </div>
           </div>
         </div>
@@ -295,7 +329,8 @@ const ProductRegistrationPage = () => {
                   value={formData.productPrice}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
-                  min="1000" // MỚI: Thêm min để trình duyệt hỗ trợ
+                  min="1000"
+                  max="999999999"
                 />
               </div>
               <div className="form-group">
@@ -307,7 +342,8 @@ const ProductRegistrationPage = () => {
                   value={formData.productNumber}
                   onChange={handleInputChange}
                   placeholder="Nhập ..."
-                  min="1" // CẬP NHẬT: Thêm min
+                  min="1" 
+                  max="9999"
                 />
               </div>
             </div>

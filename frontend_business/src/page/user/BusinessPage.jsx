@@ -31,6 +31,10 @@ const BusinessPage = () => {
 
   const itemsPerSlide = 3;
 
+  const availableProducts = products.filter(
+    (product) => product.product_number > 0
+  );
+
   useEffect(() => {
     const fetchBusinessData = async () => {
       if (!id) {
@@ -122,7 +126,7 @@ const BusinessPage = () => {
   };
 
   // Products handlers
-  const totalSlides = Math.ceil(products.length / itemsPerSlide);
+  const totalSlides = Math.ceil(availableProducts.length / itemsPerSlide);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % totalSlides);
   const prevSlide = () =>
@@ -130,8 +134,8 @@ const BusinessPage = () => {
   const goToSlide = (index) => setCurrentSlide(index);
 
   const getCurrentProducts = () => {
-    const startIndex = currentSlide * itemsPerSlide;
-    return products.slice(startIndex, startIndex + itemsPerSlide);
+    const startIndex = currentSlide * itemsPerSlide; 
+    return availableProducts.slice(startIndex, startIndex + itemsPerSlide);
   };
 
   const handleViewDetails = (productId) => {
@@ -198,9 +202,6 @@ const BusinessPage = () => {
     business.business_image && business.business_image.length > 0
       ? business.business_image
       : ["/1.png"];
-
-  const overallRating = business.business_rating || 0;
-  const totalReviews = `${business.business_total_vote || 0} Đánh giá`;
 
   return (
     <>
@@ -313,7 +314,7 @@ const BusinessPage = () => {
       </section>
 
       {/* Products Section */}
-      {products.length > 0 && (
+     {availableProducts.length > 0 && (
         <section className="business-products-section">
           <div className="business-products">
             <div className="products-container">

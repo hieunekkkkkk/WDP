@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import "./index.css";
 import "@fontsource/montserrat";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useGeolocation from "./utils/useGeolocation";
 import LandingPage from "./page/user/LandingPage";
@@ -41,6 +41,19 @@ import ManageSubjectPage from "./page/admin/ManageSubjectPage.jsx";
 const AppRoutes = () => {
   const location = useLocation();
 
+  const navigate = useNavigate();
+  const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      if (user.publicMetadata?.locked === true) {
+        if (location.pathname !== "/auth-callback") {
+          navigate("/auth-callback");
+        }
+      }
+    }
+  }, [isLoaded, user, location.pathname, navigate]);
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
@@ -61,6 +74,19 @@ const AppRoutes = () => {
           <Route path="messages" element={<StudentMessagesPage />} />
           <Route
             path="/dashboard/bot-knowledge/:botId"
+            element={
+              <>
+                <SignedIn>
+                  <KnowledgePage />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
+          <Route
+            path="/dashboard/knowledge/:botId"
             element={
               <>
                 <SignedIn>

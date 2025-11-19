@@ -302,7 +302,7 @@ export default function MyCalendar() {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.success("✅ Tạo Task thành công!");
+      toast.success(" Tạo Task thành công!");
       setOpenTaskModal(false);
 
       // Refresh task list

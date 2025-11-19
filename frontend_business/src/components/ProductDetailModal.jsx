@@ -125,7 +125,7 @@ const ProductDetailModal = ({
                         )
                       }
                       onError={(e) => {
-                        e.target.src = "/1.png";
+                        e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
                       }}
                     />
                   </div>
@@ -147,7 +147,7 @@ const ProductDetailModal = ({
                           src={thumb}
                           alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
                           onError={(e) => {
-                            e.target.src = "/1.png";
+                            e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
                           }}
                         />
                       </div>

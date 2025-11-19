@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import HeaderAi from '../components/ai-assistant/HeaderAi';
 import Sidebar from '../components/ai-assistant/Sidebar';
-import Footer from '../components/Footer';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import '../css/AiChatLayout.css';
+import { useUser } from '@clerk/clerk-react';
+import axios from "axios";
 
 const AiChatLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -13,27 +14,34 @@ const AiChatLayout = () => {
     return savedState !== null ? JSON.parse(savedState) : true;
   });
 
-  // Handle responsive sidebar behavior
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     if (window.innerWidth <= 768) {
-  //       setSidebarOpen(false);
-  //     } else {
-  //       setSidebarOpen(true);
-  //     }
-  //   };
+  const { user, isLoaded } = useUser();
 
-  //   // Set initial state
-  //   handleResize();
+  const navigate = useNavigate();
 
-  //   // Add event listener
-  //   window.addEventListener('resize', handleResize);
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
 
-  //   // Cleanup
-  //   return () => window.removeEventListener('resize', handleResize);
-  // }, []);
+    if (user) {
+      const checkBusinessStatus = async () => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/business/owner/${user.id}`);
 
-  // Handle dark mode persistence
+          const businessData = response.data?.[0];
+
+          if (businessData && businessData.business_active !== "active") {
+            navigate("/my-business");
+          }
+        } catch (error) {
+          console.error("Error checking business status:", error);
+        }
+      };
+
+      checkBusinessStatus();
+    }
+  }, [user, isLoaded, navigate]);
+
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode !== null) {

@@ -116,7 +116,7 @@ function PersonalizedPage() {
                     {/* Right Image Section */}
                     <div className="personalized-welcome-image">
                         <div className="personalized-image-placeholder">
-                            <img src="../public/1.png" alt="Welcome Image" />
+                            <img src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg" alt="Welcome Image" />
                         </div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@ function PersonalizedPage() {
                                                 alt={place.business_name}
                                                 loading="lazy"
                                                 onError={(e) => {
-                                                    e.target.src = '/1.png';
+                                                    e.target.src = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg';
                                                 }}
                                             />
                                         </div>

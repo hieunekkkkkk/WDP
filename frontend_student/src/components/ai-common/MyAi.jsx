@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 
@@ -453,6 +453,10 @@ export default function MyAi() {
   const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Lấy userId từ URL params hoặc từ Clerk user
+  const userId = searchParams.get('userId') || user?.id;
 
   const [bot, setBot] = useState(null);
   const [stack, setStack] = useState(null);
@@ -470,6 +474,10 @@ export default function MyAi() {
 
   // startNewChat
   const startNewChat = useCallback(() => {
+    if (!userId) {
+      console.warn('Cannot start new chat: userId is undefined');
+      return;
+    }
     const newChatId = generateUniqueId();
     setActiveChatId(newChatId);
     setMessages([]);
@@ -478,10 +486,10 @@ export default function MyAi() {
     setChats((prevChats) => {
       const newChat = { id: newChatId, title: "Cuộc trò chuyện mới" };
       const updatedChats = [...prevChats, newChat];
-      saveChatHistory(user.id, updatedChats);
+      saveChatHistory(userId, updatedChats);
       return updatedChats;
     });
-  }, [user?.id]);
+  }, [userId]);
 
   // handleSelectChat
   const handleSelectChat = useCallback((chatId) => {
@@ -495,13 +503,17 @@ export default function MyAi() {
   // handleDeleteChat (NEW)
   const handleDeleteChat = useCallback(
     (chatId) => {
+      if (!userId) {
+        console.warn('Cannot delete chat: userId is undefined');
+        return;
+      }
       // 1. Xóa tin nhắn khỏi localStorage
       deleteMessages(chatId);
 
       // 2. Xóa chat khỏi state và localStorage history
       setChats((prevChats) => {
         const updatedChats = prevChats.filter((chat) => chat.id !== chatId);
-        saveChatHistory(user.id, updatedChats);
+        saveChatHistory(userId, updatedChats);
 
         // 3. Nếu xóa chat đang hoạt động
         if (chatId === activeChatId) {
@@ -518,12 +530,12 @@ export default function MyAi() {
 
       toast.success("Đã xóa cuộc trò chuyện!");
     },
-    [user?.id, activeChatId, startNewChat, handleSelectChat]
+    [userId, activeChatId, startNewChat, handleSelectChat]
   );
 
   // fetchData
   const fetchData = useCallback(async () => {
-    if (!user?.id) return;
+    if (!userId) return;
 
     try {
       setLoading(true);
@@ -532,10 +544,11 @@ export default function MyAi() {
       let loadedBot = null;
       try {
         const botRes = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${user.id}`
+          `${import.meta.env.VITE_BE_URL}/api/aibot/owner/${userId}`
         );
 
-        if (botRes.data) {
+        // API trả về một bot object (không phải array), hoặc null nếu không tìm thấy
+        if (botRes.data && botRes.data.id) {
           loadedBot = botRes.data;
           setBot(loadedBot);
         }
@@ -545,6 +558,29 @@ export default function MyAi() {
 
       // Load Stack if no Bot
       if (!loadedBot) {
+        // Kiểm tra xem user đã thanh toán thành công chưa
+        try {
+          const paymentRes = await axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/payment/userid/${userId}`
+          );
+          const payments = paymentRes.data?.data || [];
+          
+          // Tìm payment completed với amount = 50000 (gói student)
+          const hasCompletedPayment = payments.some(
+            (p) => p.payment_status === 'completed' && p.payment_amount === 50000
+          );
+
+          if (hasCompletedPayment) {
+            // Đã thanh toán nhưng chưa có bot -> redirect để tạo bot
+            console.log('User đã thanh toán nhưng chưa tạo bot, redirect để tạo bot');
+            navigate('/dashboard/knowledge/create-bot?payment=success', { replace: true });
+            return;
+          }
+        } catch (paymentErr) {
+          console.warn('Lỗi khi kiểm tra payment:', paymentErr.message);
+        }
+
+        // Chưa thanh toán -> load stack
         const stackRes = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/stack`
         );
@@ -554,17 +590,19 @@ export default function MyAi() {
         setStack(personal || null);
       }
 
-      // Load chat history
-      const loadedChats = loadChatHistory(user.id);
-      setChats(loadedChats);
+      // Load chat history (only if userId exists)
+      if (userId) {
+        const loadedChats = loadChatHistory(userId);
+        setChats(loadedChats);
 
-      // Select latest chat or start new one
-      if (loadedChats.length > 0) {
-        // Get the latest chat
-        const latestChat = loadedChats[loadedChats.length - 1];
-        handleSelectChat(latestChat.id);
-      } else {
-        startNewChat();
+        // Select latest chat or start new one
+        if (loadedChats.length > 0) {
+          // Get the latest chat
+          const latestChat = loadedChats[loadedChats.length - 1];
+          handleSelectChat(latestChat.id);
+        } else {
+          startNewChat();
+        }
       }
     } catch (err) {
       console.error("Lỗi tải My AI:", err);
@@ -572,9 +610,15 @@ export default function MyAi() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, setBot, setStack, startNewChat, handleSelectChat]);
+  }, [userId, setBot, setStack, startNewChat, handleSelectChat]);
 
   useEffect(() => {
+    // Chỉ fetch data khi userId đã có
+    if (!userId) {
+      console.log('Waiting for userId to load...');
+      return;
+    }
+
     const p = new URLSearchParams(location.search);
     if (p.get("payment") === "failed")
       toast.error("Thanh toán thất bại hoặc đã hủy.");
@@ -584,7 +628,7 @@ export default function MyAi() {
       toast.error("Có lỗi khi xác thực thanh toán, vui lòng thử lại.");
 
     fetchData();
-  }, [fetchData, location.search]);
+  }, [userId, fetchData, location.search]);
 
   // handleAskBot
   const handleAskBot = useCallback(
@@ -632,7 +676,7 @@ export default function MyAi() {
         });
 
         // 3. Update chat title if first message
-        if (messages.length === 0) {
+        if (messages.length === 0 && userId) {
           setChats((prevChats) => {
             const updatedChats = prevChats.map((chat) =>
               chat.id === activeChatId
@@ -643,7 +687,7 @@ export default function MyAi() {
                   }
                 : chat
             );
-            saveChatHistory(user.id, updatedChats);
+            saveChatHistory(userId, updatedChats);
             return updatedChats;
           });
         }
@@ -665,7 +709,7 @@ export default function MyAi() {
         setAsking(false);
       }
     },
-    [bot, question, activeChatId, messages.length, user.id]
+    [bot, question, activeChatId, messages.length, userId]
   );
 
   // handlePickSuggestion
@@ -688,15 +732,15 @@ export default function MyAi() {
           throw new Error("Thiếu cấu hình máy chủ (VITE_BE_URL)");
         }
 
-        if (!user?.id || !selectedStack?._id) {
+        if (!userId || !selectedStack?._id) {
           throw new Error(
-            `Thiếu thông tin ${!user?.id ? "người dùng" : "gói đăng ký"}`
+            `Thiếu thông tin ${!userId ? "người dùng" : "gói đăng ký"}`
           );
         }
 
         const paymentUrl = `${be}/api/payment`;
         const paymentData = {
-          user_id: user.id,
+          user_id: userId,
           stack_id: selectedStack._id,
         };
 
@@ -734,7 +778,7 @@ export default function MyAi() {
         setPaymentLoading(false);
       }
     },
-    [user?.id]
+    [userId]
   );
 
   // handleNavigateToKnowledge

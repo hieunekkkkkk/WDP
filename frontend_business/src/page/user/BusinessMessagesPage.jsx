@@ -572,10 +572,11 @@ const BusinessMessagesPage = () => {
 
                 <input
                   type="text"
-                  placeholder={`Send as ${responseType}...`}
+                  placeholder={`Nhắn bằng ${responseType}...`}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
+                  maxLength={250}
                   disabled={
                     responseType === "Bot" && hasBotAccess !== "haveKnowledge"
                   }

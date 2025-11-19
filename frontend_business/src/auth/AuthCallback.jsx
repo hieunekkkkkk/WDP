@@ -19,6 +19,12 @@ const AuthCallback = () => {
       hasRun.current = true;
 
       if (isSignedIn && user) {
+        if (user.publicMetadata?.locked === true) {
+          toast.error("Tài khoản của bạn đã bị khóa.");
+          await signOut();
+          navigate("/");
+          return;
+        }
         try {
           const clerkToken = await getToken({ template: 'node-backend' });
           if (!clerkToken) throw new Error('Không lấy được token từ Clerk');

@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
-import axios from 'axios';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import { FaPlus } from 'react-icons/fa';
-import BusinessProductModal from '../../components/BusinessProductModal';
-import { getCurrentUserId } from '../../utils/useCurrentUserId';
-import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
-import '../../css/MyBusinessPage.css';
-import { sendEmail } from '../../utils/sendEmail';
-import { toast } from 'react-toastify';
-import { LuTextCursorInput } from 'react-icons/lu';
-import LoadingScreen from '../../components/LoadingScreen';
-import MapModal from '../../components/MapModal';
-import MyBusinessFeedback from '../../components/MyBusinessFeedback';
-import { FaEye, FaTrash } from 'react-icons/fa6';
-import { motion, AnimatePresence } from 'framer-motion';
-import { RxCross2 } from 'react-icons/rx';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
+import axios from "axios";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import { FaPlus } from "react-icons/fa";
+import BusinessProductModal from "../../components/BusinessProductModal";
+import { getCurrentUserId } from "../../utils/useCurrentUserId";
+import { uploadToCloudinary } from "../../utils/uploadToCloudinary";
+import "../../css/MyBusinessPage.css";
+import { sendEmail } from "../../utils/sendEmail";
+import { toast } from "react-toastify";
+import { LuTextCursorInput } from "react-icons/lu";
+import LoadingScreen from "../../components/LoadingScreen";
+import MapModal from "../../components/MapModal";
+import MyBusinessFeedback from "../../components/MyBusinessFeedback";
+import { FaEye, FaTrash } from "react-icons/fa6";
+import { motion, AnimatePresence } from "framer-motion";
+import { RxCross2 } from "react-icons/rx";
 
 const MyBusinessPage = () => {
   const navigate = useNavigate();
@@ -40,14 +40,15 @@ const MyBusinessPage = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [planExpired, setPlanExpired] = useState(false);
   const [overallRating, setOverallRating] = useState(0);
-  const [totalReviews, setTotalReviews] = useState('0 Đánh giá');
-  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState("0 Đánh giá");
   const [showActiveOnly, setShowActiveOnly] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [imageIndexToDelete, setImageIndexToDelete] = useState(null);
   const [isProductDeleteModalOpen, setIsProductDeleteModalOpen] =
     useState(false);
   const [productIdToDelete, setProductIdToDelete] = useState(null);
+  const [currentProductIndex, setCurrentProductIndex] = useState(0);
+  const PRODUCTS_PER_PAGE = 3;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -57,7 +58,7 @@ const MyBusinessPage = () => {
         );
         setCategories(response.data.categories || []);
       } catch (err) {
-        console.error('Error fetching categories:', err);
+        console.error("Error fetching categories:", err);
       }
     };
 
@@ -80,7 +81,7 @@ const MyBusinessPage = () => {
         const businessesResponse = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/business`,
           {
-            headers: { 'Content-Type': 'application/json' },
+            headers: { "Content-Type": "application/json" },
             params: { page: 1, limit: 10000 },
           }
         );
@@ -90,13 +91,13 @@ const MyBusinessPage = () => {
           if (businesses.businesses && Array.isArray(businesses.businesses)) {
             businesses = businesses.businesses;
           } else {
-            throw new Error('Dữ liệu từ API không phải là mảng doanh nghiệp.');
+            throw new Error("Dữ liệu từ API không phải là mảng doanh nghiệp.");
           }
         }
 
         if (!businesses || businesses.length === 0) {
           setError(
-            'Không tìm thấy doanh nghiệp nào từ API. Vui lòng kiểm tra kết nối hoặc dữ liệu.'
+            "Không tìm thấy doanh nghiệp nào từ API. Vui lòng kiểm tra kết nối hoặc dữ liệu."
           );
           setLoading(false);
           return;
@@ -127,31 +128,31 @@ const MyBusinessPage = () => {
 
         const [businessResult, productsResult, feedbacksResult] = results;
 
-        if (businessResult.status === 'fulfilled') {
+        if (businessResult.status === "fulfilled") {
           setBusiness(businessResult.value.data);
           setIsOpen(businessResult.value.data.business_status || false);
         } else {
-          throw new Error('Không thể tải thông tin doanh nghiệp');
+          throw new Error("Không thể tải thông tin doanh nghiệp");
         }
 
-        if (productsResult.status === 'fulfilled') {
+        if (productsResult.status === "fulfilled") {
           setProducts(productsResult.value.data?.products || []);
         } else {
-          console.warn('Could not load products:', productsResult.reason);
+          console.warn("Could not load products:", productsResult.reason);
           setProducts([]);
         }
 
-        if (feedbacksResult.status === 'fulfilled') {
+        if (feedbacksResult.status === "fulfilled") {
           setFeedbacks(feedbacksResult.value.data?.data || []);
         } else {
-          console.warn('Could not load feedbacks:', feedbacksResult.reason);
+          console.warn("Could not load feedbacks:", feedbacksResult.reason);
           setFeedbacks([]);
         }
 
         checkPlanExpiryAndUpdate(userBusiness);
       } catch (err) {
         console.error(
-          'Error fetching business data:',
+          "Error fetching business data:",
           err.response ? err.response.data : err.message
         );
         setError(
@@ -175,13 +176,13 @@ const MyBusinessPage = () => {
       if (
         diffInDays <= 30 &&
         plan.planDeactivated &&
-        business.business_active !== 'active'
+        business.business_active !== "active"
       ) {
         try {
           await axios.put(
             `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
             {
-              business_active: 'active',
+              business_active: "active",
             }
           );
 
@@ -195,7 +196,7 @@ const MyBusinessPage = () => {
             },
           });
         } catch (err) {
-          console.error('Error reactivating business:', err);
+          console.error("Error reactivating business:", err);
         }
 
         return;
@@ -210,7 +211,7 @@ const MyBusinessPage = () => {
           await axios.put(
             `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
             {
-              business_active: 'pending',
+              business_active: "pending",
             }
           );
 
@@ -220,14 +221,14 @@ const MyBusinessPage = () => {
           const owner = userRes.data.users;
 
           if (!owner?.email || !owner?.fullName) {
-            console.warn('Missing owner email or name. Skipping email.');
+            console.warn("Missing owner email or name. Skipping email.");
             return;
           }
 
           await sendEmail(import.meta.env.VITE_EMAILJS_TEMPLATE_REJECT_ID, {
             email: owner.email,
             owner_name: owner.fullName,
-            subject: 'Gói đăng ký doanh nghiệp của bạn đã hết hạn',
+            subject: "Gói đăng ký doanh nghiệp của bạn đã hết hạn",
             message_body: `
           Gói đăng ký của doanh nghiệp <strong>${business.business_name}</strong> đã hết hạn sau 30 ngày sử dụng.<br /><br />
           Trạng thái hiển thị của doanh nghiệp đã được chuyển về <strong>chờ duyệt</strong>.<br /><br />
@@ -247,7 +248,7 @@ const MyBusinessPage = () => {
           });
         } catch (err) {
           console.error(
-            'Error updating status or sending expiration email:',
+            "Error updating status or sending expiration email:",
             err
           );
         }
@@ -271,7 +272,7 @@ const MyBusinessPage = () => {
 
           if (showActiveOnly) {
             feedbacks = feedbacks.filter(
-              (fb) => fb.feedback_status === 'active'
+              (fb) => fb.feedback_status === "active"
             );
           }
 
@@ -285,12 +286,12 @@ const MyBusinessPage = () => {
           setTotalReviews(`${feedbacks.length} Đánh giá`);
         } else {
           setOverallRating(0);
-          setTotalReviews('0 Đánh giá');
+          setTotalReviews("0 Đánh giá");
         }
       } catch (err) {
-        console.error('Error fetching business feedback:', err);
+        console.error("Error fetching business feedback:", err);
         setOverallRating(0);
-        setTotalReviews('0 Đánh giá');
+        setTotalReviews("0 Đánh giá");
       }
     };
 
@@ -312,7 +313,7 @@ const MyBusinessPage = () => {
               if (res.data?.success && Array.isArray(res.data.data)) {
                 // Chỉ lấy feedback active
                 const feedbacks = res.data.data.filter(
-                  (fb) => fb.feedback_status === 'active'
+                  (fb) => fb.feedback_status === "active"
                 );
 
                 const total = feedbacks.reduce(
@@ -340,7 +341,7 @@ const MyBusinessPage = () => {
 
         setProducts(updatedProducts);
       } catch (err) {
-        console.error('Error fetching all product feedbacks:', err);
+        console.error("Error fetching all product feedbacks:", err);
       }
     };
 
@@ -354,11 +355,11 @@ const MyBusinessPage = () => {
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
         { business_status: newStatus },
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { "Content-Type": "application/json" } }
       );
       setBusiness((prev) => ({ ...prev, business_status: newStatus }));
     } catch (err) {
-      console.error('Error updating business_status:', err);
+      console.error("Error updating business_status:", err);
       setError(`Không thể cập nhật trạng thái. Chi tiết: ${err.message}`);
       setIsOpen(!newStatus);
     }
@@ -366,59 +367,84 @@ const MyBusinessPage = () => {
 
   const handleEdit = (field) => {
     setEditFields({ ...editFields, [field]: true });
-    setEditedValues({ ...editedValues, [field]: business[field] || '' });
+    if (field === "business_time") {
+      setEditedValues((prev) => ({
+        ...prev,
+        [field]: business[field] || { open: "08:00", close: "22:00" },
+      }));
+    } else {
+      setEditedValues((prev) => ({
+        ...prev,
+        [field]: business[field] || "",
+      }));
+    }
   };
-
   const handleChange = (e, field) => {
     setEditedValues({ ...editedValues, [field]: e.target.value });
+  };
+
+  const handleTimeChange = (e, part) => {
+    setEditedValues((prev) => ({
+      ...prev,
+      business_time: {
+        ...(prev.business_time || business.business_time || {}),
+        [part]: e.target.value,
+      },
+    }));
   };
 
   const handleBlur = async (field, businessId) => {
     const newValue = editedValues[field];
 
-    if (field === 'business_phone' && newValue) {
+    if (field === "business_phone" && newValue) {
       const phoneRegex = /^0\d{9}$/;
       if (!phoneRegex.test(newValue)) {
         toast.error(
-          'Số điện thoại không hợp lệ. Phải là 10 số, bắt đầu bằng 0.'
+          "Số điện thoại không hợp lệ. Phải là 10 số, bắt đầu bằng 0."
         );
         setEditedValues((prev) => ({
           ...prev,
-          [field]: business[field] || '',
+          [field]: business[field] || "",
         }));
         setEditFields((prev) => ({ ...prev, [field]: false }));
         return;
       }
     }
 
-    if (field === 'business_name' && newValue && newValue.trim().length > 100) {
-      toast.error('Tên doanh nghiệp không được vượt quá 100 ký tự.');
+    if (field === "business_name" && newValue && newValue.trim().length > 100) {
+      toast.error("Tên doanh nghiệp không được vượt quá 100 ký tự.");
       setEditedValues((prev) => ({
         ...prev,
-        [field]: business[field] || '',
+        [field]: business[field] || "",
       }));
       setEditFields((prev) => ({ ...prev, [field]: false }));
       return;
     }
 
     if (
-      field === 'business_detail' &&
+      field === "business_detail" &&
       newValue &&
       newValue.trim().length > 1000
     ) {
-      toast.error('Mô tả doanh nghiệp không được vượt quá 1000 ký tự.');
+      toast.error("Mô tả doanh nghiệp không được vượt quá 1000 ký tự.");
       setEditedValues((prev) => ({
         ...prev,
-        [field]: business[field] || '',
+        [field]: business[field] || "",
       }));
       setEditFields((prev) => ({ ...prev, [field]: false }));
       return;
     }
 
-    const isSame =
-      field === 'business_category_id'
-        ? newValue === business.business_category_id?._id
-        : newValue === business[field];
+    let isSame = false;
+    if (field === "business_category_id") {
+      isSame = newValue === business.business_category_id?._id;
+    } else if (field === "business_time") {
+      isSame =
+        newValue?.open === business.business_time?.open &&
+        newValue?.close === business.business_time?.close;
+    } else {
+      isSame = newValue === business[field];
+    }
 
     if (isSame) {
       setEditFields((prev) => ({ ...prev, [field]: false }));
@@ -427,16 +453,16 @@ const MyBusinessPage = () => {
 
     try {
       const payload =
-        field === 'business_category_id'
+        field === "business_category_id"
           ? { business_category_id: newValue?._id || newValue }
           : { [field]: newValue };
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${businessId}`,
         payload,
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (field === 'business_category_id') {
+      if (field === "business_category_id") {
         const updatedCategory = categories.find(
           (c) => c._id === (newValue?._id || newValue)
         );
@@ -460,7 +486,15 @@ const MyBusinessPage = () => {
 
     if (files.length === 0) return;
 
-    const toastId = toast.loading('Đang tải ảnh lên...');
+    const currentTotalImages =
+      (business.business_image || []).length + newImages.length;
+
+    if (currentTotalImages + files.length > 10) {
+      toast.error("Bạn chỉ có thể tải lên tối đa 10 hình ảnh.");
+      return;
+    }
+
+    const toastId = toast.loading("Đang tải ảnh lên...");
 
     try {
       const uploadedUrls = await uploadToCloudinary(files);
@@ -468,27 +502,27 @@ const MyBusinessPage = () => {
       setError(null);
       toast.update(toastId, {
         render: "Tải ảnh lên thành công! Nhấn 'Lưu ảnh' bên dưới.",
-        type: 'success',
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
     } catch (error) {
       toast.update(toastId, {
-        render: 'Không thể tải ảnh lên Cloudinary',
-        type: 'error',
+        render: "Không thể tải ảnh lên Cloudinary",
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
     } finally {
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
   const handleSaveImages = async () => {
     if (newImages.length > 0 && business) {
-      const toastId = toast.loading('Đang lưu ảnh...');
+      const toastId = toast.loading("Đang lưu ảnh...");
       try {
         const updatedImages = [
           ...(business.business_image || []),
@@ -498,23 +532,23 @@ const MyBusinessPage = () => {
         await axios.put(
           `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
           { business_image: updatedImages },
-          { headers: { 'Content-Type': 'application/json' } }
+          { headers: { "Content-Type": "application/json" } }
         );
 
         setBusiness((prev) => ({ ...prev, business_image: updatedImages }));
         setNewImages([]);
         toast.update(toastId, {
-          render: 'Lưu ảnh thành công!',
-          type: 'success',
+          render: "Lưu ảnh thành công!",
+          type: "success",
           isLoading: false,
           autoClose: 3000,
         });
       } catch (err) {
-        console.error('Error saving images:', err);
-        setError('Không thể lưu ảnh. Vui lòng kiểm tra kết nối.');
+        console.error("Error saving images:", err);
+        setError("Không thể lưu ảnh. Vui lòng kiểm tra kết nối.");
         toast.update(toastId, {
-          render: 'Không thể lưu ảnh. Vui lòng thử lại.',
-          type: 'error',
+          render: "Không thể lưu ảnh. Vui lòng thử lại.",
+          type: "error",
           isLoading: false,
           autoClose: 5000,
         });
@@ -525,7 +559,7 @@ const MyBusinessPage = () => {
   const handleDeleteImage = (index) => {
     const allImages = [...(business.business_image || []), ...newImages];
     if (allImages.length === 1) {
-      toast.warning('Bạn phải giữ lại ít nhất một ảnh.');
+      toast.warning("Bạn phải giữ lại ít nhất một ảnh.");
       return;
     }
     setImageIndexToDelete(index);
@@ -536,13 +570,13 @@ const MyBusinessPage = () => {
     const index = imageIndexToDelete;
     const allImages = [...(business.business_image || []), ...newImages];
     setIsDeleteModalOpen(false);
-    const toastId = toast.loading('Đang xóa ảnh...');
+    const toastId = toast.loading("Đang xóa ảnh...");
     try {
       const updatedImages = allImages.filter((_, i) => i !== index);
       await axios.put(
         `${import.meta.env.VITE_BE_URL}/api/business/${business._id}`,
         { business_image: updatedImages },
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { "Content-Type": "application/json" } }
       );
       setBusiness((prev) => ({
         ...prev,
@@ -555,16 +589,16 @@ const MyBusinessPage = () => {
         setSelectedImage((prev) => prev - 1);
       }
       toast.update(toastId, {
-        render: 'Xóa ảnh thành công!',
-        type: 'success',
+        render: "Xóa ảnh thành công!",
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
     } catch (err) {
-      console.error('Error deleting image:', err);
+      console.error("Error deleting image:", err);
       toast.update(toastId, {
-        render: 'Không thể xóa ảnh. Vui lòng thử lại.',
-        type: 'error',
+        render: "Không thể xóa ảnh. Vui lòng thử lại.",
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
@@ -579,12 +613,12 @@ const MyBusinessPage = () => {
       const transformedProduct = {
         id: product._id,
         name: product.product_name,
-        price: product.product_price || '0',
+        price: product.product_price || "0",
         rating: product.product_rating || 0,
         reviews: `${product.product_total_vote || 0} Đánh giá`,
-        mainImage: product.product_image?.[0] || '1.png',
-        thumbnails: product.product_image || ['1.png', '2.png', '3.png'],
-        description: product.product_description || 'Không có mô tả',
+        mainImage: product.product_image?.[0] || "1.png",
+        thumbnails: product.product_image || ["1.png", "2.png", "3.png"],
+        description: product.product_description || "Không có mô tả",
         isSaved: true,
       };
       setSelectedProduct(transformedProduct);
@@ -596,7 +630,7 @@ const MyBusinessPage = () => {
     if (!productIdToDelete) return;
 
     setIsProductDeleteModalOpen(false);
-    const toastId = toast.loading('Đang xóa sản phẩm...');
+    const toastId = toast.loading("Đang xóa sản phẩm...");
 
     try {
       await axios.delete(
@@ -608,18 +642,18 @@ const MyBusinessPage = () => {
       );
 
       toast.update(toastId, {
-        render: 'Xóa sản phẩm thành công!',
-        type: 'success',
+        render: "Xóa sản phẩm thành công!",
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
     } catch (err) {
-      console.error('Error deleting product:', err);
+      console.error("Error deleting product:", err);
       toast.update(toastId, {
         render: `Không thể xóa sản phẩm. Lỗi: ${
           err.response?.data?.message || err.message
         }`,
-        type: 'error',
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
@@ -634,15 +668,35 @@ const MyBusinessPage = () => {
   };
 
   const renderStars = (rating) =>
-    '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+    "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
 
   const displayedProducts = isExpanded ? products : products.slice(0, 6);
 
   const handleKeyDown = (e, field) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleBlur(field);
     }
+  };
+
+  const handleNextProducts = () => {
+    setCurrentProductIndex((prevIndex) => {
+      const newIndex = prevIndex + PRODUCTS_PER_PAGE;
+      if (newIndex >= products.length) {
+        return prevIndex;
+      }
+      return newIndex;
+    });
+  };
+
+  const handlePrevProducts = () => {
+    setCurrentProductIndex((prevIndex) => {
+      const newIndex = prevIndex - PRODUCTS_PER_PAGE;
+      if (newIndex < 0) {
+        return 0;
+      }
+      return newIndex;
+    });
   };
 
   if (loading) {
@@ -678,22 +732,22 @@ const MyBusinessPage = () => {
               <div className="business-warning">
                 <button
                   className="business-detail-reapprove-btn"
-                  onClick={() => navigate('/stacks')}
+                  onClick={() => navigate("/stacks")}
                 >
                   Gói doanh nghiệp của bạn đã hết hạn. Vui lòng nhấn vào đây để
                   gia hạn!
                 </button>
               </div>
             )}
-            {business?.business_active === 'pending' && !planExpired && (
+            {business?.business_active === "pending" && !planExpired && (
               <div className="business-warning">
                 Doanh nghiệp của bạn đang trong quá trình xét duyệt bởi quản trị
                 viên. <br />
-                Vui lòng đợi hoặc liên hệ qua email{' '}
+                Vui lòng đợi hoặc liên hệ qua email{" "}
                 <b>locallinkhola@gmail.com</b> để được hỗ trợ.
               </div>
             )}
-            {business?.business_active === 'inactive' && (
+            {business?.business_active === "inactive" && (
               <div className="business-warning">
                 <button
                   className="business-detail-reapprove-btn"
@@ -703,7 +757,7 @@ const MyBusinessPage = () => {
                     const ONE_DAY = 24 * 60 * 60 * 1000;
 
                     const toastId = toast.loading(
-                      'Đang kiểm tra và gửi email...'
+                      "Đang kiểm tra và gửi email..."
                     );
 
                     try {
@@ -717,7 +771,7 @@ const MyBusinessPage = () => {
                           );
                           toast.update(toastId, {
                             render: `Bạn đã gửi yêu cầu hôm nay. Vui lòng thử lại sau ${hoursLeft} giờ.`,
-                            type: 'info',
+                            type: "info",
                             isLoading: false,
                             autoClose: 5000,
                           });
@@ -743,16 +797,16 @@ const MyBusinessPage = () => {
                       });
 
                       toast.update(toastId, {
-                        render: 'Yêu cầu đã được gửi đến quản trị viên.',
-                        type: 'success',
+                        render: "Yêu cầu đã được gửi đến quản trị viên.",
+                        type: "success",
                         isLoading: false,
                         autoClose: 5000,
                       });
                     } catch (error) {
-                      console.error('Metadata or email error:', error);
+                      console.error("Metadata or email error:", error);
                       toast.update(toastId, {
-                        render: 'Không thể gửi email. Vui lòng thử lại sau.',
-                        type: 'error',
+                        render: "Không thể gửi email. Vui lòng thử lại sau.",
+                        type: "error",
                         isLoading: false,
                         autoClose: 7000,
                       });
@@ -768,10 +822,10 @@ const MyBusinessPage = () => {
               <div className="business-images">
                 <div className="main-image">
                   <img
-                    src={allImages[selectedImage] || '1.png'}
+                    src={allImages[selectedImage] || "1.png"}
                     alt={`${business.business_name} main ${selectedImage + 1}`}
                     className="main-img"
-                    onError={(e) => (e.target.src = '1.png')}
+                    onError={(e) => (e.target.src = "1.png")}
                   />
                 </div>
                 <div className="thumbnail-images">
@@ -779,19 +833,19 @@ const MyBusinessPage = () => {
                     <div
                       key={idx}
                       className={`thumbnail ${
-                        selectedImage === idx ? 'active' : ''
+                        selectedImage === idx ? "active" : ""
                       }`}
-                      style={{ position: 'relative', cursor: 'pointer' }}
+                      style={{ position: "relative", cursor: "pointer" }}
                       onClick={() => setSelectedImage(idx)} // Ensure this handler is working
                     >
                       <img
-                        src={img || '1.png'}
+                        src={img || "1.png"}
                         alt={`${business.business_name} thumbnail ${idx + 1}`}
-                        onError={(e) => (e.target.src = '1.png')}
+                        onError={(e) => (e.target.src = "1.png")}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
                         }}
                       />
                       <button
@@ -814,19 +868,19 @@ const MyBusinessPage = () => {
                       multiple
                       ref={fileInputRef}
                       onChange={handleAddImage}
-                      style={{ display: 'none' }}
+                      style={{ display: "none" }}
                     />
                   </label>
                   {newImages.length > 0 && (
                     <button
                       onClick={handleSaveImages}
                       style={{
-                        padding: '0.5rem 1rem',
-                        background: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
+                        padding: "0.5rem 1rem",
+                        background: "#4CAF50",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
                       }}
                     >
                       Lưu ảnh
@@ -837,13 +891,13 @@ const MyBusinessPage = () => {
               <div className="business-info">
                 <div className="editable-field">
                   <h1 className="business-title">
-                    {editFields['business_name'] ? (
+                    {editFields["business_name"] ? (
                       <input
                         type="text"
-                        value={editedValues['business_name'] || ''}
-                        onChange={(e) => handleChange(e, 'business_name')}
-                        onBlur={() => handleBlur('business_name', business._id)}
-                        onKeyDown={(e) => handleKeyDown(e, 'business_name')}
+                        value={editedValues["business_name"] || ""}
+                        onChange={(e) => handleChange(e, "business_name")}
+                        onBlur={() => handleBlur("business_name", business._id)}
+                        onKeyDown={(e) => handleKeyDown(e, "business_name")}
                         autoFocus
                         maxLength="100"
                       />
@@ -851,10 +905,10 @@ const MyBusinessPage = () => {
                       business.business_name
                     )}
                   </h1>
-                  {!editFields['business_name'] && (
+                  {!editFields["business_name"] && (
                     <p
                       className="edit-btn"
-                      onClick={() => handleEdit('business_name')}
+                      onClick={() => handleEdit("business_name")}
                     >
                       <LuTextCursorInput />
                     </p>
@@ -872,35 +926,35 @@ const MyBusinessPage = () => {
                       <span className="toggle-slider"></span>
                     </label>
                     <span
-                      className={`status-text ${isOpen ? 'open' : 'closed'}`}
+                      className={`status-text ${isOpen ? "open" : "closed"}`}
                     >
-                      {isOpen ? 'Đang mở cửa' : 'Đang đóng cửa'}
+                      {isOpen ? "Đang mở cửa" : "Đang đóng cửa"}
                     </span>
                   </div>
                 </div>
                 <div className="editable-field">
-                  <p className="business-description" style={{ width: '100%' }}>
-                    {editFields['business_detail'] ? (
+                  <p className="business-description" style={{ width: "100%" }}>
+                    {editFields["business_detail"] ? (
                       <textarea
-                        value={editedValues['business_detail'] || ''}
-                        onChange={(e) => handleChange(e, 'business_detail')}
+                        value={editedValues["business_detail"] || ""}
+                        onChange={(e) => handleChange(e, "business_detail")}
                         onBlur={() =>
-                          handleBlur('business_detail', business._id)
+                          handleBlur("business_detail", business._id)
                         }
-                        onKeyDown={(e) => handleKeyDown(e, 'business_detail')}
+                        onKeyDown={(e) => handleKeyDown(e, "business_detail")}
                         autoFocus
                         maxLength="1000"
                         rows="10"
-                        style={{ width: '100%', fontSize: '0.9rem' }}
+                        style={{ width: "100%", fontSize: "0.9rem" }}
                       />
                     ) : (
-                      business.business_detail || 'Không có mô tả'
+                      business.business_detail || "Không có mô tả"
                     )}
                   </p>
-                  {!editFields['business_detail'] && (
+                  {!editFields["business_detail"] && (
                     <p
                       className="edit-btn"
-                      onClick={() => handleEdit('business_detail')}
+                      onClick={() => handleEdit("business_detail")}
                     >
                       <LuTextCursorInput />
                     </p>
@@ -913,11 +967,11 @@ const MyBusinessPage = () => {
 
                   <div
                     className="toggle-container"
-                    style={{ marginLeft: '1rem' }}
+                    style={{ marginLeft: "1rem" }}
                   >
                     <label
                       className="toggle-container"
-                      style={{ marginLeft: '1rem' }}
+                      style={{ marginLeft: "1rem" }}
                     >
                       <input
                         type="checkbox"
@@ -929,8 +983,8 @@ const MyBusinessPage = () => {
                       <span className="toggle-slider"></span>
                       <span className="status-text">
                         {showActiveOnly
-                          ? 'Chỉ đánh giá hoạt động'
-                          : 'Tất cả đánh giá'}
+                          ? "Chỉ đánh giá hoạt động"
+                          : "Tất cả đánh giá"}
                       </span>
                     </label>
                   </div>
@@ -939,38 +993,38 @@ const MyBusinessPage = () => {
                   <h3 className="contact-title">Thông tin liên hệ</h3>
                   <div className="editable-field">
                     <p className="contact-detail">
-                      <strong>Số điện thoại:</strong>{' '}
-                      {editFields['business_phone'] ? (
+                      <strong>Số điện thoại:</strong>{" "}
+                      {editFields["business_phone"] ? (
                         <input
                           type="tel"
                           maxLength="10"
-                          value={editedValues['business_phone'] || ''}
+                          value={editedValues["business_phone"] || ""}
                           onChange={(e) => {
                             const numericValue = e.target.value.replace(
                               /[^0-9]/g,
-                              ''
+                              ""
                             );
                             const finalValue = numericValue.slice(0, 10);
 
                             const syntheticEvent = {
                               target: { value: finalValue },
                             };
-                            handleChange(syntheticEvent, 'business_phone');
+                            handleChange(syntheticEvent, "business_phone");
                           }}
                           onBlur={() =>
-                            handleBlur('business_phone', business._id)
+                            handleBlur("business_phone", business._id)
                           }
-                          onKeyDown={(e) => handleKeyDown(e, 'business_phone')}
+                          onKeyDown={(e) => handleKeyDown(e, "business_phone")}
                           autoFocus
                         />
                       ) : (
-                        business.business_phone || '...'
+                        business.business_phone || "..."
                       )}
                     </p>
-                    {!editFields['business_phone'] && (
+                    {!editFields["business_phone"] && (
                       <p
                         className="edit-btn"
-                        onClick={() => handleEdit('business_phone')}
+                        onClick={() => handleEdit("business_phone")}
                       >
                         <LuTextCursorInput />
                       </p>
@@ -978,26 +1032,26 @@ const MyBusinessPage = () => {
                   </div>
                   <div className="editable-field">
                     <p className="contact-detail">
-                      <strong>Địa chỉ:</strong>{' '}
-                      {editFields['business_address'] ? (
+                      <strong>Địa chỉ:</strong>{" "}
+                      {editFields["business_address"] ? (
                         <input
                           type="text"
-                          value={editedValues['business_address'] || ''}
-                          onChange={(e) => handleChange(e, 'business_address')}
+                          value={editedValues["business_address"] || ""}
+                          onChange={(e) => handleChange(e, "business_address")}
                           onBlur={() =>
-                            handleBlur('business_address', business._id)
+                            handleBlur("business_address", business._id)
                           }
                           onKeyDown={(e) =>
-                            handleKeyDown(e, 'business_address')
+                            handleKeyDown(e, "business_address")
                           }
                           autoFocus
                         />
                       ) : (
-                        business.business_address || '...'
+                        business.business_address || "..."
                       )}
                     </p>
 
-                    {!editFields['business_address'] && (
+                    {!editFields["business_address"] && (
                       <div className="edit-btn-group">
                         <p
                           className="edit-btn"
@@ -1011,12 +1065,53 @@ const MyBusinessPage = () => {
                   </div>
                   <div className="editable-field">
                     <p className="contact-detail">
-                      <strong>Mô hình kinh doanh:</strong>{' '}
-                      {editFields['business_category_id'] ? (
+                      <strong>Giờ hoạt động:</strong>{" "}
+                      {editFields["business_time"] ? (
+                        <span className="business-time-inputs">
+                          <input
+                            type="time"
+                            value={editedValues.business_time?.open || "00:00"}
+                            onChange={(e) => handleTimeChange(e, "open")}
+                            onBlur={() =>
+                              handleBlur("business_time", business._id)
+                            }
+                            style={{ width: "90px" }}
+                          />
+                          <span style={{ margin: "0 5px" }}>-</span>
+                          <input
+                            type="time"
+                            value={editedValues.business_time?.close || "00:00"}
+                            onChange={(e) => handleTimeChange(e, "close")}
+                            onBlur={() =>
+                              handleBlur("business_time", business._id)
+                            }
+                            style={{ width: "90px" }}
+                          />
+                        </span>
+                      ) : (
+                        <span>
+                          {business.business_time?.open || "..."} -{" "}
+                          {business.business_time?.close || "..."}
+                        </span>
+                      )}
+                    </p>
+                    {!editFields["business_time"] && (
+                      <p
+                        className="edit-btn"
+                        onClick={() => handleEdit("business_time")}
+                      >
+                        <LuTextCursorInput />
+                      </p>
+                    )}
+                  </div>
+                  <div className="editable-field">
+                    <p className="contact-detail">
+                      <strong>Mô hình kinh doanh:</strong>{" "}
+                      {editFields["business_category_id"] ? (
                         <select
-                          style={{ fontSize: '16px' }}
+                          style={{ fontSize: "16px" }}
                           value={
-                            editedValues['business_category_id'] ||
+                            editedValues["business_category_id"] ||
                             business.business_category_id?._id
                           }
                           onChange={(e) =>
@@ -1026,7 +1121,7 @@ const MyBusinessPage = () => {
                             })
                           }
                           onBlur={() =>
-                            handleBlur('business_category_id', business._id)
+                            handleBlur("business_category_id", business._id)
                           }
                         >
                           <option value="">
@@ -1036,26 +1131,26 @@ const MyBusinessPage = () => {
                             <option
                               key={cat._id}
                               value={cat._id}
-                              style={{ textTransform: 'capitalize' }}
+                              style={{ textTransform: "capitalize" }}
                             >
                               {cat.category_name}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <span style={{ textTransform: 'capitalize' }}>
+                        <span style={{ textTransform: "capitalize" }}>
                           {business.business_category_id?.category_name ||
-                            '...'}
+                            "..."}
                         </span>
                       )}
                     </p>
-                    {!editFields['business_category_id'] && (
+                    {!editFields["business_category_id"] && (
                       <div className="edit-btn-group">
                         <p
                           className="edit-btn"
-                          onClick={() => handleEdit('business_category_id')}
+                          onClick={() => handleEdit("business_category_id")}
                         >
-                          <LuTextCursorInput />{' '}
+                          <LuTextCursorInput />{" "}
                         </p>
                       </div>
                     )}
@@ -1071,74 +1166,115 @@ const MyBusinessPage = () => {
         <div className="business-products">
           <div className="products-container">
             <h2 className="products-title">Sản phẩm kinh doanh</h2>
-            <div className="products-list">
-              {displayedProducts.map((product) => (
-                <div key={product._id} className="product-card">
-                  <div className="product-images">
-                    <div className="product-main-image">
-                      <img
-                        src={product.product_image?.[0] || '1.png'}
-                        alt={product.product_name}
-                      />
-                    </div>
-                  </div>
-                  <div className="product-info">
-                    <h3 className="product-name">{product.product_name}</h3>
-                    <div className="product-price">
-                      {parseFloat(product.product_price || '0').toLocaleString(
-                        'vi-VN',
-                        {
-                          style: 'currency',
-                          currency: 'VND',
-                        }
-                      )}
-                    </div>
-                    <div className="product-rating">
-                      <div className="stars">
-                        {renderStars(product.product_rating || 0)}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                marginTop: "20px",
+              }}
+            >
+              <button
+                onClick={handlePrevProducts}
+                disabled={currentProductIndex === 0}
+                className="carousel-btn back-btn"
+                style={{ margin: "20px" }}
+              >
+                ‹
+              </button>
+
+              <div className="products-list">
+                {products.length > 0 ? (
+                  products
+                    .slice(
+                      currentProductIndex,
+                      currentProductIndex + PRODUCTS_PER_PAGE
+                    )
+                    .map((product) => (
+                      <div key={product._id} className="product-card">
+                        <div className="product-images">
+                          <div className="product-main-image">
+                            <img
+                              src={product.product_image?.[0] || "1.png"}
+                              alt={product.product_name}
+                            />
+                          </div>
+                        </div>
+                        <div className="product-info">
+                          <h3 className="product-name">
+                            {product.product_name}
+                          </h3>
+                          <div className="product-price">
+                            {parseFloat(
+                              product.product_price || "0"
+                            ).toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
+                          </div>
+                          <div className="product-rating">
+                            <div className="stars">
+                              {renderStars(product.product_rating || 0)}
+                            </div>
+                            <span className="reviews-count">
+                              {product.product_total_vote || "0"} Đánh giá
+                            </span>
+                          </div>
+                          <p
+                            className="view-details-btn"
+                            onClick={() => handleViewDetails(product._id)}
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              gap: "10px",
+                            }}
+                          >
+                            <FaEye /> Xem sản phẩm
+                          </p>
+                          <p
+                            className="delete-product-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProduct(product._id);
+                            }}
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              gap: "10px",
+                            }}
+                          >
+                            <FaTrash /> Xóa sản phẩm
+                          </p>
+                        </div>
                       </div>
-                      <span className="reviews-count">
-                        {product.product_total_vote || '0'} Đánh giá
-                      </span>
-                    </div>
-                    <p
-                      className="view-details-btn"
-                      onClick={() => handleViewDetails(product._id)}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '10px',
-                      }}
-                    >
-                      <FaEye /> Xem sản phẩm
-                    </p>
-                    <p
-                      className="delete-product-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProduct(product._id);
-                      }}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '10px',
-                      }}
-                    >
-                      <FaTrash /> Xóa sản phẩm
-                    </p>
-                  </div>
-                </div>
-              ))}
+                    ))
+                ) : (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      width: "100%",
+                      color: "#666",
+                    }}
+                  >
+                    Bạn chưa có sản phẩm nào.
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={handleNextProducts}
+                disabled={
+                  currentProductIndex + PRODUCTS_PER_PAGE >= products.length
+                }
+                className="carousel-btn next-btn"
+                style={{ margin: "20px" }}
+              >
+                ›
+              </button>
             </div>
+
             <div className="product-actions">
-              {products.length >= 3 && (
-                <button
-                  className="expand-btn"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                >
-                  {isExpanded ? 'Thu gọn' : 'Mở rộng'}
-                </button>
-              )}
               <a href="/product-registration" className="add-product-btn">
                 Thêm sản phẩm
               </a>
@@ -1153,13 +1289,13 @@ const MyBusinessPage = () => {
         onClose={() => setIsMapOpen(false)}
         onConfirm={async (coords) => {
           const [lat, lng] = coords;
-          const toastId = toast.loading('Đang lấy địa chỉ...');
+          const toastId = toast.loading("Đang lấy địa chỉ...");
           try {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
             );
             const data = await response.json();
-            const newAddress = data.display_name || 'Địa chỉ chưa rõ';
+            const newAddress = data.display_name || "Địa chỉ chưa rõ";
 
             setEditedValues((prev) => ({
               ...prev,
@@ -1170,7 +1306,7 @@ const MyBusinessPage = () => {
               ...prev,
               business_address: newAddress,
               business_location: {
-                type: 'Point',
+                type: "Point",
                 coordinates: [lng, lat],
               },
             }));
@@ -1180,24 +1316,24 @@ const MyBusinessPage = () => {
               {
                 business_address: newAddress,
                 business_location: {
-                  type: 'Point',
+                  type: "Point",
                   coordinates: [lng, lat],
                 },
               }
             );
 
             toast.update(toastId, {
-              render: 'Lấy địa chỉ thành công!',
-              type: 'success',
+              render: "Lấy địa chỉ thành công!",
+              type: "success",
               isLoading: false,
               autoClose: 3000,
             });
             setIsMapOpen(false);
           } catch (error) {
-            console.error('Lỗi cập nhật địa chỉ:', error);
+            console.error("Lỗi cập nhật địa chỉ:", error);
             toast.update(toastId, {
-              render: 'Không thể lấy địa chỉ. Vui lòng thử lại.',
-              type: 'error',
+              render: "Không thể lấy địa chỉ. Vui lòng thử lại.",
+              type: "error",
               isLoading: false,
               autoClose: 3000,
             });
@@ -1220,15 +1356,15 @@ const MyBusinessPage = () => {
             className="modal-overlay"
             onClick={() => setIsDeleteModalOpen(false)}
             style={{
-              position: 'fixed',
+              position: "fixed",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               zIndex: 9999,
             }}
           >
@@ -1239,35 +1375,35 @@ const MyBusinessPage = () => {
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                backgroundColor: '#fff',
-                padding: '30px',
-                borderRadius: '10px',
-                maxWidth: '350px',
-                width: '90%',
-                textAlign: 'center',
-                boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
               }}
             >
               <h3>Xác nhận xóa</h3>
-              <p style={{ margin: '15px 0' }}>
+              <p style={{ margin: "15px 0" }}>
                 Bạn có chắc chắn muốn xóa ảnh này không?
               </p>
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   style={{
                     flex: 1,
-                    padding: '10px 20px',
-                    cursor: 'pointer',
-                    background: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    fontWeight: 'bold',
-                    transition: 'background 0.2s',
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                    transition: "background 0.2s",
                   }}
-                  onMouseOver={(e) => (e.target.style.background = '#5a6268')}
-                  onMouseOut={(e) => (e.target.style.background = '#6c757d')}
+                  onMouseOver={(e) => (e.target.style.background = "#5a6268")}
+                  onMouseOut={(e) => (e.target.style.background = "#6c757d")}
                 >
                   Hủy
                 </button>
@@ -1275,17 +1411,17 @@ const MyBusinessPage = () => {
                   onClick={executeDeleteImage}
                   style={{
                     flex: 1,
-                    padding: '10px 20px',
-                    cursor: 'pointer',
-                    background: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    borderRadius: '5px',
-                    transition: 'background 0.2s',
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    fontWeight: "bold",
+                    borderRadius: "5px",
+                    transition: "background 0.2s",
                   }}
-                  onMouseOver={(e) => (e.target.style.background = '#c82333')}
-                  onMouseOut={(e) => (e.target.style.background = '#dc3545')}
+                  onMouseOver={(e) => (e.target.style.background = "#c82333")}
+                  onMouseOut={(e) => (e.target.style.background = "#dc3545")}
                 >
                   Xóa
                 </button>
@@ -1295,21 +1431,21 @@ const MyBusinessPage = () => {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {' '}
+        {" "}
         {isProductDeleteModalOpen && (
           <div
             className="modal-overlay"
             onClick={() => setIsProductDeleteModalOpen(false)}
             style={{
-              position: 'fixed',
+              position: "fixed",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               zIndex: 9999,
             }}
           >
@@ -1320,36 +1456,36 @@ const MyBusinessPage = () => {
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                backgroundColor: '#fff',
-                padding: '30px',
-                borderRadius: '10px',
-                maxWidth: '350px',
-                width: '90%',
-                textAlign: 'center',
-                boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                backgroundColor: "#fff",
+                padding: "30px",
+                borderRadius: "10px",
+                maxWidth: "350px",
+                width: "90%",
+                textAlign: "center",
+                boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
               }}
             >
               <h3>Xác nhận xóa</h3>
-              <p style={{ margin: '15px 0', lineHeight: '1.5' }}>
+              <p style={{ margin: "15px 0", lineHeight: "1.5" }}>
                 Bạn có chắc muốn xóa sản phẩm này? <br />
                 Hành động này không thể hoàn tác.
               </p>
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
                 <button
                   onClick={() => setIsProductDeleteModalOpen(false)}
                   style={{
                     flex: 1,
-                    padding: '10px 20px',
-                    cursor: 'pointer',
-                    background: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    fontWeight: 'bold',
-                    transition: 'background 0.2s',
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    fontWeight: "bold",
+                    transition: "background 0.2s",
                   }}
-                  onMouseOver={(e) => (e.target.style.background = '#5a6268')}
-                  onMouseOut={(e) => (e.target.style.background = '#6c757d')}
+                  onMouseOver={(e) => (e.target.style.background = "#5a6268")}
+                  onMouseOut={(e) => (e.target.style.background = "#6c757d")}
                 >
                   Hủy
                 </button>
@@ -1357,17 +1493,17 @@ const MyBusinessPage = () => {
                   onClick={executeDeleteProduct}
                   style={{
                     flex: 1,
-                    padding: '10px 20px',
-                    cursor: 'pointer',
-                    background: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    borderRadius: '5px',
-                    transition: 'background 0.2s',
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    fontWeight: "bold",
+                    borderRadius: "5px",
+                    transition: "background 0.2s",
                   }}
-                  onMouseOver={(e) => (e.target.style.background = '#c82333')}
-                  onMouseOut={(e) => (e.target.style.background = '#dc3545')}
+                  onMouseOver={(e) => (e.target.style.background = "#c82333")}
+                  onMouseOut={(e) => (e.target.style.background = "#dc3545")}
                 >
                   Xóa
                 </button>

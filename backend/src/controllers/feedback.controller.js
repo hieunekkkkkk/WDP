@@ -34,6 +34,24 @@ class FeedbackController {
         }
     }
 
+    async getAllBussinessFeedback(req, res) {
+        try {
+            const feedbacks = await feedbackService.getAllBussinessFeedback();
+            res.status(200).json({ message: 'Business feedbacks retrieved successfully', data: feedbacks });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    async getAllProductFeedback(req, res) {
+        try {
+            const feedbacks = await feedbackService.getAllProductFeedback();
+            res.status(200).json({ message: 'Product feedbacks retrieved successfully', data: feedbacks });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     async getFeedbackByProductId(req, res) {
         try {
             const { productId } = req.params;

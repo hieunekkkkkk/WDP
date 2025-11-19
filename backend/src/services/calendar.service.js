@@ -227,6 +227,7 @@ class CalendarService {
     // --- 2. TRUY VẤN DỮ LIỆU THÔ ---
     const tasksInMonth = await Calendar.find({
       creator_id: creatorId,
+      task_mode: "dài hạn",
       $or: [
         { start_time: { $gte: monthStartDate, $lte: monthEndDate } },
         { end_time: { $gte: monthStartDate, $lte: monthEndDate } },

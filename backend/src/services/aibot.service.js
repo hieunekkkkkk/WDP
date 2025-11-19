@@ -19,42 +19,37 @@ class AiBotService {
             model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
             temperature: 0.7,
             maxOutputTokens: 2048,
-            timeout: 30000, // 30s timeout
+            timeout: 30000, 
         });
 
-        // Dùng shared Qdrant client (không check availability ở đây nữa)
         this.qdrantClient = qdrantClientSingleton.getClient();
 
-        // 🔥 Cache knowledge context cho mỗi bot
         this.knowledgeCache = new Map();
 
-        // 🔥 Cache TTL: 30 phút
         this.CACHE_TTL = 30 * 60 * 1000;
 
-        // 🧹 Cleanup cache mỗi 10 phút
+        
         setInterval(() => this.cleanupCache(), 10 * 60 * 1000);
     }
 
-    /**
-     * 🔥 Get cached knowledge hoặc fetch mới
-     */
+   
     async getKnowledgeContext(botId, bot) {
         const cacheKey = botId.toString();
         const cached = this.knowledgeCache.get(cacheKey);
 
-        // ✅ Cache hit và chưa expire
+      
         if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
             console.log(`📦 Using cached knowledge for bot ${cacheKey}`);
             return cached.context;
         }
 
-        // ❌ Cache miss hoặc expired → Build context mới
+     
         console.log(`🔄 Building knowledge context for bot ${cacheKey}`);
         const context = bot.knowledge.map((k, i) =>
             `[${i + 1}] ${k.title}: ${k.content}`
         ).join('\n\n');
 
-        // 💾 Cache context
+      
         this.knowledgeCache.set(cacheKey, {
             context,
             timestamp: Date.now()
@@ -63,9 +58,6 @@ class AiBotService {
         return context;
     }
 
-    /**
-     * 🧹 Cleanup expired cache
-     */
     cleanupCache() {
         const now = Date.now();
         let cleaned = 0;
@@ -82,9 +74,7 @@ class AiBotService {
         }
     }
 
-    /**
-     * 🔄 Invalidate cache khi knowledge thay đổi
-     */
+   
     invalidateCache(botId) {
         const cacheKey = botId.toString();
         this.knowledgeCache.delete(cacheKey);
@@ -161,7 +151,6 @@ class AiBotService {
         const bot = await this.getBotById(botId);
         if (!bot) throw new Error('Bot not found');
 
-        // 🔥 Lấy cached knowledge context
         const allKnowledgeContext = await this.getKnowledgeContext(botId, bot);
 
         if (!allKnowledgeContext || allKnowledgeContext.trim() === '') {
@@ -172,11 +161,10 @@ class AiBotService {
             };
         }
 
-        // Lấy kiến thức liên quan từ Qdrant (nếu có)
         let relevantDocs = [];
-        let context = allKnowledgeContext; // Default: dùng all knowledge
+        let context = allKnowledgeContext; 
 
-        // Check Qdrant availability
+     
         const isQdrantReady = await qdrantClientSingleton.checkAvailability();
 
         if (isQdrantReady) {
@@ -185,16 +173,16 @@ class AiBotService {
                 relevantDocs = await BotKnowledgeService.searchKnowledge(botId, message, 4);
 
                 if (relevantDocs && relevantDocs.length > 0) {
-                    // ✅ Tìm thấy relevant docs → Dùng chúng thay vì all knowledge
+                    
                     context = relevantDocs.map((d, i) => `[${i + 1}] ${d.content}`).join('\n\n');
                     console.log(`✅ Found ${relevantDocs.length} relevant docs from Qdrant`);
                 } else {
-                    // ⚠️ Không tìm thấy → Giữ nguyên all knowledge
+                   
                     console.warn('⚠️ No relevant docs found, using all knowledge');
                 }
             } catch (err) {
                 console.warn('⚠️ Qdrant search failed, using all knowledge:', err.message);
-                // ❌ Qdrant error → Giữ nguyên all knowledge
+                
             }
         } else {
             console.log('📝 Qdrant not available, using all knowledge');
@@ -202,7 +190,7 @@ class AiBotService {
 
         console.log(`📚 Using context with ${context.split('\n\n').length} knowledge items`);
 
-        // Load lịch sử hội thoại từ Redis
+     
         let historyText = '';
         if (conversationId) {
             try {
@@ -236,7 +224,7 @@ Answer helpfully and naturally in Vietnamese. If the question is not related to 
         ]);
 
         try {
-            // 🔥 Gọi Gemini với timeout protection
+            
             const response = await Promise.race([
                 ragChain.invoke({
                     botName: bot.name,
@@ -257,7 +245,7 @@ Answer helpfully and naturally in Vietnamese. If the question is not related to 
         } catch (err) {
             console.error('❌ Gemini API error:', err.message);
 
-            // 🔥 Fallback response khi Gemini fail
+      
             const fallbackResponse = this.generateFallbackResponse(message, bot);
 
             return {
@@ -268,13 +256,10 @@ Answer helpfully and naturally in Vietnamese. If the question is not related to 
         }
     }
 
-    /**
-     * 🔥 Generate fallback response khi Gemini timeout
-     */
     generateFallbackResponse(message, bot) {
         const lowerMessage = message.toLowerCase().trim();
 
-        // Simple pattern matching
+       
         if (lowerMessage.includes('xin chào') || lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
             return `Xin chào! Tôi là ${bot.name}. ${bot.description || 'Tôi có thể giúp gì cho bạn?'}`;
         }
@@ -291,7 +276,7 @@ Answer helpfully and naturally in Vietnamese. If the question is not related to 
             return `Để biết giờ mở cửa, vui lòng xem thông tin trên trang doanh nghiệp. Tôi đang gặp chút vấn đề kỹ thuật, xin lỗi vì sự bất tiện này.`;
         }
 
-        // Default fallback
+        
         return `Xin lỗi, hệ thống đang gặp chút vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với doanh nghiệp. Cảm ơn bạn đã thông cảm!`;
     }
 }

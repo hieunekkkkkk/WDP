@@ -10,12 +10,12 @@
   width: 100%;
 }
 
-.business-warning{
+.business-warning {
   margin-bottom: 50px;
   text-align: center;
 }
 
-.business-warning-text{
+.business-warning-text {
   color: red;
   font-weight: bold;
 }
@@ -54,6 +54,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-width: 600px;
 }
 
 .main-image {
@@ -79,7 +80,18 @@
 
 .thumbnail-images {
   display: flex;
-  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  gap: 8px;
+  padding-bottom: 10px;
+  justify-content: flex-start;
+  padding: 20px;
+}
+.thumbnail-images .thumbnail {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
 }
 
 .thumbnail {
@@ -136,7 +148,7 @@
   font-weight: 500;
 }
 
-.status-badge{
+.status-badge {
   font-size: 0.9rem;
   font-weight: 500;
   padding: 4px 12px;
@@ -383,6 +395,8 @@
   padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .product-card:hover {
@@ -442,6 +456,9 @@
 
 .product-info {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .product-name {
@@ -449,6 +466,9 @@
   font-weight: 600;
   color: #333;
   margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: center;
+  flex: 1;
 }
 
 .product-price {
@@ -1049,7 +1069,7 @@
   opacity: 0.85;
 }
 
-.business-detail-reapprove-btn{
+.business-detail-reapprove-btn {
   color: red;
   background: none;
   border: none;
@@ -1060,6 +1080,6 @@
   font-size: 16px;
 }
 
-.business-detail-reapprove-btn:hover{
+.business-detail-reapprove-btn:hover {
   color: rgb(192, 0, 0);
 }

@@ -333,6 +333,9 @@
   background: transparent;
   color: var(--text);
   min-width: 0;
+  height: 24px;
+  padding: 0;
+  line-height: 1;
 }
 
 .ai-search input::placeholder {

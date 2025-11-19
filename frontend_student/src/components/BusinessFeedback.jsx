@@ -570,9 +570,23 @@ const BusinessFeedback = ({
                     className="feedback-textarea"
                     placeholder="Chia sẻ trải nghiệm của bạn..."
                     value={newFeedback}
-                    onChange={(e) => setNewFeedback(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 250) {
+                        setNewFeedback(e.target.value);
+                      }
+                    }}
                     rows="4"
                   />
+                  <p
+                    style={{
+                      fontStyle: "italic",
+                      fontSize: "0.85rem",
+                      marginTop: "4px",
+                      color: "grey"
+                    }}
+                  >
+                    *Giới hạn 250 ký tự
+                  </p>
                   <div className="review-form-actions">
                     <button
                       className="submit-review-btn"

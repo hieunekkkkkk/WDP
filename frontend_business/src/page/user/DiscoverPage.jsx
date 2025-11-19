@@ -69,7 +69,6 @@ function DiscoverPage() {
     });
 
     if (businessesToReset.length > 0) {
-      console.log(`🔄 Resetting priority for ${businessesToReset.length} businesses`);
 
       // Gọi API reset-priority cho từng business (không await để không block UI)
       businessesToReset.forEach(async (business) => {
@@ -77,7 +76,6 @@ function DiscoverPage() {
           await axios.post(
             `${import.meta.env.VITE_BE_URL}/api/business/${business._id}/reset-priority`
           );
-          console.log(`✅ Reset priority for business: ${business.business_name}`);
         } catch (err) {
           console.warn(`⚠️ Failed to reset priority for ${business.business_name}:`, err.message);
         }
@@ -223,7 +221,7 @@ function DiscoverPage() {
       onClick(business._id);
     }, [business._id, onClick]);
 
-    let imageUrl = "/1.png";
+    let imageUrl = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
     if (
       business.business_image &&
       Array.isArray(business.business_image) &&
@@ -240,7 +238,7 @@ function DiscoverPage() {
             alt={businessName}
             loading="lazy"
             onError={(e) => {
-              e.target.src = "/1.png";
+              e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
             }}
           />
           <div className="place-overlay">
@@ -393,7 +391,7 @@ function DiscoverPage() {
                         alt={business.business_name}
                         loading="lazy"
                         onError={(e) => {
-                          e.target.src = "/1.png";
+                          e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
                         }}
                       />
                     </div>
@@ -447,7 +445,7 @@ function DiscoverPage() {
                             alt={business.business_name}
                             loading="lazy"
                             onError={(e) => {
-                              e.target.src = "/1.png";
+                              e.target.src = "https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg";
                             }}
                           />
                         </div>

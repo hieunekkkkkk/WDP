@@ -200,7 +200,7 @@ const StackPage = () => {
               </p>
             </div>
             <div className="business-register-intro-image">
-              <img src="/1.png" alt="Subscription Plans Illustration" />
+              <img src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg" alt="Subscription Plans Illustration" />
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import HeroSectionAdmin from "../../components/HeroSectionAdmin";
-import Footer from "../../components/Footer";
 import "../../css/ManageTransactionPage.css";
 import { toast } from "react-toastify";
 import Chart from "chart.js/auto";
@@ -348,7 +347,7 @@ function ManageTransactionPage() {
       });
     }
 
-    // Stack statistics chart
+    // Stack statistics chart (Vertical Bar)
     if (categoryChartRef.current) {
       const ctx = categoryChartRef.current.getContext("2d");
 
@@ -366,6 +365,7 @@ function ManageTransactionPage() {
           labels: stackLabels,
           datasets: [
             {
+              label: "Số lượng giao dịch",
               data: stackData,
               backgroundColor: [
                 "#4FC3F7",
@@ -374,73 +374,7 @@ function ManageTransactionPage() {
                 "#0288D1",
                 "#0277BD",
               ],
-              borderRadius: 5,
-              borderSkipped: false,
-            },
-          ],
-        },
-        options: {
-          indexAxis: "y",
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false,
-            },
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              grid: {
-                color: "#f1f3f4",
-              },
-              ticks: {
-                color: "#6c757d",
-              },
-            },
-            y: {
-              grid: {
-                display: false,
-              },
-              ticks: {
-                color: "#6c757d",
-              },
-            },
-          },
-        },
-      });
-    }
-
-    // Revenue chart
-    if (revenueChartRef.current) {
-      const ctx = revenueChartRef.current.getContext("2d");
-
-      if (revenueChartInstance.current) {
-        revenueChartInstance.current.destroy();
-      }
-
-      const revenueData = getStackRevenues().map((stack) => ({
-        name: stack.name,
-        amount: payments
-          .filter((p) => p.payment_stack.stack_name === stack.name)
-          .reduce((sum, p) => sum + p.payment_amount, 0),
-      }));
-
-      revenueChartInstance.current = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: revenueData.map((item) => item.name),
-          datasets: [
-            {
-              data: revenueData.map((item) => item.amount),
-              backgroundColor: [
-                "#4FC3F7",
-                "#B52857",
-                "#E3DB10",
-                "#0288D1",
-                "#0277BD",
-              ],
-              borderRadius: 5,
+              borderRadius: 8,
               borderSkipped: false,
             },
           ],
@@ -455,12 +389,22 @@ function ManageTransactionPage() {
             tooltip: {
               callbacks: {
                 label: function (context) {
-                  return `${context.label}: ${formatCurrency(context.raw)}`;
+                  return `Số lượng: ${context.parsed.y} giao dịch`;
                 },
               },
             },
           },
           scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: "#f1f3f4",
+              },
+              ticks: {
+                color: "#6c757d",
+                stepSize: 1,
+              },
+            },
             x: {
               grid: {
                 display: false,
@@ -469,15 +413,70 @@ function ManageTransactionPage() {
                 color: "#6c757d",
               },
             },
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: "#f1f3f4",
-              },
-              ticks: {
+          },
+        },
+      });
+    }
+
+    // Revenue chart (Pie Chart - Tỷ lệ phần trăm doanh thu)
+    if (revenueChartRef.current) {
+      const ctx = revenueChartRef.current.getContext("2d");
+
+      if (revenueChartInstance.current) {
+        revenueChartInstance.current.destroy();
+      }
+
+      const revenueData = getStackRevenues().map((stack) => ({
+        name: stack.name,
+        amount: payments
+          .filter((p) => p.payment_stack.stack_name === stack.name)
+          .reduce((sum, p) => sum + p.payment_amount, 0),
+      }));
+
+      const totalRevenue = revenueData.reduce((sum, item) => sum + item.amount, 0);
+
+      revenueChartInstance.current = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: revenueData.map((item) => item.name),
+          datasets: [
+            {
+              data: revenueData.map((item) => item.amount),
+              backgroundColor: [
+                "#4FC3F7",
+                "#B52857",
+                "#E3DB10",
+                "#0288D1",
+                "#0277BD",
+                "#FF6384",
+                "#36A2EB",
+              ],
+              borderWidth: 2,
+              borderColor: "#fff",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: "right",
+              labels: {
                 color: "#6c757d",
-                callback: function (value) {
-                  return formatCurrency(value);
+                padding: 15,
+                font: {
+                  size: 12,
+                },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const value = context.parsed;
+                  const percentage = ((value / totalRevenue) * 100).toFixed(1);
+                  return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
                 },
               },
             },
@@ -757,9 +756,9 @@ function ManageTransactionPage() {
                     className="legend-color"
                     style={{
                       background: [
-                        "#4FC3F7",
-                        "#B52857",
                         "#E3DB10",
+                        "#B52857",
+                        "#4FC3F7",
                         "#0288D1",
                         "#0277BD",
                       ][index % 5],
@@ -772,11 +771,11 @@ function ManageTransactionPage() {
           </div>
         </div>
 
-        {/* Biểu đồ doanh thu theo gói */}
+        {/* Biểu đồ tỷ lệ doanh thu theo gói */}
         <div className="business-revenue-section">
           <div className="revenue-chart-header">
             <h3 className="revenue-chart-title">
-              📊 Top gói dịch vụ có doanh thu cao nhất
+              📊 Tỷ lệ phần trăm doanh thu theo gói dịch vụ
             </h3>
           </div>
 

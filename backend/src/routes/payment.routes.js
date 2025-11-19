@@ -19,7 +19,7 @@
 const express = require('express');
 const router = express.Router();
 const PaymentController = require('../controllers/payment.controller');
-const authMiddleware = require('../middleware/authMiddleware');
+// const authMiddleware = require('../middleware/authMiddleware');
 /**
  * @swagger
  * /api/payments:

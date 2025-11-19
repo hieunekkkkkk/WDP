@@ -76,7 +76,7 @@ const ImageZoomModal = ({ isOpen, imageUrl, onClose, imageAlt = "Phóng to ảnh
                 className={`zoomed-image ${imageLoaded ? 'loaded' : ''}`}
                 onLoad={handleImageLoad}
                 onError={(e) => { 
-                  e.target.src = '/1.png'; 
+                  e.target.src = 'https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg'; 
                   setImageLoaded(true);
                 }}
               />

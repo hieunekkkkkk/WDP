@@ -31,7 +31,7 @@ function ManageFeedbackPage() {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
+  }, [typeFilter]);
 
   useEffect(() => {
     const fetchUsernames = async () => {
@@ -98,9 +98,20 @@ function ManageFeedbackPage() {
 
   const fetchFeedbacks = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/feedback/`
-      );
+      let res;
+      if (typeFilter === "business") {
+        res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/feedback/businesses`
+        );
+      } else if (typeFilter === "product") {
+        res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/feedback/products`
+        );
+      } else {
+        res = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/feedback/`
+        );
+      }
       const data = res.data?.data || [];
       setFeedbacks(data);
       setFiltered(data);
@@ -112,10 +123,6 @@ function ManageFeedbackPage() {
 
   useEffect(() => {
     let data = [...feedbacks];
-
-    if (typeFilter !== "all") {
-      data = data.filter((f) => f.feedback_type === typeFilter);
-    }
 
     data = data.filter(
       (f) => f.feedback_rating >= minRating && f.feedback_rating <= maxRating

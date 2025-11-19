@@ -1,19 +1,19 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
-import { createPortal } from 'react-dom';
-import axios from 'axios';
-import * as XLSX from 'xlsx';
-import '../../css/DashboardPage.css';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaPlusCircle, FaEdit, FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useAuth } from "@clerk/clerk-react";
+import { createPortal } from "react-dom";
+import axios from "axios";
+import * as XLSX from "xlsx";
+import "../../css/DashboardPage.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FaPlusCircle, FaEdit, FaTrash } from "react-icons/fa";
 
 const BACKEND_URL = import.meta.env.VITE_BE_URL;
 
 const formatDateForAPI = (date) => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
@@ -24,22 +24,33 @@ const formatDateForInput = (date) => {
 const formatChartDateLabel = (dateString) => {
   try {
     // eslint-disable-next-line no-unused-vars
-    const [year, month, day] = dateString.split('-');
+    const [year, month, day] = dateString.split("-");
     return `${day}/${month}`;
     // eslint-disable-next-line no-unused-vars
   } catch (e) {
-    return '';
+    return "";
   }
 };
 
 const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
   const [formData, setFormData] = useState({
-    revenue_name: '',
-    revenue_amount: '',
-    revenue_description: '',
-    revenue_date: formatDateForInput(new Date()),
+    revenue_name: "",
+    revenue_amount: "",
+    revenue_description: "",
+    revenue_date: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        revenue_name: "",
+        revenue_amount: "",
+        revenue_description: "",
+        revenue_date: formatDateForInput(new Date()),
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -57,13 +68,22 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
       !formData.revenue_amount ||
       !formData.revenue_date
     ) {
-      toast.error('Vui lòng nhập Tên, Doanh thu và Ngày.');
+      toast.error("Vui lòng nhập Tên, Doanh thu và Ngày.");
       return;
     }
 
     const amount = Number(formData.revenue_amount);
     if (isNaN(amount) || amount < 0) {
-      toast.error('Doanh thu không thể là số âm.');
+      toast.error("Doanh thu không thể là số âm.");
+      return;
+    }
+
+    const revenueDate = new Date(formData.revenue_date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    if (revenueDate > today) {
+      toast.error("Ngày doanh thu không được ở tương lai.");
       return;
     }
 
@@ -76,12 +96,12 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
           revenue_amount: amount,
         }
       );
-      toast.success('Thêm doanh thu thành công!');
+      toast.success("Thêm doanh thu thành công!");
       onSuccess();
       onClose();
     } catch (err) {
-      console.error('Failed to add revenue:', err);
-      toast.error(err.response?.data?.error || 'Lỗi khi thêm doanh thu');
+      console.error("Failed to add revenue:", err);
+      toast.error(err.response?.data?.error || "Lỗi khi thêm doanh thu");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +121,10 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
               value={formData.revenue_name}
               onChange={handleChange}
               required
+              maxLength="30"
             />
+            {/* THÊM MỚI: Ghi chú */}
+            <small className="form-field-hint">Tối đa 30 ký tự.</small>
           </div>
           <div className="form-group">
             <label htmlFor="revenue_amount">Doanh thu (VND)</label>
@@ -112,7 +135,13 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
               value={formData.revenue_amount}
               onChange={handleChange}
               required
+              min="1000"
+              max="999999999"
             />
+            {/* THÊM MỚI: Ghi chú */}
+            <small className="form-field-hint">
+              Nhập giá trị từ 1,000 đến 999,999,999.
+            </small>
           </div>
           <div className="form-group">
             <label htmlFor="revenue_date">Ngày/Tháng</label>
@@ -133,7 +162,11 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
               name="revenue_description"
               value={formData.revenue_description}
               onChange={handleChange}
+              maxLength="100"
             />
+            <small className="form-field-hint">
+              Tối đa 100 ký tự (không bắt buộc).
+            </small>
           </div>
           <div className="modal-actions">
             <button
@@ -149,7 +182,7 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
               className="btn-primary dashboard-btn"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+              {isSubmitting ? "Đang lưu..." : "Lưu"}
             </button>
           </div>
         </form>
@@ -160,10 +193,10 @@ const AddRevenueModal = ({ isOpen, onClose, businessId, onSuccess }) => {
 
 const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
   const [formData, setFormData] = useState({
-    revenue_name: '',
-    revenue_amount: '',
-    revenue_description: '',
-    revenue_date: '',
+    revenue_name: "",
+    revenue_amount: "",
+    revenue_description: "",
+    revenue_date: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -178,17 +211,17 @@ const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
         .then((res) => {
           const data = res.data;
           setFormData({
-            revenue_name: data.revenue_name || '',
-            revenue_amount: data.revenue_amount || '',
-            revenue_description: data.revenue_description || '',
+            revenue_name: data.revenue_name || "",
+            revenue_amount: data.revenue_amount || "",
+            revenue_description: data.revenue_description || "",
             revenue_date: data.revenue_date
               ? formatDateForInput(new Date(data.revenue_date))
-              : '',
+              : "",
           });
         })
         .catch((err) => {
-          console.error('Failed to fetch revenue:', err);
-          toast.error('Không thể tải dữ liệu để sửa');
+          console.error("Failed to fetch revenue:", err);
+          toast.error("Không thể tải dữ liệu để sửa");
           onClose();
         })
         .finally(() => {
@@ -214,13 +247,13 @@ const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
       !formData.revenue_amount ||
       !formData.revenue_date
     ) {
-      toast.error('Vui lòng nhập Tên, Doanh thu và Ngày.');
+      toast.error("Vui lòng nhập Tên, Doanh thu và Ngày.");
       return;
     }
 
     const amount = Number(formData.revenue_amount);
     if (isNaN(amount) || amount < 0) {
-      toast.error('Doanh thu không thể là số âm.');
+      toast.error("Doanh thu không thể là số âm.");
       return;
     }
 
@@ -233,12 +266,12 @@ const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
           revenue_amount: amount,
         }
       );
-      toast.success('Cập nhật doanh thu thành công!');
+      toast.success("Cập nhật doanh thu thành công!");
       onSuccess(); // Tải lại bảng
       onClose(); // Đóng modal
     } catch (err) {
-      console.error('Failed to update revenue:', err);
-      toast.error(err.response?.data?.error || 'Lỗi khi cập nhật doanh thu');
+      console.error("Failed to update revenue:", err);
+      toast.error(err.response?.data?.error || "Lỗi khi cập nhật doanh thu");
     } finally {
       setIsSubmitting(false);
     }
@@ -309,7 +342,7 @@ const EditRevenueModal = ({ isOpen, onClose, revenueId, onSuccess }) => {
                 className="btn-primary dashboard-btn"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+                {isSubmitting ? "Đang lưu..." : "Lưu"}
               </button>
             </div>
           </form>
@@ -351,7 +384,7 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
     <div className="pagination-container">
       <nav>
         <ul className="pagination">
-          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
             <a onClick={() => paginate(1)} href="#!" className="page-link">
               «
             </a>
@@ -360,7 +393,7 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
           {pageNumbers.map((number) => (
             <li
               key={number}
-              className={`page-item ${currentPage === number ? 'active' : ''}`}
+              className={`page-item ${currentPage === number ? "active" : ""}`}
             >
               <a
                 onClick={() => paginate(number)}
@@ -374,7 +407,7 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
 
           <li
             className={`page-item ${
-              currentPage === totalPages ? 'disabled' : ''
+              currentPage === totalPages ? "disabled" : ""
             }`}
           >
             <a
@@ -392,18 +425,18 @@ const Pagination = ({ itemsPerPage, totalItems, paginate, currentPage }) => {
 };
 
 const PriorityTimer = ({ updatedAt }) => {
-  const [remainingTime, setRemainingTime] = useState('');
+  const [remainingTime, setRemainingTime] = useState("");
 
   useEffect(() => {
     if (!updatedAt) return;
 
     const interval = setInterval(() => {
-      const expirationTime = new Date(updatedAt).getTime() + 60 * 60 * 1000;
+      const expirationTime = new Date(updatedAt).getTime() + 30 * 60 * 1000;
       const now = Date.now();
       const diff = expirationTime - now;
 
       if (diff <= 0) {
-        setRemainingTime('Đã hết hạn');
+        setRemainingTime("Đã hết hạn");
         clearInterval(interval);
         return;
       }
@@ -412,9 +445,9 @@ const PriorityTimer = ({ updatedAt }) => {
       const seconds = Math.floor((diff / 1000) % 60);
 
       setRemainingTime(
-        `Còn lại: ${String(minutes).padStart(2, '0')} phút ${String(
+        `Còn lại: ${String(minutes).padStart(2, "0")} phút ${String(
           seconds
-        ).padStart(2, '0')} giây`
+        ).padStart(2, "0")} giây`
       );
     }, 1000);
 
@@ -427,10 +460,10 @@ const PriorityTimer = ({ updatedAt }) => {
     <div
       className="stack-expiration-info"
       style={{
-        marginBottom: '10px',
-        fontSize: '14px',
-        color: remainingTime === 'Đã hết hạn' ? '#dc3545' : '#28a745',
-        fontWeight: '500',
+        marginBottom: "10px",
+        fontSize: "14px",
+        color: remainingTime === "Đã hết hạn" ? "#dc3545" : "#28a745",
+        fontWeight: "500",
       }}
     >
       {remainingTime}
@@ -469,7 +502,7 @@ const StackModal = ({
   }
 
   const hasPriority = businessInfo && businessInfo.business_priority > 0;
-  let buttonText = isActivating ? 'Đang xử lý...' : '🔓 Kích hoạt gói này';
+  let buttonText = isActivating ? "Đang xử lý..." : "🔓 Kích hoạt gói này";
   if (hasPriority && !isActivating) {
     buttonText = `Đã mua ${businessInfo.business_priority} lần, mua thêm?`;
   }
@@ -488,10 +521,10 @@ const StackModal = ({
           <div
             className="stack-price"
             style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              margin: '15px 0',
-              color: '#283593',
+              fontSize: "24px",
+              fontWeight: "bold",
+              margin: "15px 0",
+              color: "#283593",
             }}
           >
             {Number(stack.stack_price).toLocaleString()}₫
@@ -501,7 +534,7 @@ const StackModal = ({
 
           <div
             className="modal-actions"
-            style={{ flexDirection: 'column', justifyContent: 'center' }}
+            style={{ flexDirection: "column", justifyContent: "center" }}
           >
             <button
               type="submit"
@@ -539,12 +572,12 @@ const DashboardPage = () => {
   const [lineChartData, setLineChartData] = useState([]);
   const [isLoadingTable, setIsLoadingTable] = useState(true);
   const [appStatus, setAppStatus] = useState(
-    'Đang tải thông tin người dùng...'
+    "Đang tải thông tin người dùng..."
   );
 
   const [sortConfig, setSortConfig] = useState({
-    key: 'revenue_date',
-    direction: 'descending',
+    key: "revenue_date",
+    direction: "descending",
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -560,29 +593,29 @@ const DashboardPage = () => {
 
   useEffect(() => {
     if (userId) {
-      setAppStatus('Đang tải thông tin business...');
+      setAppStatus("Đang tải thông tin business...");
       fetch(`${BACKEND_URL}/api/business/owner/${userId}`)
         .then((res) => {
-          if (!res.ok) throw new Error('Không thể tải thông tin business.');
+          if (!res.ok) throw new Error("Không thể tải thông tin business.");
           return res.json();
         })
         .then((businesses) => {
           if (businesses && businesses.length > 0) {
             setBusinessId(businesses[0]._id);
             setBusinessInfo(businesses[0]);
-            setAppStatus('');
+            setAppStatus("");
           } else {
-            setAppStatus('Không tìm thấy business nào cho tài khoản này.');
+            setAppStatus("Không tìm thấy business nào cho tài khoản này.");
             setIsLoadingTable(false);
           }
         })
         .catch((err) => {
-          console.error('Failed to fetch business:', err);
+          console.error("Failed to fetch business:", err);
           setAppStatus(`Lỗi: ${err.message}`);
           setIsLoadingTable(false);
         });
     } else {
-      setAppStatus('Đang xác thực người dùng...');
+      setAppStatus("Đang xác thực người dùng...");
     }
   }, [userId]);
 
@@ -595,8 +628,8 @@ const DashboardPage = () => {
 
         const priorityStack = stackList.find(
           (stack) =>
-            stack.stack_name.toLowerCase().includes('tăng view') ||
-            stack.stack_name.toLowerCase().includes('hiếu béo')
+            stack.stack_name.toLowerCase().includes("tăng view") ||
+            stack.stack_name.toLowerCase().includes("hiếu béo")
         );
 
         if (priorityStack) {
@@ -605,7 +638,7 @@ const DashboardPage = () => {
           console.warn('Không tìm thấy gói "Tăng view"');
         }
       } catch (err) {
-        console.error('Lỗi khi tải thông tin stack:', err);
+        console.error("Lỗi khi tải thông tin stack:", err);
       }
     };
 
@@ -618,14 +651,14 @@ const DashboardPage = () => {
 
     fetch(`${BACKEND_URL}/api/business/${businessId}/business_revenues`)
       .then((res) => {
-        if (!res.ok) throw new Error('Network response was not ok');
+        if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
       })
       .then((data) => {
         setTableData(data);
       })
       .catch((err) => {
-        console.error('Fetch table data error:', err);
+        console.error("Fetch table data error:", err);
         setTableData([]);
       })
       .finally(() => {
@@ -635,8 +668,8 @@ const DashboardPage = () => {
 
   const formatDateForAPI = (date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -656,8 +689,8 @@ const DashboardPage = () => {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(new Date().getDate() - i);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
       last7DaysLabels.push({
         fullDate: formatDateForAPI(d),
         label: `${day}/${month}`,
@@ -668,7 +701,7 @@ const DashboardPage = () => {
       `${BACKEND_URL}/api/business/${businessId}/views?start=${startDateString}&end=${endDateString}`
     )
       .then((res) => {
-        if (!res.ok) throw new Error('Không thể tải dữ liệu lượt xem');
+        if (!res.ok) throw new Error("Không thể tải dữ liệu lượt xem");
         return res.json();
       })
       .then((apiData) => {
@@ -683,7 +716,7 @@ const DashboardPage = () => {
         setWeeklyData(processedData);
       })
       .catch((err) => {
-        console.error('Fetch weekly data error:', err);
+        console.error("Fetch weekly data error:", err);
         const errorData = last7DaysLabels.map((dayInfo) => ({
           view_date: dayInfo.label,
           view_count: 0,
@@ -695,7 +728,7 @@ const DashboardPage = () => {
   useEffect(() => {
     if (!businessId) return;
     if (startDate > endDate) {
-      alert('Ngày bắt đầu không thể sau ngày kết thúc.');
+      alert("Ngày bắt đầu không thể sau ngày kết thúc.");
       return;
     }
 
@@ -711,7 +744,7 @@ const DashboardPage = () => {
 
         setLineChartData(res.data || []);
       } catch (err) {
-        console.error('Failed to fetch chart data:', err);
+        console.error("Failed to fetch chart data:", err);
         setLineChartData([]);
       } finally {
         setLoadingChart(false);
@@ -727,70 +760,38 @@ const DashboardPage = () => {
 
     setIsLoadingTable(true);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const data = event.target.result;
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-        if (jsonData.length === 0) {
-          toast.error('File Excel rỗng!');
-          return;
+      const res = await fetch(
+        `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
+        {
+          method: "POST",
+          body: formData,
         }
+      );
 
-        for (let i = 0; i < jsonData.length; i++) {
-          const row = jsonData[i];
-
-          if (!row.revenue_name && !row.name) {
-            throw new Error(`Cột 'revenue_name' có lỗi.`);
-          }
-
-          const amount = row.revenue_amount || row.amount;
-          if (amount === undefined || isNaN(parseFloat(amount))) {
-            throw new Error(`Cột 'revenue_amount' có lỗi.`);
-          }
-
-          if (row.revenue_date && isNaN(new Date(row.revenue_date).getTime())) {
-            throw new Error(`Cột 'revenue_date' có lỗi.`);
-          }
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const res = await fetch(
-          `${BACKEND_URL}/api/business/${businessId}/business_revenues/import`,
-          {
-            method: 'POST',
-            body: formData,
-          }
-        );
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'Lỗi từ server');
-        }
-
-        const result = await res.json();
-        toast.success(result.message);
-        fetchTableData();
-      } catch (err) {
-        console.error('Error importing file:', err);
-        toast.error(err.message);
-      } finally {
-        setIsLoadingTable(false);
-        e.target.value = null;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Lỗi từ server");
       }
-    };
-    reader.readAsArrayBuffer(file);
+
+      const result = await res.json();
+      toast.success(result.message);
+      fetchTableData();
+    } catch (err) {
+      console.error("Error importing file:", err);
+      toast.error(err.message);
+    } finally {
+      setIsLoadingTable(false);
+      e.target.value = null;
+    }
   };
 
   const handleDeleteRevenue = async (revenueId) => {
     if (!revenueId) return;
-    if (!window.confirm('Bạn có chắc chắn muốn xóa mục doanh thu này?')) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa mục doanh thu này?")) {
       return;
     }
 
@@ -799,11 +800,11 @@ const DashboardPage = () => {
         `${BACKEND_URL}/api/business/${revenueId}/business_revenues`
       );
 
-      toast.success(res.data.message || 'Xóa doanh thu thành công!');
+      toast.success(res.data.message || "Xóa doanh thu thành công!");
       fetchTableData();
     } catch (err) {
-      console.error('Failed to delete revenue:', err);
-      toast.error(err.response?.data?.message || 'Lỗi khi xóa.');
+      console.error("Failed to delete revenue:", err);
+      toast.error(err.response?.data?.message || "Lỗi khi xóa.");
     }
   };
 
@@ -816,26 +817,26 @@ const DashboardPage = () => {
         const be = import.meta.env.VITE_BE_URL || BACKEND_URL;
 
         if (!selectedStack?._id) {
-          throw new Error('Thiếu thông tin gói đăng ký');
+          throw new Error("Thiếu thông tin gói đăng ký");
         }
 
         const paymentUrl = `${be}/api/payment`;
         const paymentData = {
           user_id: userId,
           stack_id: selectedStack._id,
-          type: 'business',
+          type: "business",
         };
 
         const res = await axios.post(paymentUrl, paymentData);
 
         if (!res.data?.url) {
-          throw new Error('Không nhận được link thanh toán từ máy chủ.');
+          throw new Error("Không nhận được link thanh toán từ máy chủ.");
         }
 
         window.location.href = res.data.url;
       } catch (err) {
-        console.error('[DashboardPage] Payment initiation failed:', err);
-        toast.error(err.message || 'Không thể khởi tạo thanh toán');
+        console.error("[DashboardPage] Payment initiation failed:", err);
+        toast.error(err.message || "Không thể khởi tạo thanh toán");
         setIsActivating(false);
       }
     },
@@ -849,22 +850,22 @@ const DashboardPage = () => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
 
-        if (sortConfig.key === 'revenue_amount') {
+        if (sortConfig.key === "revenue_amount") {
           aValue = Number(aValue) || 0;
           bValue = Number(bValue) || 0;
-        } else if (sortConfig.key === 'revenue_date') {
+        } else if (sortConfig.key === "revenue_date") {
           aValue = new Date(aValue).getTime() || 0;
           bValue = new Date(bValue).getTime() || 0;
-        } else if (sortConfig.key === 'revenue_name') {
-          aValue = String(aValue || '').toLowerCase();
-          bValue = String(bValue || '').toLowerCase();
+        } else if (sortConfig.key === "revenue_name") {
+          aValue = String(aValue || "").toLowerCase();
+          bValue = String(bValue || "").toLowerCase();
         }
 
         if (aValue < bValue) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
+          return sortConfig.direction === "ascending" ? -1 : 1;
         }
         if (aValue > bValue) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
+          return sortConfig.direction === "ascending" ? 1 : -1;
         }
         return 0;
       });
@@ -873,27 +874,27 @@ const DashboardPage = () => {
   }, [tableData, sortConfig]);
 
   const requestSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
     }
     setSortConfig({ key, direction });
   };
 
   const getSortIndicator = (key) => {
     if (sortConfig.key !== key) return null;
-    return sortConfig.direction === 'ascending' ? ' 🔼' : ' 🔽';
+    return sortConfig.direction === "ascending" ? " 🔼" : " 🔽";
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('vi-VN');
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("vi-VN");
   };
   const formatCurrency = (amount) => {
-    if (typeof amount !== 'number') return 'N/A';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
+    if (typeof amount !== "number") return "N/A";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -919,7 +920,7 @@ const DashboardPage = () => {
     if (isLoadingTable) {
       return (
         <tr>
-          <td colSpan="4" style={{ textAlign: 'center' }}>
+          <td colSpan="4" style={{ textAlign: "center" }}>
             Đang tải dữ liệu...
           </td>
         </tr>
@@ -928,7 +929,7 @@ const DashboardPage = () => {
     if (appStatus && !businessId) {
       return (
         <tr>
-          <td colSpan="4" style={{ textAlign: 'center' }}>
+          <td colSpan="4" style={{ textAlign: "center" }}>
             {appStatus}
           </td>
         </tr>
@@ -961,7 +962,7 @@ const DashboardPage = () => {
     }
     return (
       <tr>
-        <td colSpan="5" style={{ textAlign: 'center' }}>
+        <td colSpan="5" style={{ textAlign: "center" }}>
           Chưa có thông tin
         </td>
       </tr>
@@ -994,7 +995,7 @@ const DashboardPage = () => {
       return { x, y, data: d };
     });
 
-    pointsString = chartPoints.map((p) => `${p.x},${p.y}`).join(' ');
+    pointsString = chartPoints.map((p) => `${p.x},${p.y}`).join(" ");
   }
 
   return (
@@ -1029,10 +1030,10 @@ const DashboardPage = () => {
       <div className="business-card table-section">
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1rem',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
           }}
         >
           <h2 className="card-title" style={{ margin: 0 }}>
@@ -1049,14 +1050,14 @@ const DashboardPage = () => {
             <input
               type="file"
               id="file-upload"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               onChange={handleFileImport}
               accept=".xlsx, .xls"
               disabled={!businessId}
             />
             <button
               className="import-btn"
-              onClick={() => document.getElementById('file-upload').click()}
+              onClick={() => document.getElementById("file-upload").click()}
               disabled={!businessId}
             >
               Thêm bằng Excel
@@ -1064,15 +1065,15 @@ const DashboardPage = () => {
             <a
               href="/business_revenues.xlsx"
               download="business_revenues.xlsx"
-              style={{ textDecoration: 'none' }}
+              style={{ textDecoration: "none" }}
             >
               <button
                 className="import-btn"
                 style={{
-                  marginLeft: '10px',
-                  backgroundColor: '#ffc107',
-                  color: '#000',
-                  fontWeight: '500',
+                  marginLeft: "10px",
+                  backgroundColor: "#ffc107",
+                  color: "#000",
+                  fontWeight: "500",
                 }}
               >
                 Tải file doanh thu mẫu
@@ -1084,22 +1085,22 @@ const DashboardPage = () => {
           <thead>
             <tr>
               <th
-                onClick={() => requestSort('revenue_name')}
-                style={{ cursor: 'pointer' }}
+                onClick={() => requestSort("revenue_name")}
+                style={{ cursor: "pointer" }}
               >
-                Tên {getSortIndicator('revenue_name')}
+                Tên {getSortIndicator("revenue_name")}
               </th>
               <th
-                onClick={() => requestSort('revenue_date')}
-                style={{ cursor: 'pointer' }}
+                onClick={() => requestSort("revenue_date")}
+                style={{ cursor: "pointer" }}
               >
-                Ngày/Tháng {getSortIndicator('revenue_date')}
+                Ngày/Tháng {getSortIndicator("revenue_date")}
               </th>
               <th
-                onClick={() => requestSort('revenue_amount')}
-                style={{ cursor: 'pointer' }}
+                onClick={() => requestSort("revenue_amount")}
+                style={{ cursor: "pointer" }}
               >
-                Doanh thu {getSortIndicator('revenue_amount')}
+                Doanh thu {getSortIndicator("revenue_amount")}
               </th>
               <th>Mô tả</th>
             </tr>
@@ -1121,25 +1122,25 @@ const DashboardPage = () => {
         <div className="chart-wrapper">
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              minHeight: '38px',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              minHeight: "38px",
             }}
           >
             <h3 className="card-title">Lượt truy cập trong tuần</h3>
             <button
               className="dashboard-btn"
               style={{
-                padding: '4px 8px',
-                fontSize: '12px',
-                marginRight: '8px',
+                padding: "4px 8px",
+                fontSize: "12px",
+                marginRight: "8px",
               }}
               onClick={() => setIsStackModalOpen(true)}
               disabled={!tangViewStack}
               title="Tăng ưu tiên hiển thị"
             >
-              <FaPlusCircle style={{ marginRight: '5px' }} />
+              <FaPlusCircle style={{ marginRight: "5px" }} />
               Tăng View
             </button>
           </div>
@@ -1163,22 +1164,22 @@ const DashboardPage = () => {
         <div className="chart-wrapper">
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              minHeight: '38px',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              minHeight: "38px",
             }}
           >
             <h3 className="card-title">Doanh thu theo thời gian</h3>
           </div>
           <div
             className="date-picker-group"
-            style={{ display: 'flex', gap: '10px', margin: '10px 0' }}
+            style={{ display: "flex", gap: "10px", margin: "10px 0" }}
           >
             <div style={{ flex: 1 }}>
               <label
                 htmlFor="start-date"
-                style={{ fontSize: '12px', display: 'block' }}
+                style={{ fontSize: "12px", display: "block" }}
               >
                 Từ ngày
               </label>
@@ -1187,13 +1188,13 @@ const DashboardPage = () => {
                 id="start-date"
                 value={formatDateForInput(startDate)}
                 onChange={(e) => setStartDate(new Date(e.target.value))}
-                style={{ width: '100%', padding: '4px' }}
+                style={{ width: "100%", padding: "4px" }}
               />
             </div>
             <div style={{ flex: 1 }}>
               <label
                 htmlFor="end-date"
-                style={{ fontSize: '12px', display: 'block' }}
+                style={{ fontSize: "12px", display: "block" }}
               >
                 Đến ngày
               </label>
@@ -1202,7 +1203,7 @@ const DashboardPage = () => {
                 id="end-date"
                 value={formatDateForInput(endDate)}
                 onChange={(e) => setEndDate(new Date(e.target.value))}
-                style={{ width: '100%', padding: '4px' }}
+                style={{ width: "100%", padding: "4px" }}
               />
             </div>
           </div>
@@ -1211,10 +1212,10 @@ const DashboardPage = () => {
             {loadingChart ? (
               <div
                 style={{
-                  height: '150px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  height: "150px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 Đang tải...
@@ -1222,10 +1223,10 @@ const DashboardPage = () => {
             ) : lineChartData.length === 0 ? (
               <div
                 style={{
-                  height: '150px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  height: "150px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 Không có dữ liệu

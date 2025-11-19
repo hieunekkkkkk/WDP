@@ -83,81 +83,103 @@ function DiscoverByCategoryPage() {
       setError(null);
 
       try {
-        const storedLocation = JSON.parse(localStorage.getItem("userLocation"));
-        if (!storedLocation?.latitude || !storedLocation?.longitude) {
-          throw new Error(
-            "Vui lòng bật quyền truy cập vị trí trong trình duyệt hoặc thiết bị để tiếp tục."
+        let response;
+        let businessList = [];
+
+        if (filters.searchByLocation) {
+          const storedLocation = JSON.parse(
+            localStorage.getItem("userLocation")
           );
+          if (!storedLocation?.latitude || !storedLocation?.longitude) {
+            throw new Error(
+              "Vui lòng bật quyền truy cập vị trí trong trình duyệt hoặc thiết bị để tiếp tục."
+            );
+          }
+
+          const { latitude, longitude } = storedLocation;
+          const maxDistanceValue = filters.distance * 1000;
+
+          response = await axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/business/near`,
+            {
+              params: {
+                latitude,
+                longitude,
+                maxDistance: maxDistanceValue,
+                categoryId: categoryId,
+              },
+              timeout: 10000,
+            }
+          );
+
+          if (Array.isArray(response.data)) {
+            businessList = response.data;
+          } else {
+            throw new Error(
+              `Unexpected response format from /near: ${JSON.stringify(
+                response.data
+              )}`
+            );
+          }
+        } else {
+          response = await axios.get(
+            `${import.meta.env.VITE_BE_URL}/api/business/category/${categoryId}`,
+            { timeout: 10000 }
+          );
+
+          if (response.data && Array.isArray(response.data.businesses)) {
+            businessList = response.data.businesses;
+          } else if (Array.isArray(response.data)) {
+            businessList = response.data;
+          } else {
+            throw new Error(
+              `Unexpected response format from /category/${categoryId}: ${JSON.stringify(
+                response.data
+              )}`
+            );
+          }
         }
 
-        const { latitude, longitude } = storedLocation;
-
-        const maxDistanceValue = filters.searchByLocation
-          ? filters.distance * 1000
-          : 99999999;
-
-        const response = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/business/near`,
-          {
-            params: {
-              latitude,
-              longitude,
-              maxDistance: maxDistanceValue,
-              categoryId: categoryId,
-            },
-            timeout: 10000,
-          }
+        const filtered = businessList.filter(
+          (b) => b.business_active === "active"
         );
 
-        if (Array.isArray(response.data)) {
-          const filtered = response.data.filter(
-            (b) => b.business_active === "active"
-          );
+        const enriched = await Promise.all(
+          filtered.map(async (b) => {
+            let avgRating = 0;
 
-          const enriched = await Promise.all(
-            filtered.map(async (b) => {
-              let avgRating = 0;
+            try {
+              const res = await axios.get(
+                `${import.meta.env.VITE_BE_URL}/api/feedback/business/${b._id}`
+              );
 
-              try {
-                const res = await axios.get(
-                  `${import.meta.env.VITE_BE_URL}/api/feedback/business/${
-                    b._id
-                  }`
+              if (res.data?.success && Array.isArray(res.data.data)) {
+                const feedbacks = res.data.data;
+                const total = feedbacks.reduce(
+                  (sum, fb) => sum + (fb.feedback_rating || 0),
+                  0
                 );
-
-                if (res.data?.success && Array.isArray(res.data.data)) {
-                  const feedbacks = res.data.data;
-                  const total = feedbacks.reduce(
-                    (sum, fb) => sum + (fb.feedback_rating || 0),
-                    0
-                  );
-                  avgRating =
-                    feedbacks.length > 0 ? total / feedbacks.length : 0;
-                }
-              } catch (err) {
-                console.error(
-                  `Error fetching feedback for ${b.business_name}:`,
-                  err
-                );
+                avgRating = feedbacks.length > 0 ? total / feedbacks.length : 0;
               }
+            } catch (err) {
+              console.error(
+                `Error fetching feedback for ${b.business_name}:`,
+                err
+              );
+            }
 
-              return {
-                ...b,
-                price: b.business_stack_id?.stack_price
-                  ? parseFloat(b.business_stack_id.stack_price)
-                  : 50000,
-                rating: avgRating,
-                status: b.business_status ? "Đang mở cửa" : "Đã đóng cửa",
-              };
-            })
-          );
+            return {
+              ...b,
+              price: b.business_stack_id?.stack_price
+                ? parseFloat(b.business_stack_id.stack_price)
+                : 50000,
+              rating: avgRating,
+              status: b.business_status ? "Đang mở cửa" : "Đã đóng cửa",
+            };
+          })
+        );
 
-          setBusinesses(enriched);
-        } else {
-          throw new Error(
-            `Unexpected response format: ${JSON.stringify(response.data)}`
-          );
-        }
+        setBusinesses(enriched);
       } catch (err) {
         console.error(
           "Fetch error:",

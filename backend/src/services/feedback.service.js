@@ -76,6 +76,28 @@ class FeedbackService {
     }
   }
 
+  async getAllBussinessFeedback() {
+    try {
+      const feedbacks = await Feedback.find({ feedback_type: "business" }).sort({ feedback_date: -1 });
+      return feedbacks;
+    } catch (error) {
+      throw new Error(
+        "Error retrieving business feedback: " + error.message
+      );
+    }
+  }
+
+  async getAllProductFeedback() {
+    try {
+      const feedbacks = await Feedback.find({ feedback_type: "product" }).sort({ feedback_date: -1 });
+      return feedbacks;
+    } catch (error) {
+      throw new Error(
+        "Error retrieving product feedback: " + error.message
+      );
+    }
+  }
+
   async updateFeedback(id, updateData) {
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {

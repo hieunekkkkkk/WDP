@@ -291,7 +291,7 @@ function ManageBusinessPage() {
                   >
                     <td>{b.business_name}</td>
                     <td>{ownerNames[b.owner_id] || 'Loading...'}</td>
-                    <td>{b.business_category_id?.category_name}</td>
+                    <td style={{textTransform: "capitalize"}}>{b.business_category_id?.category_name}</td>
                     <td>
                       <span
                         className={`manage-business-status ${b.business_active.toLowerCase()}`}

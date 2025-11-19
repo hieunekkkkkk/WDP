@@ -17,6 +17,7 @@ const Header = () => {
   const [isMenuOpen,] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [hasBusiness, setHasBusiness] = useState(false);
+  const [hasBusinessActive, setHasBusinessActive] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [userCache, setUserCache] = useState({});
   const notificationRef = useRef(null);
@@ -145,19 +146,29 @@ const Header = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/business/owner/${ownerId}`
         );
-        if (response.data && response.data.length > 0) {
+
+        const businesses = response.data;
+
+        if (businesses && businesses.length > 0) {
           setHasBusiness(true);
+
+          const isActive = businesses.some(
+            (business) => business.business_active == "active"
+          );
+          setHasBusinessActive(isActive);
         } else {
           setHasBusiness(false);
+          setHasBusinessActive(false); 
         }
       } catch (error) {
         console.error("Error fetching business data:", error);
         setHasBusiness(false);
+        setHasBusinessActive(false); 
       }
     };
 
     fetchBusinessStatus();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -269,13 +280,16 @@ const Header = () => {
         </Link>
       )}
 
-      <Link
-        to="/business-dashboard"
-        className={`header-nav-link ${isActive("/business-dashboard") ? "active" : ""
+      {hasBusinessActive && (
+        <Link
+          to="/business-dashboard"
+          className={`header-nav-link ${
+            isActive("/business-dashboard") ? "active" : ""
           }`}
-      >
-        Hỗ trợ doanh nghiệp
-      </Link>
+        >
+          Hỗ trợ doanh nghiệp
+        </Link>
+      )}
     </nav>
   );
 

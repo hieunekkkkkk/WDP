@@ -1,24 +1,31 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { useUser } from "@clerk/clerk-react";
 import KnowledgeDetailModal from "../ai-modal/KnowledgeDetailModal";
 import KnowledgeCreateModal from "../ai-modal/KnowledgeCreateModal";
 import KnowledgeEditModal from "../../components/ai-modal/KnowledgeEditModal.jsx";
 import BotDetailModal from "../ai-modal/BotDetailModal";
+import BotCreateModal from "../ai-modal/BotCreateModal";
 import "./style/KnowledgePage.css";
 
 const KnowledgePage = () => {
   const { botId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useUser();
   const isBusinessKnowledge = location.pathname.includes("business-dashboard");
+  const isCreateBotMode = botId === 'create-bot';
   const [bot, setBot] = useState(null);
   const [knowledges, setKnowledges] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editingKnowledge, setEditingKnowledge] = useState(null);
   const [showBotDetail, setShowBotDetail] = useState(false);
+  const [showCreateBot, setShowCreateBot] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -66,9 +73,27 @@ const KnowledgePage = () => {
   }, [botId]);
 
   useEffect(() => {
-    fetchBot();
-    fetchKnowledge();
-  }, [fetchBot, fetchKnowledge]);
+    // Kiểm tra nếu đang ở chế độ tạo bot mới
+    if (isCreateBotMode) {
+      const paymentStatus = searchParams.get('payment');
+      if (paymentStatus === 'success') {
+        setShowCreateBot(true);
+      } else {
+        // Không có payment success, redirect về my-ai
+        navigate('/dashboard/my-ai', { replace: true });
+      }
+    } else {
+      fetchBot();
+      fetchKnowledge();
+    }
+  }, [isCreateBotMode, searchParams, navigate, fetchBot, fetchKnowledge]);
+
+  // Handler khi tạo bot thành công
+  const handleBotCreated = (newBot) => {
+    const newBotId = newBot._id || newBot.id;
+    // Redirect đến knowledge page của bot vừa tạo
+    navigate(`/dashboard/knowledge/${newBotId}`, { replace: true });
+  };
 
   const deleteKnowledge = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa kiến thức này?")) return;
@@ -92,17 +117,96 @@ const KnowledgePage = () => {
     }
   };
 
+  // Nếu đang ở chế độ tạo bot, hiển thị background mờ + modal
+  if (isCreateBotMode) {
+    return (
+      <>
+        <div className="knowledge-page" style={{ filter: 'blur(5px)', pointerEvents: 'none' }}>
+          {/* Background mờ */}
+          <div className="knowledge-header-card">
+            <h1 className="knowledge-title">📚 Quản lý kiến thức Bot</h1>
+          </div>
+          <div className="knowledge-list-panel">
+            <div className="loading">
+              <div className="loading-spinner"></div>
+              Đang chuẩn bị tạo bot...
+            </div>
+          </div>
+        </div>
+        {/* Modal tạo bot */}
+        {showCreateBot && (
+          <BotCreateModal
+            onClose={() => {
+              // Không cho phép đóng modal, user phải hoàn thành tạo bot
+              toast.warning('Bạn cần hoàn thành việc tạo bot để sử dụng dịch vụ!');
+            }}
+            onBotCreated={handleBotCreated}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="knowledge-page">
-      {/* Header card */}
+      {/* Header - Thông tin Bot */}
       <div className="knowledge-header-card">
-        <h1 className="knowledge-title">
-          {isBusinessKnowledge
-            ? "🏢 Kiến thức doanh nghiệp"
-            : "📘 Kiến thức học tập"}
-        </h1>
+        <h1 className="knowledge-title">📚 Quản lý kiến thức Bot</h1>
 
-        <div className="action-bar">
+        {!loading && !error && bot && (
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "16px 20px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderRadius: "12px",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: "700",
+                    color: "white",
+                    marginBottom: "6px",
+                  }}
+                >
+                  🤖 {bot.name || "(chưa đặt tên)"}
+                </div>
+                <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.9)" }}>
+                  {bot.description || "Chưa có mô tả"}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBotDetail(true)}
+                style={{
+                  padding: "10px 20px",
+                  background: "white",
+                  color: "#667eea",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  transition: "all 0.2s",
+                }}
+              >
+                ✏️ Chỉnh sửa Bot
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="action-bar" style={{ marginTop: "16px" }}>
           <div className="search-container">
             <input
               type="text"
@@ -113,10 +217,7 @@ const KnowledgePage = () => {
             />
           </div>
           <button className="add-button" onClick={() => setShowCreate(true)}>
-            ➕{" "}
-            {isBusinessKnowledge
-              ? "Thêm kiến thức doanh nghiệp"
-              : "Thêm kiến thức học tập"}
+            ➕ Thêm kiến thức
           </button>
         </div>
       </div>
@@ -129,26 +230,6 @@ const KnowledgePage = () => {
           <div className="loading">
             <div className="loading-spinner"></div>
             Đang tải dữ liệu...
-          </div>
-        )}
-
-        {!loading && !error && bot && (
-          <div className="bot-info-box">
-            <p>
-              <b>Bot ID:</b>{" "}
-              <button
-                className="bot-id-link"
-                onClick={() => setShowBotDetail(true)}
-              >
-                {bot.id || bot._id}
-              </button>
-            </p>
-            <p>
-              <b>Tên:</b> {bot.name}
-            </p>
-            <p>
-              <b>Mô tả:</b> {bot.description}
-            </p>
           </div>
         )}
 

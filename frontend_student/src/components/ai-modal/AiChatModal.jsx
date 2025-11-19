@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { askGemini } from "../../utils/geminiClient.js";
+import { fetchDriveContentWithCache, truncateContent } from "../../utils/driveContentFetcher.js";
 
-// --- CONSTANTS VÀ UTILS ---
-const getStorageKey = (docTitle, industry) =>
-  `aiChatHistory_${industry}_${docTitle}`;
+// Lưu theo môn học (industry/category) thay vì từng tài liệu
+const getStorageKey = (industry) => `aiChatHistory_${industry}`;
 
-const initialWelcomeMessage = (docTitle) => ({
+const initialWelcomeMessage = (industry) => ({
   id: Date.now(),
   sender: "ai",
-  text: `Xin chào! Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
+  text: `Xin chào! Tôi là trợ lý AI của môn ${industry}. Tôi có thể giúp gì cho bạn?`,
 });
 
 // Icon Components
@@ -52,7 +52,7 @@ const TrashIcon = () => (
   </svg>
 );
 
-// Message Component
+
 const Message = React.memo(({ msg }) => (
   <div className={`ai-chat-message ${msg.sender}`}>
     <div className="ai-chat-bubble">{msg.text}</div>
@@ -68,11 +68,11 @@ export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
 
   const industry = docData?.industry;
 
-  // --- THAY ĐỔI 1: TẢI LỊCH SỬ TỪ LOCALSTORAGE (thay vì reset) ---
+  
   const [messages, setMessages] = useState(() => {
-    if (!docTitle || !industry) return []; // Không có docTitle hoặc industry thì không load
+    if (!industry) return []; // Chỉ cần industry (môn học)
 
-    const key = getStorageKey(docTitle, industry);
+    const key = getStorageKey(industry);
     const savedHistory = localStorage.getItem(key);
 
     if (savedHistory) {
@@ -89,31 +89,29 @@ export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
         console.error("Lỗi khi tải lịch sử chat:", e);
       }
     }
-    // Trả về tin nhắn chào mừng mặc định nếu không có lịch sử
-    return [initialWelcomeMessage(docTitle)];
+  
+    return [initialWelcomeMessage(industry)];
   });
 
-  // --- THAY ĐỔI 2: LƯU LỊCH SỬ MỖI KHI CÓ TIN NHẮN MỚI ---
+
   useEffect(() => {
-    if (messages.length > 1 && industry) {
-      const key = getStorageKey(docTitle, industry);
+    if (messages.length > 0 && industry) {
+      const key = getStorageKey(industry);
       localStorage.setItem(key, JSON.stringify(messages));
     }
-  }, [messages, docTitle, industry]);
+  }, [messages, industry]);
 
-  // --- THAY ĐỔI 3: LOẠI BỎ useEffect TỰ ĐỘNG RESET KHI MỞ MODAL (đã xóa) ---
-  // (Đoạn useEffect cũ đã bị xóa)
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Xử lý khi docTitle hoặc industry thay đổi (khi người dùng mở chat cho tài liệu khác)
+  // Xử lý khi industry thay đổi HOẶC khi mở modal (isOpen thay đổi)
   useEffect(() => {
-    if (!docTitle || !industry) return;
+    if (!industry || !isOpen) return;
 
-    const key = getStorageKey(docTitle, industry);
+    const key = getStorageKey(industry);
     const savedHistory = localStorage.getItem(key);
 
     if (savedHistory) {
@@ -131,61 +129,182 @@ export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
         console.error("Lỗi khi tải lịch sử chat:", e);
       }
     }
-    // Nếu không có lịch sử cho docTitle và industry mới, set tin nhắn chào mừng
-    setMessages([initialWelcomeMessage(docTitle)]);
-  }, [docTitle, industry]);
+    
+    setMessages([initialWelcomeMessage(industry)]);
+  }, [industry, isOpen]);
 
-  // --- THAY ĐỔI 4: CHỨC NĂNG XÓA CHAT THỦ CÔNG ---
   const handleClearChat = useCallback(() => {
     const isConfirmed = window.confirm(
-      "Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện này không?"
+      `Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat của môn ${industry} không?`
     );
     if (isConfirmed && industry) {
-      const key = getStorageKey(docTitle, industry);
+      const key = getStorageKey(industry);
       localStorage.removeItem(key); // Xóa khỏi localStorage
       setMessages([
         // Reset state về tin nhắn chào mừng
         {
           id: Date.now(),
           sender: "ai",
-          text: `Lịch sử chat đã được xóa. Tôi có thể giúp gì cho bạn về tài liệu "${docTitle}"?`,
+          text: `Lịch sử chat của môn ${industry} đã được xóa. Tôi có thể giúp gì cho bạn?`,
         },
       ]);
       setInput("");
     }
-  }, [docTitle, industry]);
+  }, [industry]);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || loading) return;
 
-    // Tạo prompt dựa trên toàn bộ lịch sử để AI có ngữ cảnh
-    const contextHistory = messages
-      .map((m) => `${m.sender.toUpperCase()}: ${m.text}`)
-      .join("\n");
-
     const userMsg = { id: Date.now(), sender: "user", text: input };
     setMessages((prev) => [...prev, userMsg]);
+    const currentInput = input;
     setInput("");
     setLoading(true);
 
-    const aiPrompt = `Bạn là trợ lý học tập thông minh. Người dùng đang hỏi về tài liệu "${docTitle}". 
-    Đây là lịch sử cuộc trò chuyện (USER là người dùng, AI là bạn):
-    
-    --- Bắt đầu Lịch sử ---
-    ${contextHistory}
-    USER: ${input}
-    --- Kết thúc Lịch sử ---
+    try {
+      // Lấy lịch sử hội thoại (5 tin nhắn gần nhất)
+      const recentHistory = messages
+        .slice(-5)
+        .map((m) => `${m.sender === 'user' ? 'Người dùng' : 'Trợ lý AI'}: ${m.text}`)
+        .join("\n");
 
-    Hãy trả lời tin nhắn cuối cùng (USER) bằng tiếng Việt, súc tích, dễ hiểu và hữu ích. Giả định rằng bạn có thông tin về tài liệu "${docTitle}".`;
+      let aiPrompt;
 
-    const reply = await askGemini(aiPrompt);
+      // Kiểm tra nếu có Drive URL, fetch nội dung thực tế (luôn tải mới)
+      if (docData?.driveUrl) {
+        try {
+          console.log(`🔄 Đang tải nội dung mới nhất cho: ${docTitle}`);
+          
+          // LUÔN fetch mới từ Drive (forceRefresh = true)
+          const result = await fetchDriveContentWithCache(docData.driveUrl, true);
+          const driveContent = result.content;
+          const truncatedContent = truncateContent(driveContent, 30000);
 
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now() + 1, sender: "ai", text: reply },
-    ]);
-    setLoading(false);
-  }, [input, loading, docTitle, messages]); // messages được thêm vào dependencies để lấy lịch sử
+          // Thông báo cho user biết nguồn dữ liệu
+          let dataSource = '';
+          if (result.updated) {
+            dataSource = '🔄 (dữ liệu mới nhất từ Drive)';
+          } else if (result.fromCache) {
+            dataSource = '💾 (cache - không thể cập nhật từ Drive)';
+          }
+
+          // Thêm warning nếu có
+          const warningNote = result.warning 
+            ? `\n⚠️ ${result.warning}\n` 
+            : '';
+
+          // Prompt với nội dung thực tế từ Drive
+          aiPrompt = `Bạn là trợ lý học tập thông minh chuyên về môn ${docData.industry}. Nhiệm vụ của bạn là trả lời câu hỏi DỰA HOÀN TOÀN VÀO NỘI DUNG TÀI LIỆU được cung cấp.
+
+📚 THÔNG TIN TÀI LIỆU HIỆN TẠI:
+- Tiêu đề: ${docTitle}
+- Mô tả: ${docData.desc || 'Không có'}
+- Tác giả: ${docData.author || 'Không rõ'}
+- Môn học: ${docData.industry || 'Không rõ'}
+
+📄 NỘI DUNG ĐẦY ĐỦ TỪ TÀI LIỆU (${driveContent.length} ký tự) ${dataSource}:
+================================================================================
+${truncatedContent}
+================================================================================
+${warningNote}
+${recentHistory ? `📝 LỊCH SỬ HỘI THOẠI GẦN ĐÂY:\n${recentHistory}\n\n` : ''}❓ CÂU HỎI MỚI:
+${currentInput}
+
+📋 QUY TẮC TRẢ LỜI (BẮT BUỘC):
+1. ✅ CHỈ sử dụng thông tin từ nội dung tài liệu ở trên
+2. ❌ KHÔNG bịa đặt hoặc thêm thông tin từ kiến thức chung của bạn
+3. 📌 Trích dẫn cụ thể từ tài liệu khi có thể (dùng "...")
+4. 🤔 Nếu câu hỏi không liên quan đến nội dung tài liệu, nói rõ: "Câu hỏi này không có trong tài liệu"
+5. ⚠️ Nếu thông tin không đủ để trả lời chính xác, hãy thừa nhận thẳng thắn
+6. 🇻🇳 Trả lời bằng tiếng Việt, rõ ràng, súc tích
+7. 💡 Giải thích dễ hiểu, có ví dụ nếu cần
+
+Hãy trả lời câu hỏi:`;
+
+          console.log(`✅ Sử dụng ${driveContent.length} ký tự ${result.updated ? '(mới cập nhật)' : '(từ cache)'}`);
+        } catch (driveError) {
+          console.error('❌ Lỗi khi tải Drive content:', driveError);
+          
+          // Hiển thị lỗi chi tiết cho user
+          const errorMessage = `${driveError.message}
+
+📌 **Câu hỏi của bạn**: "${currentInput}"
+
+Vì không thể truy cập tài liệu, tôi không thể trả lời chính xác. 
+
+🔗 Bạn có thể:
+• Nhấn nút **Drive** ở card tài liệu để mở và đọc trực tiếp
+• **Copy toàn bộ nội dung** từ Drive và paste vào đây, tôi sẽ trả lời ngay
+• Liên hệ admin để kiểm tra cấu hình file`;
+
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now() + 1, sender: "ai", text: errorMessage },
+          ]);
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Không có Drive URL - kiểm tra xem user có paste nội dung dài không
+        const isLongContent = currentInput.length > 500;
+        
+        if (isLongContent) {
+          // User có thể đã paste nội dung tài liệu vào
+          aiPrompt = `Bạn là trợ lý học tập môn ${docData.industry}. Đang tham khảo tài liệu "${docTitle}".
+
+Người dùng đã cung cấp nội dung sau (có thể là từ tài liệu):
+
+📄 NỘI DUNG:
+${currentInput}
+
+Hãy phân tích nội dung này và:
+1. Tóm tắt các ý chính
+2. Giải thích các khái niệm quan trọng
+3. Trả lời câu hỏi nếu có
+4. Đưa ra nhận xét và gợi ý học tập
+
+Trả lời bằng tiếng Việt, rõ ràng và có cấu trúc:`;
+        } else {
+          // Câu hỏi ngắn không có Drive URL
+          aiPrompt = `Bạn là trợ lý học tập môn ${docData.industry}. Đang tham khảo tài liệu "${docTitle}".
+
+${recentHistory ? `📝 LỊCH SỬ:\n${recentHistory}\n\n` : ''}❓ CÂU HỎI:
+${currentInput}
+
+⚠️ **Lưu ý**: Tài liệu hiện tại chưa có link Drive hoặc tôi chưa truy cập được nội dung đầy đủ.
+
+Tôi sẽ trả lời dựa trên:
+- Kiến thức chung về môn ${docData.industry}
+- Thông tin từ tiêu đề/mô tả tài liệu
+- Ngữ cảnh cuộc trò chuyện trước đó của môn này
+
+💡 **Để câu trả lời chính xác hơn**, bạn có thể:
+1. Paste đoạn văn bản từ tài liệu vào đây
+2. Hỏi câu hỏi cụ thể hơn về nội dung môn học
+
+Hãy trả lời bằng tiếng Việt:`;
+        }
+      }
+
+      const reply = await askGemini(aiPrompt);
+
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: "ai", text: reply },
+      ]);
+    } catch (error) {
+      console.error("Error in handleSend:", error);
+      
+      const errorMessage = `❌ Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`;
+      
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: "ai", text: errorMessage },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }, [input, loading, docTitle, docData, messages]);
 
   const handleKeyPress = useCallback(
     (e) => {
@@ -204,16 +323,16 @@ export default function AiChatModal({ isOpen, onClose, docTitle, docData }) {
       <div className="ai-chat-box" onClick={(e) => e.stopPropagation()}>
         <div className="ai-chat-header">
           <div>
-            <h3>Chat với AI</h3>
-            <p>{docTitle}</p>
+            <h3>Chat với AI - {industry}</h3>
+            <p>📄 {docTitle}</p>
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
-            {/* --- THAY ĐỔI 5: NÚT XÓA CHAT THỦ CÔNG --- */}
+            {/* --- NÚT XÓA LỊCH SỬ CHAT CỦA MÔN HỌC --- */}
             {messages.length > 1 && (
               <button
                 className="ai-chat-close"
                 onClick={handleClearChat}
-                title="Xóa lịch sử trò chuyện"
+                title={`Xóa lịch sử chat môn ${industry}`}
               >
                 <TrashIcon />
               </button>

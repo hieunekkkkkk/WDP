@@ -62,6 +62,11 @@ const BusinessRegistrationPage = () => {
 
     if (files.length === 0) return;
 
+    if (images.length + files.length > 10) {
+      toast.error("Bạn chỉ có thể tải lên tối đa 10 hình ảnh.");
+      return; 
+    }
+
     const toastId = toast.loading("Đang tải ảnh lên...");
 
     try {
@@ -333,7 +338,7 @@ const BusinessRegistrationPage = () => {
               </ul>
             </div>
             <div className="business-register-intro-image">
-              <img src="/1.png" alt="Product Illustration" />
+              <img src="https://res.cloudinary.com/diqpghsfm/image/upload/v1762696086/1_ypkvxn.jpg" alt="Product Illustration" />
             </div>
           </div>
         </div>
@@ -462,14 +467,14 @@ const BusinessRegistrationPage = () => {
                       name="businessType"
                       value={formData.businessType}
                       onChange={handleInputChange}
-                      style={{ textTransform: "capitalize" }} // Thêm từ code trước
+                      style={{ textTransform: "capitalize" }} 
                     >
                       <option value="">Lựa chọn...</option>
                       {categories.map((category) => (
                         <option
                           key={category._id}
                           value={category._id}
-                          style={{ textTransform: "capitalize" }} // Thêm từ code trước
+                          style={{ textTransform: "capitalize" }} 
                         >
                           {category.category_name}
                         </option>
